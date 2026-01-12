@@ -140,6 +140,17 @@ class ProductController extends Controller
 
         // Handle image upload
         if ($request->hasFile('image')) {
+            // Delete old image first (soft delete)
+            $oldImage = \App\Models\File::where('related_table', 'products')
+                ->where('related_id', $product->id)
+                ->where('is_delete', false)
+                ->first();
+            
+            if ($oldImage) {
+                $oldImage->update(['is_delete' => true]);
+            }
+            
+            // Upload new image
             uploadProductImage(
                 $request->file('image'),
                 $product->id,

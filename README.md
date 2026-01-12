@@ -81,3 +81,4 @@ php artisan migrate
 
 php artisan db:seed
 
+git commit -m "Update README"

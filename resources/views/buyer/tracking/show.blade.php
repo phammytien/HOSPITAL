@@ -49,12 +49,12 @@
                     </span>
                 @elseif($order->status == 'CANCELLED')
                     <span
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium border border-gray-200 flex items-center">
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium border border-gray-200 flex items-center">
                         <i class="fas fa-times mr-2"></i> Đã hủy
                     </span>
                 @elseif($order->status == 'REJECTED')
                     <span
-                        class="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium border border-red-200 flex items-center">
+                        class="px-4 py-2 bg-red-100 text-white rounded-lg font-medium border border-red-200 flex items-center">
                         <i class="fas fa-ban mr-2"></i> Đã từ chối
                     </span>
                 @endif

@@ -88,7 +88,11 @@
                             <td class="px-6 py-4 text-right">
                                 <a href="{{ route('buyer.tracking.show', $order->id) }}"
                                     class="text-blue-600 hover:text-blue-900 text-sm font-medium flex items-center justify-end gap-1">
-                                    <i class="fas fa-truck-loading"></i> Cập nhật
+                                    @if(in_array($order->status, ['COMPLETED', 'PAID', 'CANCELLED']))
+                                        <i class="fas fa-eye"></i> Xem chi tiết
+                                    @else
+                                        <i class="fas fa-truck-loading"></i> Cập nhật
+                                    @endif
                                 </a>
                             </td>
                         </tr>

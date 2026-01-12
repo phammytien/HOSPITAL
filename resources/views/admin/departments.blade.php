@@ -321,7 +321,7 @@
             <!-- Pagination (Mock UI) -->
             <div class="mt-6 flex justify-between items-center text-sm text-gray-500">
                 <span id="logCountText">Hiển thị 0 kết quả</span>
-                <div class="flex gap-2">
+                <div id="paginationControls" class="flex gap-2">
                     <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled><i class="fas fa-chevron-left"></i></button>
                     <button class="px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm">1</button>
                     <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
@@ -642,9 +642,15 @@ document.getElementById('searchInput')?.addEventListener('input', function(e) {
 
 // ... [existing functions] ...
 
+// Store current user ID for pagination
+let currentUserId = null;
+
 function openUserDetailModal(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
+
+    // Store user ID for pagination
+    currentUserId = userId;
 
     // Update Header Info
     document.getElementById('userModalTitle').innerHTML = `Chi tiết nhật ký hoạt động <span class="text-gray-400 font-normal text-lg ml-2">#${user.id}</span>`;
@@ -659,15 +665,15 @@ function openUserDetailModal(userId) {
     const modal = document.getElementById('userDetailModal');
     modal.classList.remove('hidden');
 
-    // Fetch Logs
-    fetchAuditLogs(userId);
+    // Fetch Logs (page 1)
+    fetchAuditLogs(userId, 1);
 }
 
 function closeUserDetailModal() {
     document.getElementById('userDetailModal').classList.add('hidden');
 }
 
-function fetchAuditLogs(userId) {
+function fetchAuditLogs(userId, page = 1) {
     const tbody = document.getElementById('auditLogTableBody');
     tbody.innerHTML = `
         <tr>
@@ -678,11 +684,11 @@ function fetchAuditLogs(userId) {
         </tr>
     `;
 
-    fetch(`/admin/users/${userId}/audit-logs`)
+    fetch(`/admin/users/${userId}/audit-logs?page=${page}`)
         .then(res => res.json())
         .then(data => {
             if (data.success && data.data.length > 0) {
-                renderAuditLogs(data.data);
+                renderAuditLogs(data.data, data.pagination);
             } else {
                 tbody.innerHTML = `
                     <tr>
@@ -693,6 +699,7 @@ function fetchAuditLogs(userId) {
                     </tr>
                 `;
                 document.getElementById('logCountText').textContent = 'Hiển thị 0 kết quả';
+                renderPagination(null);
             }
         })
         .catch(err => {
@@ -705,12 +712,19 @@ function fetchAuditLogs(userId) {
                     </td>
                 </tr>
             `;
+            renderPagination(null);
         });
 }
 
-function renderAuditLogs(logs) {
+function renderAuditLogs(logs, pagination) {
     const tbody = document.getElementById('auditLogTableBody');
-    document.getElementById('logCountText').textContent = `Hiển thị ${logs.length} kết quả`;
+    
+    // Update count text with pagination info
+    if (pagination) {
+        document.getElementById('logCountText').textContent = `Hiển thị ${pagination.from} - ${pagination.to} trên ${pagination.total} kết quả`;
+    } else {
+        document.getElementById('logCountText').textContent = `Hiển thị ${logs.length} kết quả`;
+    }
     
     tbody.innerHTML = logs.map(log => {
         let actionClass = 'bg-gray-100 text-gray-700';
@@ -756,8 +770,50 @@ function renderAuditLogs(logs) {
             </tr>
         `;
     }).join('');
+    
+    // Render pagination controls
+    renderPagination(pagination);
+}
+
+function renderPagination(pagination) {
+    const container = document.getElementById('paginationControls');
+    
+    if (!pagination || pagination.total === 0) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const currentPage = pagination.current_page;
+    const totalPages = pagination.total_pages;
+    
+    let html = '';
+    
+    // Previous button
+    html += `<button onclick="changePage(${currentPage - 1})" class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors" ${currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left"></i>
+    </button>`;
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === currentPage) {
+            html += `<button class="px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm">${i}</button>`;
+        } else {
+            html += `<button onclick="changePage(${i})" class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 transition-colors">${i}</button>`;
+        }
+    }
+    
+    // Next button
+    html += `<button onclick="changePage(${currentPage + 1})" class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50 transition-colors" ${currentPage === totalPages ? 'disabled' : ''}>
+        <i class="fas fa-chevron-right"></i>
+    </button>`;
+    
+    container.innerHTML = html;
+}
+
+function changePage(page) {
+    if (currentUserId) {
+        fetchAuditLogs(currentUserId, page);
+    }
 }
 </script>
 @endpush
-
-

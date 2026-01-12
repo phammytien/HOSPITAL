@@ -80,10 +80,59 @@ class InventoryController extends Controller
         return view('department.inventory.index', compact('products', 'warehouse', 'categories'));
     }
 
-    public function export()
+    public function export(Request $request)
     {
-        // Placeholder for export functionality
-        return redirect()->back()->with('success', 'Chức năng xuất báo cáo đang được phát triển.');
+        $user = Auth::user();
+        $departmentId = $user->department_id;
+
+        // Re-use Logic from index to get the same products
+        $warehouse = Warehouse::where('department_id', $departmentId)->first();
+
+        // Query Products
+        $query = \App\Models\Product::where('is_delete', 0)
+            ->whereHas('purchaseRequestItems.purchaseRequest', function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            })
+            ->with(['category']);
+
+        // Manual join for inventory quantity
+        if ($warehouse) {
+            $query->leftJoin('inventory', function ($join) use ($warehouse) {
+                $join->on('products.id', '=', 'inventory.product_id')
+                    ->where('inventory.warehouse_id', '=', $warehouse->id);
+            })
+                ->select('products.*', 'inventory.quantity as stock_quantity_dept');
+        } else {
+            $query->select('products.*');
+        }
+
+        // Apply filters if passed in request (for WYSIWYG export)
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('product_code', 'like', "%{$search}%");
+            });
+        }
+        if ($request->has('cat') && $request->cat != '') {
+            $query->where('category_id', $request->cat);
+        }
+        if ($request->has('stock_status') && $request->stock_status != '') {
+            if ($request->stock_status == 'out_of_stock') {
+                $query->where(function ($q) {
+                    $q->whereNull('inventory.quantity')->orWhere('inventory.quantity', '<=', 0);
+                });
+            } elseif ($request->stock_status == 'low_stock') {
+                $query->where('inventory.quantity', '>', 0)->where('inventory.quantity', '<=', 10);
+            } elseif ($request->stock_status == 'in_stock') {
+                $query->where('inventory.quantity', '>', 10);
+            }
+        }
+
+        $products = $query->get();
+
+        $fileName = 'Bao_cao_ton_kho_' . date('d-m-Y') . '.xlsx';
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\DepartmentInventoryExport($products), $fileName);
     }
 
     public function sync()

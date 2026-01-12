@@ -7,8 +7,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->withoutMiddleware([\App\Http\Middleware\CheckMaintenanceMode::class]);
+Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware([\App\Http\Middleware\CheckMaintenanceMode::class]);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
@@ -100,6 +100,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
+        
+        // Maintenance Mode Management
+        Route::get('/settings/maintenance', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getMaintenanceSettings'])->name('settings.maintenance');
+        Route::post('/settings/maintenance/mode', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMode'])->name('settings.maintenance.mode');
+        Route::post('/settings/maintenance/message', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMessage'])->name('settings.maintenance.message');
         
         // Profile
         Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');

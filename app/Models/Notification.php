@@ -21,7 +21,7 @@ class Notification extends Model
         'updated_at' => 'datetime',
     ];
 
-    public function creator()
+    public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
     }

@@ -382,6 +382,83 @@ class SystemSettingsController extends Controller
     }
 
     /**
+     * Get maintenance mode settings
+     */
+    public function getMaintenanceSettings()
+    {
+        try {
+            $maintenanceMode = DB::table('system_settings')
+                ->where('key', 'maintenance_mode')
+                ->first();
+            
+            $maintenanceMessage = DB::table('system_settings')
+                ->where('key', 'maintenance_message')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'maintenance_mode' => $maintenanceMode ? (int)$maintenanceMode->value : 0,
+                'maintenance_message' => $maintenanceMessage ? $maintenanceMessage->value : 'Hệ thống đang bảo trì'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update maintenance mode status
+     */
+    public function updateMaintenanceMode(Request $request)
+    {
+        $request->validate([
+            'status' => 'required|boolean'
+        ]);
+
+        try {
+            DB::table('system_settings')
+                ->where('key', 'maintenance_mode')
+                ->update([
+                    'value' => $request->status ? '1' : '0',
+                    'updated_at' => now()
+                ]);
+
+            $statusText = $request->status ? 'bật' : 'tắt';
+            return response()->json([
+                'success' => true,
+                'message' => "Đã {$statusText} chế độ bảo trì!"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update maintenance message
+     */
+    public function updateMaintenanceMessage(Request $request)
+    {
+        $request->validate([
+            'message' => 'required|string|max:1000'
+        ]);
+
+        try {
+            DB::table('system_settings')
+                ->where('key', 'maintenance_message')
+                ->update([
+                    'value' => $request->message,
+                    'updated_at' => now()
+                ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cập nhật thông báo bảo trì thành công!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Format bytes to human readable format
      */
     private function formatBytes($bytes, $precision = 2)

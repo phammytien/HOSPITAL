@@ -4,7 +4,9 @@
 @section('page-title', 'Cài đặt hệ thống')
 
 @section('content')
+
 <div class="space-y-6">
+
 
     <!-- Tabs -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">

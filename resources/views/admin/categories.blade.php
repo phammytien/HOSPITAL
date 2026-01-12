@@ -6,9 +6,9 @@
 @section('content')
 <div class="space-y-6">
     <!-- Page Header -->
+     
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Quản lý danh mục sản phẩm</h2>
             <p class="text-gray-600 mt-1">Quản lý danh sách thuốc, vật tư y tế và các loại hàng hóa khác trong bệnh viện.</p>
         </div>
         <div class="flex space-x-3">

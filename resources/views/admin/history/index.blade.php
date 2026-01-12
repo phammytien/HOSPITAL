@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Lịch sử Mua hàng')
+@section('page-title', 'Lịch sử Mua hàng')
 @section('header_title', 'Lịch sử Mua hàng')
 @section('page-subtitle', 'Quản lý và theo dõi lịch sử đơn hàng đã duyệt của các mua sắm')
 

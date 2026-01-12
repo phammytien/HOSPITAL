@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý nhân viên & Khoa phòng')
+
 @section('page-title', 'Quản lý nhân viên & Khoa phòng')
 
 @section('content')
@@ -8,9 +8,9 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Quản lý nhân viên & Khoa phòng</h1>
             <p class="text-gray-500 mt-1">Quản lý cơ cấu tổ chức và ngân sách bệnh viện</p>
         </div>
+
         <div class="flex items-center gap-3 w-full md:w-auto">
             <div class="relative flex-1 md:w-80">
                 <input type="text" id="searchInput" placeholder="Tìm kiếm khoa/phòng..." 

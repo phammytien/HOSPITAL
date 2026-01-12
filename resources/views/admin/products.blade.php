@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Quản lý sản phẩm')
+@section('page-title', 'Quản lý sản phẩm')
 
 
 @section('content')
@@ -8,9 +9,9 @@
     <!-- Page Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Quản lý sản phẩm</h2>
             <p class="text-gray-600 mt-1">Danh sách tất cả sản phẩm trong hệ thống</p>
         </div>
+
         <div class="flex space-x-3">
             <a href="{{ route('admin.products.export', ['category_id' => request('category_id'), 'search' => request('search')]) }}" 
                class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium inline-flex items-center">
@@ -812,7 +813,7 @@ document.getElementById('stock_quantity')?.addEventListener('input', function() 
                                         <select name="category_id" id="category_id"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                             required>
-                                            <option value="">Thực phẩm chức năng</option>
+                                            <option value="" disabled selected>-- Chọn danh mục --</option>
                                             @foreach($categories ?? [] as $category)
                                             <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                                             @endforeach

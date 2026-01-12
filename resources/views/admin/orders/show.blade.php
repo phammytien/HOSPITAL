@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Chi tiết đơn hàng')
+@section('page-title', 'Chi tiết đơn hàng #' . $order->order_code)
 @section('header_title', $order->order_code)
 @section('page-subtitle', 'Thông tin chi tiết đơn hàng')
 

@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Chi tiết yêu cầu')
+@section('page-title', 'Chi tiết yêu cầu #' . $request->request_code)
 @section('header_title', $request->request_code)
 @section('page-subtitle', 'Chi tiết lịch sử yêu cầu mua hàng')
 

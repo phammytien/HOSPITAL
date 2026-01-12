@@ -155,161 +155,168 @@
             </div>
         </div>
 
-        <!-- 4. Bottom Row: Table & Sidebar Widgets -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left: Recent Requests Table (2/3) -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-                    <h3 class="text-base font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-file-earmark-text text-blue-600 mr-2"></i> Yêu cầu mua sắm gần đây
-                    </h3>
-                    <a href="#" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center group">
-                        Xem tất cả <i class="bi bi-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
-                    </a>
-                </div>
-                <div class="overflow-x-auto flex-grow p-2">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-500 uppercase bg-gray-50/50">
-                            <tr>
-                                <th class="px-4 py-3 font-semibold rounded-l-lg">Mã phiếu</th>
-                                <th class="px-4 py-3 font-semibold">Khoa/Phòng</th>
-                                <th class="px-4 py-3 font-semibold">Ngày tạo</th>
-                                <th class="px-4 py-3 font-semibold">Trạng thái</th>
-                                <th class="px-4 py-3 font-semibold text-center rounded-r-lg">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            @forelse($recentRequests as $request)
-                            <tr class="hover:bg-gray-50 transition-colors group">
-                                <td class="px-4 py-4 font-bold text-blue-600 group-hover:text-blue-700">
-                                    {{ $request->request_code }}
-                                </td>
-                                <td class="px-4 py-4 text-gray-700 font-medium">{{ $request->department->department_name ?? '-' }}</td>
-                                <td class="px-4 py-4 text-gray-500">{{ $request->created_at ? $request->created_at->format('d/m/Y') : '-' }}</td>
-                                <td class="px-4 py-4">
-                                     @if($request->status == 'APPROVED')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>Đã duyệt
-                                        </span>
-                                    @elseif($request->status == 'SUBMITTED')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>Chờ duyệt
-                                        </span>
-                                    @elseif($request->status == 'REJECTED')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>Từ chối
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">{{ $request->status }}</span>
-                                    @endif
-                                </td>
-                                <td class="px-4 py-4 text-center">
-                                    <button onclick="viewOrderDetail({{ $request->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="Xem chi tiết">
-                                        <i class="bi bi-eye-fill"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu giao dịch</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+        <!-- 4. Bottom Section: Recent Requests Table (Full Width) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="text-base font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-file-earmark-text text-blue-600 mr-2"></i> Yêu cầu mua sắm gần đây
+                </h3>
+                <a href="#" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center group">
+                    Xem tất cả <i class="bi bi-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
+                </a>
             </div>
+            <div class="overflow-x-auto flex-grow p-2">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-xs text-gray-500 uppercase bg-gray-50/50">
+                        <tr>
+                            <th class="px-4 py-3 font-semibold rounded-l-lg">Mã phiếu</th>
+                            <th class="px-4 py-3 font-semibold">Khoa/Phòng</th>
+                            <th class="px-4 py-3 font-semibold">Ngày tạo</th>
+                            <th class="px-4 py-3 font-semibold">Trạng thái</th>
+                            <th class="px-4 py-3 font-semibold text-center rounded-r-lg">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @forelse($recentRequests as $request)
+                        <tr class="hover:bg-gray-50 transition-colors group">
+                            <td class="px-4 py-4 font-bold text-blue-600 group-hover:text-blue-700">
+                                {{ $request->request_code }}
+                            </td>
+                            <td class="px-4 py-4 text-gray-700 font-medium">{{ $request->department->department_name ?? '-' }}</td>
+                            <td class="px-4 py-4 text-gray-500">{{ $request->created_at ? $request->created_at->format('d/m/Y') : '-' }}</td>
+                            <td class="px-4 py-4">
+                                 @if($request->status == 'APPROVED')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>Đã duyệt
+                                    </span>
+                                @elseif($request->status == 'SUBMITTED')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>Chờ duyệt
+                                    </span>
+                                @elseif($request->status == 'REJECTED')
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>Từ chối
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">{{ $request->status }}</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-4 text-center">
+                                <button onclick="viewOrderDetail({{ $request->id }})" class="text-gray-400 hover:text-blue-600 transition-colors" title="Xem chi tiết">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">Chưa có dữ liệu giao dịch</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-            <!-- Right: Widgets Stack (1/3) -->
-            <div class="space-y-6">
-                <!-- Quick Actions (Grid of 4) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
-                        <i class="bi bi-lightning-charge-fill text-blue-600 mr-2"></i> Lối tắt nhanh
-                    </h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- 1. Quản lý sản phẩm -->
-                        <a href="{{ route('admin.products.index') }}" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-xl text-blue-600 hover:bg-blue-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
-                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
-                                <i class="bi bi-box-seam-fill text-2xl"></i>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-blue-700">Quản lý<br>sản phẩm</span>
-                        </a>
-
-                        <!-- 2. Quản lý danh mục -->
-                        <a href="{{ route('admin.categories') }}" class="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-xl text-indigo-600 hover:bg-indigo-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
-                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-200 transition-colors">
-                                <i class="bi bi-grid-3x3-gap-fill text-2xl"></i>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Quản lý<br>danh mục</span>
-                        </a>
-
-                        <!-- 3. Lịch sử mua hàng -->
-                         <a href="{{ route('admin.history') }}" class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-xl text-purple-600 hover:bg-purple-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
-                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-200 transition-colors">
-                                <i class="bi bi-clock-history text-2xl"></i>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-purple-700">Lịch sử mua<br>hàng</span>
-                        </a>
-
-                        <!-- 4. Thông báo -->
-                        <a href="{{ route('admin.notifications') }}" class="flex flex-col items-center justify-center p-4 bg-orange-50 rounded-xl text-orange-600 hover:bg-orange-100 transition-all hover:scale-105 duration-200 group h-32 text-center relative">
-                            <div class="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></div>
-                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-orange-200 transition-colors">
-                                <i class="bi bi-bell-fill text-2xl"></i>
-                            </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-orange-700">Thông báo</span>
-                        </a>
+        <!-- 5. Activity Feed (Full Width) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-gray-800 flex items-center">
+                    <i class="bi bi-activity text-green-500 mr-2"></i> Hoạt động mới
+                </h3>
+                <!-- <a href="#" class="text-xs text-blue-600 hover:underline">Đã đọc</a> -->
+            </div>
+            <div class="space-y-4">
+                @forelse($recentActivities->take(4) as $activity)
+                <div class="flex items-start gap-3 relative pb-4 border-l-2 border-gray-100 pl-4 last:pb-0 last:border-0">
+                    <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-{{ $activity['icon_color'] ?? 'blue' }}-500 ring-4 ring-white"></div>
+                    <div>
+                        <p class="text-xs text-gray-800 font-medium leading-relaxed">{!! $activity['message'] !!}</p>
+                        <span class="text-[10px] text-gray-400 font-medium mt-1 block">{{ $activity['time'] }}</span>
                     </div>
                 </div>
+                @empty
+                <div class="text-center py-4 text-gray-400 text-xs">Chưa có hoạt động nào</div>
+                @endforelse
+                <a href="{{ route('admin.notifications') }}" class="block w-full text-center text-xs text-blue-600 font-bold hover:bg-blue-50 py-2 rounded-lg transition-colors mt-2">Xem tất cả <i class="bi bi-arrow-right ml-1"></i></a>
+            </div>
+        </div>
 
-                <!-- Activity Feed -->
+        <!-- 6. Bottom Widgets Row (2 columns) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Department Request Statistics -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-gray-800 flex items-center">
-                            <i class="bi bi-activity text-green-500 mr-2"></i> Hoạt động mới
+                            <i class="bi bi-building-fill text-blue-600 mr-2"></i> Thống kê yêu cầu theo khoa
                         </h3>
-                        <a href="#" class="text-xs text-blue-600 hover:underline">Đã đọc</a>
+                        <a href="{{ route('admin.departments') }}" class="text-xs text-blue-600 hover:underline">Xem thêm</a>
                     </div>
-                    <div class="space-y-4">
-                        @forelse($recentActivities->take(4) as $activity)
-                        <div class="flex items-start gap-3 relative pb-4 border-l-2 border-gray-100 pl-4 last:pb-0 last:border-0">
-                            <div class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-{{ $activity['icon_color'] ?? 'blue' }}-500 ring-4 ring-white"></div>
-                            <div>
-                                <p class="text-xs text-gray-800 font-medium leading-relaxed">{!! $activity['message'] !!}</p>
-                                <span class="text-[10px] text-gray-400 font-medium mt-1 block">{{ $activity['time'] }}</span>
+                    <div class="space-y-3">
+                        @forelse($topDepartments as $index => $dept)
+                        <div class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
+                            <div class="flex items-center gap-3 flex-1">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 text-white font-bold text-sm">
+                                    #{{ $index + 1 }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-xs font-bold text-gray-800 truncate">{{ $dept->department->department_name ?? 'N/A' }}</p>
+                                    <p class="text-[10px] text-gray-500">{{ $dept->request_count }} yêu cầu</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="w-16 bg-gray-100 rounded-full h-2">
+                                    @php
+                                        $maxCount = $topDepartments->first()->request_count ?? 1;
+                                        $percent = ($dept->request_count / $maxCount) * 100;
+                                    @endphp
+                                    <div class="bg-blue-600 h-2 rounded-full transition-all" style="width: {{ $percent }}%"></div>
+                                </div>
+                                <span class="text-xs font-bold text-blue-600 w-8 text-right">{{ $dept->request_count }}</span>
                             </div>
                         </div>
                         @empty
-                        <div class="text-center py-4 text-gray-400 text-xs">Chưa có hoạt động nào</div>
+                        <div class="text-center py-8 text-gray-400 text-xs">
+                            <i class="bi bi-inbox text-3xl mb-2 block"></i>
+                            Chưa có dữ liệu yêu cầu
+                        </div>
                         @endforelse
-                        <button class="w-full text-center text-xs text-blue-600 font-bold hover:bg-blue-50 py-2 rounded-lg transition-colors mt-2">Xem tất cả <i class="bi bi-arrow-right ml-1"></i></button>
                     </div>
                 </div>
 
-                <!-- Dept Budget (Progress Bars) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                <!-- Quick Stats -->
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-sm p-5 text-white">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-bold text-gray-800 flex items-center"><i class="bi bi-wallet2 text-gray-400 mr-2"></i> Ngân sách theo khoa</h3>
+                        <h3 class="text-sm font-bold flex items-center">
+                            <i class="bi bi-graph-up-arrow mr-2"></i> Thống kê nhanh
+                        </h3>
                     </div>
-                    <div class="space-y-4">
-                        @php 
-                            $deptData = $chartData['departments']['data'] ?? [];
-                            $maxSpending = (!empty($deptData) && max($deptData) > 0) ? max($deptData) : 1;
-                        @endphp
-                        @foreach(array_slice($chartData['departments']['labels'], 0, 4) as $index => $label)
-                            @php 
-                                $value = $chartData['departments']['data'][$index] ?? 0;
-                                $percent = ($value / $maxSpending) * 100;
-                            @endphp
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
                             <div>
-                                <div class="flex justify-between items-end mb-1.5">
-                                    <span class="text-xs font-bold text-gray-700">{{ $label }}</span>
-                                    <span class="text-xs font-bold text-blue-600">{{ number_format($value) }} <span class="text-gray-400 font-normal">VNĐ</span></span>
-                                </div>
-                                <div class="w-full bg-gray-100 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-1000" style="width: {{ $percent }}%"></div>
-                                </div>
-                                <p class="text-[10px] text-gray-400 mt-1">70% đã sử dụng</p>
+                                <p class="text-xs opacity-90">Tổng đơn hàng</p>
+                                <p class="text-xl font-bold mt-1">{{ $recentRequests->count() }}</p>
                             </div>
-                        @endforeach
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-file-earmark-text text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                            <div>
+                                <p class="text-xs opacity-90">Khoa/Phòng</p>
+                                <p class="text-xl font-bold mt-1">{{ $departments->count() }}</p>
+                            </div>
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-building text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                            <div>
+                                <p class="text-xs opacity-90">Sản phẩm</p>
+                                <p class="text-xl font-bold mt-1">{{ $totalProducts }}</p>
+                            </div>
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="bi bi-box-seam text-lg"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

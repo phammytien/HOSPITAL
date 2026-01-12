@@ -44,7 +44,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/categories/import', [App\Http\Controllers\Admin\CategoryController::class, 'import'])->name('categories.import');
         Route::put('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
-        
+
         // Suppliers
         Route::get('/suppliers', [App\Http\Controllers\Admin\SupplierController::class, 'index'])->name('suppliers');
         Route::post('/suppliers', [App\Http\Controllers\Admin\SupplierController::class, 'store'])->name('suppliers.store');
@@ -53,14 +53,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/suppliers/{id}/products', [App\Http\Controllers\Admin\SupplierController::class, 'getProducts'])->name('suppliers.products');
         Route::put('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'update'])->name('suppliers.update');
         Route::delete('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'destroy'])->name('suppliers.destroy');
-        
+
         // Inventory Management
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
-        
+
         // Placeholder routes for sidebar links
-        Route::get('/users', function () { return redirect()->route('admin.departments'); })->name('users');
+        Route::get('/users', function () {
+            return redirect()->route('admin.departments');
+        })->name('users');
         Route::get('/purchase-history', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('purchase-history');
-        
+
         // Purchase Orders
         Route::get('/orders', [App\Http\Controllers\Admin\PurchaseOrderController::class, 'index'])->name('orders');
         Route::get('/orders/{id}', [App\Http\Controllers\Admin\PurchaseOrderController::class, 'show'])->name('orders.show');
@@ -93,14 +95,14 @@ Route::middleware(['auth'])->group(function () {
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('settings');
-        
+
         // Backup Management
         Route::post('/settings/backup/create', [App\Http\Controllers\Admin\SystemSettingsController::class, 'createBackup'])->name('settings.backup.create');
         Route::get('/settings/backup/list', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupList'])->name('settings.backup.list');
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
-        
+
         // Profile
         Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::post('/profile/update', [App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
@@ -186,10 +188,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('requests/{id}/withdraw', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'withdraw'])->name('requests.withdraw');
 
         // Product Catalog
-        Route::get('/catalog', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('catalog.index');
         Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
-        
-Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
+        Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
+
+        Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
         Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
 
         // Profile
@@ -229,7 +231,7 @@ Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposa
     Route::post('/settings/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreItem'])->name('settings.restore');
     Route::post('/settings/restore-bulk', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBulk'])->name('settings.restore-bulk');
     Route::delete('/settings/permanent-delete', [App\Http\Controllers\Admin\SystemSettingsController::class, 'permanentDelete'])->name('settings.permanent-delete');
-    
+
     // Settings - Database Backup (Admin)
     Route::get('/settings/backup/list', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupList'])->name('settings.backup.list');
     Route::post('/settings/backup', [App\Http\Controllers\Admin\SystemSettingsController::class, 'createBackup'])->name('settings.backup.create');

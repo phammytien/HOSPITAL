@@ -5,7 +5,7 @@
 @section('content')
     <div class="max-w-2xl mx-auto">
         <div class="mb-6">
-            <a href="{{ route('department.catalog.index') }}" class="text-gray-500 hover:text-blue-600 flex items-center">
+            <a href="{{ route('department.products.index') }}" class="text-gray-500 hover:text-blue-600 flex items-center">
                 <i class="fas fa-arrow-left mr-2"></i> Quay lại danh mục
             </a>
         </div>
@@ -62,7 +62,7 @@
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                        <a href="{{ route('department.catalog.index') }}"
+                        <a href="{{ route('department.products.index') }}"
                             class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition">Hủy
                             bỏ</a>
                         <button type="submit"

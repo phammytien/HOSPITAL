@@ -144,8 +144,8 @@
                     <div class="mb-4">
                         <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Kho & Sản phẩm</p>
                         
-                        <a href="{{ route('department.catalog.index') }}"
-                            class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.catalog.index') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
+                        <a href="{{ route('department.products.index') }}"
+                            class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.products.index') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-box-open w-5 text-sm"></i>
                             <span class="font-medium text-sm">Danh mục sản phẩm</span>
                         </a>

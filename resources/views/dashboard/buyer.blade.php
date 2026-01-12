@@ -152,164 +152,156 @@
         </div>
     </div>
 
-    <!-- Bottom Section: Table + Notifications/Feedback -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Bottom Section: Full Width Sections -->
+    <div class="space-y-6">
+        <!-- Recent Requests -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Yêu cầu gần đây</h3>
+                <a href="{{ route('buyer.requests.index') }}" class="text-sm text-blue-600 font-medium hover:underline">Xem
+                    tất cả</a>
+            </div>
 
-        <!-- Left Column: Recent Requests -->
-        <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div class="p-5 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="font-bold text-gray-800">Yêu cầu gần đây</h3>
-                    <a href="{{ route('buyer.requests.index') }}" class="text-sm text-blue-600 font-medium hover:underline">Xem
-                        tất cả</a>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">Mã
-                                    đơn</th>
-                                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-                                    Khoa/Phòng</th>
-                                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-                                    Ngày tạo</th>
-                                <th
-                                    class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 text-center">
-                                    Trạng thái</th>
-                                <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
-                                </th>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">Mã
+                                đơn</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
+                                Khoa/Phòng</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
+                                Ngày tạo</th>
+                            <th
+                                class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50 text-center">
+                                Trạng thái</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50">
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($recentRequests as $request)
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $request->request_code }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ $request->department->department_name ?? 'N/A' }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    {{ $request->created_at?->format('d/m/Y') ?? 'N/A' }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    @php
+                                        $statusClass = match ($request->status) {
+                                            'SUBMITTED' => 'bg-yellow-100 text-yellow-700',
+                                            'APPROVED' => 'bg-green-100 text-green-700',
+                                            'REJECTED' => 'bg-red-100 text-red-700',
+                                            'PROCESSING' => 'bg-blue-100 text-blue-700',
+                                            'PAID' => 'bg-indigo-100 text-indigo-700',
+                                            default => 'bg-gray-100 text-gray-700'
+                                        };
+                                        $statusLabel = match ($request->status) {
+                                            'SUBMITTED' => 'Chờ duyệt',
+                                            'APPROVED' => 'Đã duyệt',
+                                            'REJECTED' => 'Từ chối',
+                                            'PROCESSING' => 'Đang xử lý',
+                                            'PAID' => 'Đã bàn giao',
+                                            default => $request->status
+                                        };
+                                    @endphp
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button onclick="openCompareModal({{ $request->id }})"
+                                        class="text-gray-400 hover:text-blue-600 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @forelse($recentRequests as $request)
-                                <tr class="hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $request->request_code }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-600">{{ $request->department->department_name ?? 'N/A' }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">
-                                        {{ $request->created_at?->format('d/m/Y') ?? 'N/A' }}</td>
-                                    <td class="px-6 py-4 text-center">
-                                        @php
-                                            $statusClass = match ($request->status) {
-                                                'SUBMITTED' => 'bg-yellow-100 text-yellow-700',
-                                                'APPROVED' => 'bg-green-100 text-green-700',
-                                                'REJECTED' => 'bg-red-100 text-red-700',
-                                                'PROCESSING' => 'bg-blue-100 text-blue-700',
-                                                'PAID' => 'bg-indigo-100 text-indigo-700',
-                                                default => 'bg-gray-100 text-gray-700'
-                                            };
-                                            $statusLabel = match ($request->status) {
-                                                'SUBMITTED' => 'Chờ duyệt',
-                                                'APPROVED' => 'Đã duyệt',
-                                                'REJECTED' => 'Từ chối',
-                                                'PROCESSING' => 'Đang xử lý',
-                                                'PAID' => 'Đã bàn giao',
-                                                default => $request->status
-                                            };
-                                        @endphp
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-full {{ $statusClass }}">
-                                            {{ $statusLabel }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        <button onclick="openCompareModal({{ $request->id }})"
-                                            class="text-gray-400 hover:text-blue-600 transition">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-500 italic">Chưa có yêu cầu nào.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <div class="p-4 border-t border-gray-100 text-center">
-                    <a href="{{ route('buyer.requests.index') }}"
-                        class="text-sm text-gray-500 hover:text-blue-600 font-medium">Xem toàn bộ yêu cầu mua hàng <span
-                            class="ml-1">&rarr;</span></a>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-500 italic">Chưa có yêu cầu nào.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-gray-100 text-center">
+                <a href="{{ route('buyer.requests.index') }}"
+                    class="text-sm text-gray-500 hover:text-blue-600 font-medium">Xem toàn bộ yêu cầu mua hàng <span
+                        class="ml-1">&rarr;</span></a>
+            </div>
+        </div>
+
+        <!-- Latest Updates (Notifications) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-800">Cập nhật mới nhất</h3>
+            </div>
+            <div class="p-4">
+                <div class="space-y-4">
+                    @forelse($notifications as $notification)
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0 mt-1">
+                                @if($notification->type == 'success')
+                                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                @elseif($notification->type == 'error')
+                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </div>
+                                @elseif($notification->type == 'warning')
+                                     <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                    </div>
+                                @else
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800">{{ $notification->title }}</h4>
+                                <p class="text-xs text-gray-600 mt-0.5">{{ $notification->message }}</p>
+                                <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500 italic text-center py-4">Chưa có thông báo mới.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Notifications & Feedback -->
-        <div class="space-y-6">
-            
-            <!-- Latest Updates (Notifications) -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-4 border-b border-gray-100 bg-gray-50">
-                    <h3 class="font-bold text-gray-800">Cập nhật mới nhất</h3>
-                </div>
-                <div class="p-4">
-                    <div class="space-y-4">
-                        @forelse($notifications as $notification)
-                            <div class="flex items-start gap-3">
-                                <div class="flex-shrink-0 mt-1">
-                                    @if($notification->type == 'success')
-                                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </div>
-                                    @elseif($notification->type == 'error')
-                                        <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </div>
-                                    @elseif($notification->type == 'warning')
-                                         <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                        </div>
-                                    @else
-                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                    @endif
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-semibold text-gray-800">{{ $notification->title }}</h4>
-                                    <p class="text-xs text-gray-600 mt-0.5">{{ $notification->message }}</p>
-                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                </div>
-                            </div>
-                        @empty
-                            <p class="text-sm text-gray-500 italic text-center py-4">Chưa có thông báo mới.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Feedback -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                <h3 class="font-bold text-gray-800 mb-4">Phản hồi mới nhất</h3>
-                <div class="space-y-4">
-                    @forelse($recentFeedbacks as $feedback)
-                        <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 overflow-hidden">
-                                <img src="https://ui-avatars.com/api/?name={{ $feedback->user->full_name ?? 'User' }}&background=0D8ABC&color=fff"
-                                    alt="User">
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-800">
-                                    <span class="font-bold text-blue-900">{{ $feedback->user->full_name ?? 'Người dùng' }}</span>
-                                    đã thêm ghi chú vào <a href="#"
-                                        class="text-blue-600 font-medium hover:underline">REQ-{{ $feedback->purchase_request_id }}</a>
-                                </p>
-                                <p class="text-xs text-gray-500 italic mt-1">"{{ Str::limit($feedback->feedback_content, 50) }}"</p>
-                                <p class="text-[0.65rem] text-gray-400 mt-2">{{ $feedback->feedback_date->diffForHumans() }}</p>
-                            </div>
+        <!-- Recent Feedback -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <h3 class="font-bold text-gray-800 mb-4">Phản hồi mới nhất</h3>
+            <div class="space-y-4">
+                @forelse($recentFeedbacks as $feedback)
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex-shrink-0 overflow-hidden">
+                            <img src="https://ui-avatars.com/api/?name={{ $feedback->user->full_name ?? 'User' }}&background=0D8ABC&color=fff"
+                                alt="User">
                         </div>
-                    @empty
-                        <p class="text-sm text-gray-500 italic">Chưa có phản hồi mới.</p>
-                    @endforelse
-                </div>
+                        <div>
+                            <p class="text-sm text-gray-800">
+                                <span class="font-bold text-blue-900">{{ $feedback->user->full_name ?? 'Người dùng' }}</span>
+                                đã thêm ghi chú vào <a href="#"
+                                    class="text-blue-600 font-medium hover:underline">REQ-{{ $feedback->purchase_request_id }}</a>
+                            </p>
+                            <p class="text-xs text-gray-500 italic mt-1">"{{ Str::limit($feedback->feedback_content, 50) }}"</p>
+                            <p class="text-[0.65rem] text-gray-400 mt-2">{{ $feedback->feedback_date->diffForHumans() }}</p>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500 italic">Chưa có phản hồi mới.</p>
+                @endforelse
             </div>
-
         </div>
     </div>
 

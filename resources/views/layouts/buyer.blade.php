@@ -13,6 +13,11 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        @media print {
+            .d-print-none {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -20,7 +25,7 @@
 
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex d-print-none">
             <div>
                 <!-- Logo area -->
                 <div class="flex flex-col items-center justify-center px-4 py-6 border-b border-gray-100 text-center">
@@ -115,7 +120,14 @@
                             </svg>
                             Sản phẩm
                         </a>
-
+ <a href="{{ route('buyer.suppliers.index') }}"
+                        class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('buyer.suppliers.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" target="_blank"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                         Nhà cung cấp
+                    </a>
                         <a href="{{ route('buyer.reports.index') }}"
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('buyer.reports.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +187,7 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
             <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 d-print-none">
 
                 <h1 class="text-xl font-bold text-gray-800">@yield('header_title', 'Dashboard')</h1>
 

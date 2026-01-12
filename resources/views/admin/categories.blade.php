@@ -180,7 +180,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-sm space-x-2">
-                                <button onclick="openEditModal({{ $category->id }}, '{{ addslashes($category->category_name) }}', '{{ addslashes($category->description ?? '') }}')" 
+                                <button onclick="openEditModal({{ $category->id }}, '{{ addslashes($category->category_name) }}', '{{ addslashes($category->description ?? '') }}', '{{ addslashes($category->category_code ?? '') }}')" 
                                     class="text-blue-600 hover:text-blue-800" title="Sửa">
                                     <i class="fas fa-edit"></i>
                                 </button>

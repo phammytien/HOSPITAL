@@ -365,7 +365,7 @@ function openModal(mode, id = null) {
         el.classList.remove('bg-gray-100');
     });
 
-    // Make product_code readonly again
+    // Make product_code readonly for add mode (will be changed for edit mode below)
     document.getElementById('product_code').setAttribute('readonly', true);
     document.getElementById('product_code').classList.add('bg-gray-50');
 
@@ -430,6 +430,10 @@ function openModal(mode, id = null) {
                     
                     if(inventoryStatus) inventoryStatus.classList.remove('hidden');
                     if(supplierSection) supplierSection.classList.remove('hidden');
+                    
+                    // Allow editing product_code in edit mode
+                    document.getElementById('product_code').removeAttribute('readonly');
+                    document.getElementById('product_code').classList.remove('bg-gray-50');
 
                 } else if (mode === 'view') {
                     modalTitle.textContent = 'Chi tiết sản phẩm';
@@ -458,13 +462,9 @@ function closeModal() {
     document.getElementById('productModal').classList.add('hidden');
 }
 
-// Auto-generate Code Logic
+// Auto-generate Code Logic - works in both Add and Edit mode
 document.getElementById('category_id').addEventListener('change', function() {
-    // Only generate in Add mode (no ID set)
-    const form = document.getElementById('productForm');
-    if (!form.dataset.id) { 
-        generateProductCode(this.value);
-    }
+    generateProductCode(this.value);
 });
 
 function generateProductCode(categoryId) {

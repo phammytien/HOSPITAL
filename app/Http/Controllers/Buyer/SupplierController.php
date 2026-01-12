@@ -50,15 +50,15 @@ class SupplierController extends Controller
 
         // Auto-generate Supplier Code
         $lastSupplier = Supplier::latest('id')->first();
-        $nextCode = 'SUP001';
+        $nextCode = 'NCC001';
         
         if ($lastSupplier && $lastSupplier->supplier_code) {
             // Extract numbers from the code
-            if (preg_match('/^SUP(\d+)$/', $lastSupplier->supplier_code, $matches)) {
+            if (preg_match('/^NCC(\d+)$/', $lastSupplier->supplier_code, $matches)) {
                 $number = intval($matches[1]) + 1;
                 // Pad with zeros to ensure at least 3 digits, or maintain existing length if longer
                 $length = max(3, strlen($matches[1]));
-                $nextCode = 'SUP' . str_pad($number, $length, '0', STR_PAD_LEFT);
+                $nextCode = 'NCC' . str_pad($number, $length, '0', STR_PAD_LEFT);
             }
         }
 
@@ -102,11 +102,10 @@ class SupplierController extends Controller
     {
         $supplier = Supplier::with('categories')->findOrFail($id);
 
-        // Get filter inputs or default to current
+        // Always use current period based on system clock
         $currentMonth = now()->month;
-        $currentQuarter = ceil($currentMonth / 3);
-        $quarter = $request->input('quarter', $currentQuarter);
-        $year = $request->input('year', now()->year);
+        $quarter = ceil($currentMonth / 3);
+        $year = now()->year;
 
         // Format period string consistent with PurchaseRequest logic (YYYY_QX)
         $periodString = $year . '_Q' . $quarter;
@@ -116,7 +115,7 @@ class SupplierController extends Controller
 
         // Find approved purchase request items
         $itemsToOrder = PurchaseRequestItem::whereHas('purchaseRequest', function ($query) use ($periodString) {
-                $query->whereIn('status', ['APPROVED', 'PAID', 'PROCESSING']) // Added PROCESSING just in case
+                $query->whereIn('status', ['APPROVED', 'COMPLETED', 'PROCESSING']) // Added PROCESSING just in case
                       ->where('period', $periodString);
             })
             ->whereHas('product', function ($query) use ($categoryIds) {

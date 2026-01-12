@@ -146,6 +146,16 @@ class DashboardController extends Controller
         // Recent Activities logic remains same (simplified for brevity, can just fetch latest for now)
         $recentActivities = $this->getRecentActivities();
 
+        // Top Departments by Request Count
+        $topDepartments = PurchaseRequest::select('department_id', DB::raw('COUNT(*) as request_count'))
+            ->where('is_delete', false)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('department_id')
+            ->orderByDesc('request_count')
+            ->limit(5)
+            ->with('department')
+            ->get();
+
         // Prepare available years for dropdown
         $availableYears = range(2020, 2030);
 
@@ -156,7 +166,7 @@ class DashboardController extends Controller
             'totalValue', 'spendingGrowth', 'prevTotalValue',
             'totalProducts', 'lowStock',
             'recentRequests', 'departments',
-            'chartData', 'recentActivities'
+            'chartData', 'recentActivities', 'topDepartments'
         ));
     }
 

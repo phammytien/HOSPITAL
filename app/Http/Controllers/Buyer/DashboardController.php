@@ -31,7 +31,7 @@ class DashboardController extends Controller
             ->get();
 
         // Recent Feedbacks (last 3)
-        $recentFeedbacks = PurchaseFeedback::with('user')
+        $recentFeedbacks = PurchaseFeedback::with(['user', 'purchaseRequest.department', 'purchaseOrder.purchaseRequest.department'])
             ->latest('feedback_date')
             ->take(3)
             ->get();

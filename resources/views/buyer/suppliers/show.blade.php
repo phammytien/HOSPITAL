@@ -37,31 +37,19 @@
         </div>
     </div>
 
-    <!-- Filter (Hidden on print) -->
-    <div class="d-print-none bg-white shadow rounded-lg p-4 mb-8">
-        <form action="{{ route('buyer.suppliers.show', $supplier->id) }}" method="GET" class="flex flex-col sm:flex-row sm:items-end gap-4">
-            <div class="w-full sm:w-auto">
-                <label for="quarter" class="block text-sm font-medium text-gray-700 mb-1">Quý</label>
-                <select name="quarter" id="quarter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
-                    @foreach([1, 2, 3, 4] as $q)
-                        <option value="{{ $q }}" {{ $quarter == $q ? 'selected' : '' }}>Quý {{ $q }}</option>
-                    @endforeach
-                </select>
+    <!-- Period Info (Hidden on print) -->
+    <div class="d-print-none bg-white shadow rounded-lg p-6 mb-8">
+        <div class="flex items-center gap-8">
+            <div>
+                <span class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Quý hiện tại</span>
+                <p class="text-2xl font-bold text-blue-600">Quý {{ $quarter }}</p>
             </div>
-            <div class="w-full sm:w-auto">
-                <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Năm</label>
-                <select name="year" id="year" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border">
-                    @for($y = now()->year; $y >= now()->year - 2; $y--)
-                        <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                    @endfor
-                </select>
+            <div class="h-10 w-px bg-gray-200"></div>
+            <div>
+                <span class="block text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Năm</span>
+                <p class="text-2xl font-bold text-gray-900">{{ $year }}</p>
             </div>
-            <div class="w-full sm:w-auto">
-                <button type="submit" class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Lọc dữ liệu
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 
     <!-- Print Header (Visible only on print) -->

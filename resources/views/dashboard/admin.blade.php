@@ -225,20 +225,20 @@
                         <i class="bi bi-lightning-charge-fill text-blue-600 mr-2"></i> Lối tắt nhanh
                     </h3>
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- 1. Tạo yêu cầu mua hàng -->
-                        <a href="#" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-xl text-blue-600 hover:bg-blue-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
+                        <!-- 1. Quản lý sản phẩm -->
+                        <a href="{{ route('admin.products.index') }}" class="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-xl text-blue-600 hover:bg-blue-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
                             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
-                                <i class="bi bi-cart-plus-fill text-2xl"></i>
+                                <i class="bi bi-box-seam-fill text-2xl"></i>
                             </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-blue-700">Tạo yêu cầu<br>mua hàng</span>
+                            <span class="text-xs font-bold text-gray-700 group-hover:text-blue-700">Quản lý<br>sản phẩm</span>
                         </a>
 
-                        <!-- 2. Quản lý yêu cầu khoa -->
-                        <a href="#" class="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-xl text-indigo-600 hover:bg-indigo-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
+                        <!-- 2. Quản lý danh mục -->
+                        <a href="{{ route('admin.categories') }}" class="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-xl text-indigo-600 hover:bg-indigo-100 transition-all hover:scale-105 duration-200 group h-32 text-center">
                             <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-indigo-200 transition-colors">
-                                <i class="bi bi-archive-fill text-2xl"></i>
+                                <i class="bi bi-grid-3x3-gap-fill text-2xl"></i>
                             </div>
-                            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Quản lý yêu<br>cầu khoa</span>
+                            <span class="text-xs font-bold text-gray-700 group-hover:text-indigo-700">Quản lý<br>danh mục</span>
                         </a>
 
                         <!-- 3. Lịch sử mua hàng -->
@@ -362,43 +362,106 @@
     const commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } }, // Custom legends used
+        plugins: { 
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                borderRadius: 8,
+                titleFont: { size: 13, weight: 'bold' },
+                bodyFont: { size: 12 },
+                displayColors: true,
+                boxPadding: 6
+            }
+        },
         scales: {
             x: { grid: { display: false } },
             y: { border: { display: false }, grid: { color: '#f1f5f9' } }
         }
     };
 
-    // 1. Trend Chart (Bar - Blue)
+    // Create gradients
+    const createGradient = (ctx, color1, color2) => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, color1);
+        gradient.addColorStop(1, color2);
+        return gradient;
+    };
+
+    // 1. Trend Chart (Bar + Line Combo)
     const trendCtx = document.getElementById('trendChart').getContext('2d');
+    const trendGradient = createGradient(trendCtx, '#3b82f6', '#60a5fa');
+    
     new Chart(trendCtx, {
         type: 'bar',
         data: {
             labels: chartData.trend.labels,
-            datasets: [{
-                label: 'Chi phí',
-                data: chartData.trend.data,
-                backgroundColor: '#3b82f6',
-                hoverBackgroundColor: '#2563eb',
-                borderRadius: 4,
-                barPercentage: 0.6,
-                categoryPercentage: 0.7
-            }]
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Chi phí',
+                    data: chartData.trend.data,
+                    backgroundColor: trendGradient,
+                    hoverBackgroundColor: '#2563eb',
+                    borderRadius: 6,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8,
+                    order: 2
+                },
+                {
+                    type: 'line',
+                    label: 'Xu hướng',
+                    data: chartData.trend.data,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#059669',
+                    pointHoverBorderWidth: 3,
+                    order: 1
+                }
+            ]
         },
         options: {
             ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        padding: 15,
+                        font: { size: 11, weight: '600' },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                }
+            },
             scales: {
                 y: {
                     ...commonOptions.scales.y,
                     beginAtZero: true,
                     ticks: {
                         callback: (v) => v >= 1000000 ? (v/1000000).toFixed(0) + 'M' : v,
-                        font: { size: 11, weight: 500 }
+                        font: { size: 11, weight: 500 },
+                        color: '#94a3b8'
                     }
                 },
                 x: {
                     ...commonOptions.scales.x,
-                    ticks: { font: { size: 11 } }
+                    ticks: { 
+                        font: { size: 11 },
+                        color: '#94a3b8'
+                    }
                 }
             }
         }
@@ -424,32 +487,79 @@
         }
     });
 
-    // 3. Department Comparison (Bar - Horizontal or Vertical)
-    // User image shows specific style. Let's make it vertical bars with nice styling.
+    // 3. Department Comparison (Bar + Line Combo)
     const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    const deptGradient = createGradient(deptCtx, '#94a3b8', '#cbd5e1');
+    
     new Chart(deptCtx, {
         type: 'bar',
         data: {
             labels: chartData.departments.labels,
-            datasets: [{
-                label: 'Chi tiêu',
-                data: chartData.departments.data,
-                backgroundColor: '#94a3b8', // Gray default
-                hoverBackgroundColor: '#3b82f6', // Blue hover
-                borderRadius: 4,
-                barPercentage: 0.5
-            }]
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Chi tiêu',
+                    data: chartData.departments.data,
+                    backgroundColor: deptGradient,
+                    hoverBackgroundColor: '#3b82f6',
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                    order: 2
+                },
+                {
+                    type: 'line',
+                    label: 'Xu hướng',
+                    data: chartData.departments.data,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#f59e0b',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#d97706',
+                    pointHoverBorderWidth: 3,
+                    order: 1
+                }
+            ]
         },
         options: {
             ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        padding: 15,
+                        font: { size: 11, weight: '600' },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                }
+            },
             scales: {
                 y: {
                     ...commonOptions.scales.y,
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (v) => v >= 1000000 ? (v/1000000).toFixed(0) + 'M' : v,
+                        font: { size: 11, weight: 500 },
+                        color: '#94a3b8'
+                    }
                 },
                 x: {
                     ...commonOptions.scales.x,
-                    ticks: { font: { size: 11 } }
+                    ticks: { 
+                        font: { size: 11 },
+                        color: '#94a3b8'
+                    }
                 }
             }
         }

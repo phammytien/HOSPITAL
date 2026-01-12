@@ -189,7 +189,7 @@ class DepartmentController extends Controller
         ]);
     }
 
-    public function getUserLogs($id)
+    public function getUserLogs(Request $request, $id)
     {
         $user = User::find($id);
         
@@ -237,8 +237,21 @@ class DepartmentController extends Controller
             ]);
         }
 
+        // Get pagination parameters
+        $page = $request->input('page', 1);
+        $perPage = 4; // 4 items per page as requested
+        
+        // Get total count
+        $total = $user->auditLogs()->count();
+        
+        // Calculate pagination
+        $totalPages = ceil($total / $perPage);
+        $offset = ($page - 1) * $perPage;
+
         $logs = $user->auditLogs()
             ->orderBy('created_at', 'desc')
+            ->skip($offset)
+            ->take($perPage)
             ->get()
             ->map(function($log) {
                 return [
@@ -254,7 +267,15 @@ class DepartmentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $logs
+            'data' => $logs,
+            'pagination' => [
+                'current_page' => (int)$page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => $totalPages,
+                'from' => $offset + 1,
+                'to' => min($offset + $perPage, $total)
+            ]
         ]);
     }
 

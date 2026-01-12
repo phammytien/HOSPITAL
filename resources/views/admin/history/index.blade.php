@@ -157,8 +157,8 @@
                             <p class="text-gray-900">{{ $request->requester->full_name ?? 'N/A' }}</p>
                         </td>
                         <td class="px-6 py-4">
-                            <p class="text-gray-600">{{ $request->created_at->format('d/m/Y') }}</p>
-                            <p class="text-xs text-gray-400">{{ $request->created_at->format('H:i') }}</p>
+                            <p class="text-gray-600">{{ optional($request->created_at)->format('d/m/Y') }}</p>
+                            <p class="text-xs text-gray-400">{{ optional($request->created_at)->format('H:i') }}</p>
                         </td>
                         <td class="px-6 py-4">
                             <p class="font-bold text-gray-900">{{ number_format($total, 0, ',', '.') }} đ</p>

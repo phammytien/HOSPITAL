@@ -1,13 +1,13 @@
 @extends('layouts.admin')
 
 @section('title', 'Quản lý nhà cung cấp')
+@section('page-title', 'Quản lý nhà cung cấp')
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Quản lý nhà cung cấp</h1>
             <p class="text-gray-600 mt-1">Quản lý thông tin các nhà cung cấp vật tư y tế</p>
         </div>
         <button onclick="openModal('add')" 

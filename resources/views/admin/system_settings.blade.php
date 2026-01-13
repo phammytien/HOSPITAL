@@ -16,6 +16,9 @@
                 <button onclick="switchTab('backup')" id="tab-backup" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     <i class="fas fa-database mr-2"></i>Backup Database
                 </button>
+                <button onclick="switchTab('maintenance')" id="tab-maintenance" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-tools mr-2"></i>Bảo trì hệ thống
+                </button>
             </nav>
         </div>
 
@@ -124,9 +127,88 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Maintenance Mode Tab -->
+            <div id="content-maintenance" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Quản lý Bảo trì Hệ thống</h3>
+                            <p class="text-sm text-gray-600">Bật/tắt chế độ bảo trì và tùy chỉnh thông báo</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <span id="maintenanceStatusText" class="text-sm font-medium"></span>
+                            <div class="relative inline-block w-12 align-middle select-none">
+                                <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenanceMode()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out" />
+                                <label for="maintenanceToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Alert -->
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    <strong>Lưu ý:</strong> Khi bật chế độ bảo trì, tất cả người dùng (trừ Admin) sẽ không thể truy cập hệ thống. Chỉ bật khi thực sự cần thiết.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Maintenance Message Editor -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Thông báo bảo trì</label>
+                        <textarea id="maintenanceMessage" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nhập nội dung thông báo bảo trì..."></textarea>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="updateMaintenanceMessage()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-medium">
+                                <i class="fas fa-save mr-2"></i>Lưu thông báo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Current Status Info -->
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Trạng thái hiện tại</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Chế độ bảo trì</p>
+                                <p id="currentStatus" class="text-sm font-medium">Đang tải...</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Cập nhật lần cuối</p>
+                                <p id="lastUpdated" class="text-sm font-medium">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+
+@push('styles')
+<style>
+/* Toggle Switch Styles */
+.toggle-checkbox:checked {
+    transform: translateX(100%);
+    border-color: #10b981;
+}
+
+.toggle-checkbox:checked + .toggle-label {
+    background-color: #10b981;
+}
+
+.toggle-label {
+    transition: background-color 0.2s ease-in-out;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -150,6 +232,8 @@ function switchTab(tab) {
     // Load data for the active tab
     if (tab === 'backup') {
         loadBackupList();
+    } else if (tab === 'maintenance') {
+        loadMaintenanceSettings();
     }
 }
 
@@ -595,6 +679,129 @@ function deleteBackup(filename) {
                 }
             });
         }
+    });
+}
+
+// ========== MAINTENANCE MODE FUNCTIONS ==========
+
+function loadMaintenanceSettings() {
+    fetch('/admin/settings/maintenance')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Update toggle switch
+                const toggle = document.getElementById('maintenanceToggle');
+                toggle.checked = data.maintenance_mode === 1;
+                
+                // Update message textarea
+                document.getElementById('maintenanceMessage').value = data.maintenance_message;
+                
+                // Update status display
+                updateMaintenanceStatusDisplay(data.maintenance_mode);
+                
+                // Update last updated time
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString('vi-VN');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Lỗi', 'Không thể tải cài đặt bảo trì', 'error');
+        });
+}
+
+function updateMaintenanceStatusDisplay(mode) {
+    const statusText = document.getElementById('maintenanceStatusText');
+    const currentStatus = document.getElementById('currentStatus');
+    
+    if (mode === 1) {
+        statusText.textContent = 'Đang bật';
+        statusText.className = 'text-sm font-medium text-red-600';
+        currentStatus.textContent = '🔴 Đang bảo trì';
+        currentStatus.className = 'text-sm font-medium text-red-600';
+    } else {
+        statusText.textContent = 'Đang tắt';
+        statusText.className = 'text-sm font-medium text-green-600';
+        currentStatus.textContent = '🟢 Hoạt động bình thường';
+        currentStatus.className = 'text-sm font-medium text-green-600';
+    }
+}
+
+function toggleMaintenanceMode() {
+    const toggle = document.getElementById('maintenanceToggle');
+    const status = toggle.checked;
+    
+    const confirmText = status 
+        ? 'Bạn có chắc muốn BẬT chế độ bảo trì? Người dùng (trừ Admin) sẽ không thể truy cập hệ thống.'
+        : 'Bạn có chắc muốn TẮT chế độ bảo trì?';
+    
+    Swal.fire({
+        title: 'Xác nhận',
+        text: confirmText,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: status ? 'Bật bảo trì' : 'Tắt bảo trì',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: status ? '#d33' : '#3085d6'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('/admin/settings/maintenance/mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công!', data.message, 'success');
+                    updateMaintenanceStatusDisplay(status ? 1 : 0);
+                    document.getElementById('lastUpdated').textContent = new Date().toLocaleString('vi-VN');
+                } else {
+                    Swal.fire('Lỗi', data.message, 'error');
+                    toggle.checked = !status; // Revert toggle
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire('Lỗi', 'Không thể cập nhật chế độ bảo trì', 'error');
+                toggle.checked = !status; // Revert toggle
+            });
+        } else {
+            toggle.checked = !status; // Revert toggle if cancelled
+        }
+    });
+}
+
+function updateMaintenanceMessage() {
+    const message = document.getElementById('maintenanceMessage').value.trim();
+    
+    if (!message) {
+        Swal.fire('Lỗi', 'Vui lòng nhập nội dung thông báo', 'error');
+        return;
+    }
+    
+    fetch('/admin/settings/maintenance/message', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire('Thành công!', data.message, 'success');
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString('vi-VN');
+        } else {
+            Swal.fire('Lỗi', data.message, 'error');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        Swal.fire('Lỗi', 'Không thể cập nhật thông báo', 'error');
     });
 }
 

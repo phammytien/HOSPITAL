@@ -20,13 +20,15 @@ class DepartmentController extends Controller
             ->where('is_delete', false)
             ->orderBy('created_at', 'desc')
             ->get();
-        
+
         $departments = Department::where('is_delete', false)
             ->withCount('users')
-            ->with(['purchaseOrders' => function($query) {
-                $query->where('is_delete', false)
-                      ->where('status', '!=', 'CANCELLED');
-            }])
+            ->with([
+                'purchaseOrders' => function ($query) {
+                    $query->where('is_delete', false)
+                        ->where('status', '!=', 'CANCELLED');
+                }
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -36,16 +38,16 @@ class DepartmentController extends Controller
         $totalBudget = $departments->sum('budget_amount');
 
         // Add calculated fields to departments
-        $departments->each(function($dept) {
+        $departments->each(function ($dept) {
             $dept->used_budget = $dept->purchaseOrders->sum('total_amount');
-            $dept->usage_percent = $dept->budget_amount > 0 
-                ? round(($dept->used_budget / $dept->budget_amount) * 100) 
+            $dept->usage_percent = $dept->budget_amount > 0
+                ? round(($dept->used_budget / $dept->budget_amount) * 100)
                 : 0;
-            
+
             // Format time difference
-            $dept->last_updated = $dept->updated_at->diffForHumans();
+            $dept->last_updated = $dept->updated_at ? $dept->updated_at->diffForHumans() : 'Chưa cập nhật';
         });
-        
+
         return view('admin.departments', compact('users', 'departments', 'totalDepartments', 'totalEmployees', 'totalBudget'));
     }
 
@@ -114,10 +116,10 @@ class DepartmentController extends Controller
     {
         // Convert Vietnamese to ASCII
         $name = $this->removeVietnameseAccents($name);
-        
+
         // Replace spaces with underscores and convert to uppercase
         $code = strtoupper(str_replace(' ', '_', trim($name)));
-        
+
         // Check if code already exists, if yes, append number
         $originalCode = $code;
         $counter = 1;
@@ -125,7 +127,7 @@ class DepartmentController extends Controller
             $code = $originalCode . '_' . $counter;
             $counter++;
         }
-        
+
         return $code;
     }
 
@@ -135,21 +137,75 @@ class DepartmentController extends Controller
     private function removeVietnameseAccents($str)
     {
         $vietnameseMap = [
-            'à' => 'a', 'á' => 'a', 'ả' => 'a', 'ã' => 'a', 'ạ' => 'a',
-            'ă' => 'a', 'ằ' => 'a', 'ắ' => 'a', 'ẳ' => 'a', 'ẵ' => 'a', 'ặ' => 'a',
-            'â' => 'a', 'ầ' => 'a', 'ấ' => 'a', 'ẩ' => 'a', 'ẫ' => 'a', 'ậ' => 'a',
+            'à' => 'a',
+            'á' => 'a',
+            'ả' => 'a',
+            'ã' => 'a',
+            'ạ' => 'a',
+            'ă' => 'a',
+            'ằ' => 'a',
+            'ắ' => 'a',
+            'ẳ' => 'a',
+            'ẵ' => 'a',
+            'ặ' => 'a',
+            'â' => 'a',
+            'ầ' => 'a',
+            'ấ' => 'a',
+            'ẩ' => 'a',
+            'ẫ' => 'a',
+            'ậ' => 'a',
             'đ' => 'd',
-            'è' => 'e', 'é' => 'e', 'ẻ' => 'e', 'ẽ' => 'e', 'ẹ' => 'e',
-            'ê' => 'e', 'ề' => 'e', 'ế' => 'e', 'ể' => 'e', 'ễ' => 'e', 'ệ' => 'e',
-            'ì' => 'i', 'í' => 'i', 'ỉ' => 'i', 'ĩ' => 'i', 'ị' => 'i',
-            'ò' => 'o', 'ó' => 'o', 'ỏ' => 'o', 'õ' => 'o', 'ọ' => 'o',
-            'ô' => 'o', 'ồ' => 'o', 'ố' => 'o', 'ổ' => 'o', 'ỗ' => 'o', 'ộ' => 'o',
-            'ơ' => 'o', 'ờ' => 'o', 'ớ' => 'o', 'ở' => 'o', 'ỡ' => 'o', 'ợ' => 'o',
-            'ù' => 'u', 'ú' => 'u', 'ủ' => 'u', 'ũ' => 'u', 'ụ' => 'u',
-            'ư' => 'u', 'ừ' => 'u', 'ứ' => 'u', 'ử' => 'u', 'ữ' => 'u', 'ự' => 'u',
-            'ỳ' => 'y', 'ý' => 'y', 'ỷ' => 'y', 'ỹ' => 'y', 'ỵ' => 'y',
+            'è' => 'e',
+            'é' => 'e',
+            'ẻ' => 'e',
+            'ẽ' => 'e',
+            'ẹ' => 'e',
+            'ê' => 'e',
+            'ề' => 'e',
+            'ế' => 'e',
+            'ể' => 'e',
+            'ễ' => 'e',
+            'ệ' => 'e',
+            'ì' => 'i',
+            'í' => 'i',
+            'ỉ' => 'i',
+            'ĩ' => 'i',
+            'ị' => 'i',
+            'ò' => 'o',
+            'ó' => 'o',
+            'ỏ' => 'o',
+            'õ' => 'o',
+            'ọ' => 'o',
+            'ô' => 'o',
+            'ồ' => 'o',
+            'ố' => 'o',
+            'ổ' => 'o',
+            'ỗ' => 'o',
+            'ộ' => 'o',
+            'ơ' => 'o',
+            'ờ' => 'o',
+            'ớ' => 'o',
+            'ở' => 'o',
+            'ỡ' => 'o',
+            'ợ' => 'o',
+            'ù' => 'u',
+            'ú' => 'u',
+            'ủ' => 'u',
+            'ũ' => 'u',
+            'ụ' => 'u',
+            'ư' => 'u',
+            'ừ' => 'u',
+            'ứ' => 'u',
+            'ử' => 'u',
+            'ữ' => 'u',
+            'ự' => 'u',
+            'ỳ' => 'y',
+            'ý' => 'y',
+            'ỷ' => 'y',
+            'ỹ' => 'y',
+            'ỵ' => 'y',
         ];
-        
+
         return strtr(mb_strtolower($str), $vietnameseMap);
     }
 
@@ -189,18 +245,18 @@ class DepartmentController extends Controller
         ]);
     }
 
-    public function getUserLogs($id)
+    public function getUserLogs(Request $request, $id)
     {
         $user = User::find($id);
-        
+
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found']);
         }
 
         // Demo Data Seeding (if empty)
         if ($user->auditLogs()->count() === 0) {
-             // 1. Success Login
-             $user->auditLogs()->create([
+            // 1. Success Login
+            $user->auditLogs()->create([
                 'action' => 'Đăng nhập thành công',
                 'description' => 'Người dùng đăng nhập vào hệ thống bệnh viện qua cổng web.',
                 'ip_address' => '127.0.0.1',
@@ -237,10 +293,23 @@ class DepartmentController extends Controller
             ]);
         }
 
+        // Get pagination parameters
+        $page = $request->input('page', 1);
+        $perPage = 4; // 4 items per page as requested
+
+        // Get total count
+        $total = $user->auditLogs()->count();
+
+        // Calculate pagination
+        $totalPages = ceil($total / $perPage);
+        $offset = ($page - 1) * $perPage;
+
         $logs = $user->auditLogs()
             ->orderBy('created_at', 'desc')
+            ->skip($offset)
+            ->take($perPage)
             ->get()
-            ->map(function($log) {
+            ->map(function ($log) {
                 return [
                     'id' => $log->id,
                     'created_at' => $log->created_at->format('d/m/Y H:i:s'),
@@ -248,17 +317,25 @@ class DepartmentController extends Controller
                     'description' => $log->description,
                     'ip_address' => $log->ip_address,
                     'device_agent' => $log->device_agent,
-                    
+
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data' => $logs
+            'data' => $logs,
+            'pagination' => [
+                'current_page' => (int) $page,
+                'per_page' => $perPage,
+                'total' => $total,
+                'total_pages' => $totalPages,
+                'from' => $offset + 1,
+                'to' => min($offset + $perPage, $total)
+            ]
         ]);
     }
 
-    private function seedDummyLogs($user) 
+    private function seedDummyLogs($user)
     {
         $actions = [
             ['action' => 'Đăng nhập thành công', 'desc' => 'Hệ thống quản lý trung tâm', 'ip' => '192.168.1.45', 'device' => 'Chrome (Windows 11)'],

@@ -22,8 +22,16 @@ if (!function_exists('getProductImage')) {
                 return $file->file_path;
             }
             
-            // Otherwise, construct storage URL
-            return asset('storage/' . $file->file_path);
+            // Construct storage URL with cache-busting timestamp
+            $url = asset('storage/' . $file->file_path);
+            
+            // Add timestamp to prevent browser caching when image is updated
+            if ($file->uploaded_at) {
+                $timestamp = strtotime($file->uploaded_at);
+                $url .= '?t=' . $timestamp;
+            }
+            
+            return $url;
         }
 
         return $default;
@@ -67,14 +75,36 @@ if (!function_exists('uploadProductImage')) {
     function uploadProductImage($file, $productId, $userId)
     {
         try {
-            // Store file in storage/app/public/products
-            $path = $file->store('products', 'public');
+            // IMPORTANT: Get file info BEFORE moving (temp file will be gone after move!)
+            $originalName = $file->getClientOriginalName();
+            $mimeType = $file->getMimeType();
+            $filename = $file->hashName();
             
-            // Create file record
+            // Save DIRECTLY to public/storage/products (no symlink needed!)
+            $destinationPath = public_path('storage/products');
+            
+            // Create directory if it doesn't exist
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+            
+            // Move uploaded file to public directory
+            $file->move($destinationPath, $filename);
+            
+            // Store relative path (just "products/filename.jpg")
+            $path = 'products/' . $filename;
+            
+            \Log::info('Image uploaded successfully', [
+                'filename' => $filename,
+                'path' => $path,
+                'original_name' => $originalName
+            ]);
+            
+            // Create file record in database
             return \App\Models\File::create([
-                'file_name' => $file->getClientOriginalName(),
+                'file_name' => $originalName,
                 'file_path' => $path,
-                'file_type' => $file->getMimeType(),
+                'file_type' => $mimeType,
                 'related_table' => 'products',
                 'related_id' => $productId,
                 'uploaded_by' => $userId,

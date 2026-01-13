@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Quản lý đơn hàng')
+@section('page-title', 'Quản lý đơn hàng')
 @section('header_title', 'Quản lý đơn hàng')
 @section('page-subtitle', 'Xem và quản lý tất cả đơn hàng mua sắm')
 

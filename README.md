@@ -65,9 +65,20 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 composer require maatwebsite/excel
 
+
+
+## cài composer
+
+composer install
+
+cp .env.example .env
+
+php artisan key:generate
+
 ## chạy dữ liệu 
 
 php artisan migrate  
 
 php artisan db:seed
 
+git commit -m "Update README"

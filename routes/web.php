@@ -7,8 +7,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->withoutMiddleware([\App\Http\Middleware\CheckMaintenanceMode::class]);
+Route::post('/login', [AuthController::class, 'login'])->withoutMiddleware([\App\Http\Middleware\CheckMaintenanceMode::class]);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
@@ -20,7 +20,7 @@ Route::post('/support', [SupportController::class, 'send'])->name('support.send'
 
 Route::middleware(['auth'])->group(function () {
     // Admin routes
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:ADMIN'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/purchase-requests/{id}/details', [App\Http\Controllers\Admin\DashboardController::class, 'getPurchaseRequestDetails'])->name('purchase-requests.details');
         Route::get('/departments', [App\Http\Controllers\Admin\DepartmentController::class, 'index'])->name('departments');
@@ -103,6 +103,12 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
 
+        // Maintenance Mode Management
+        Route::get('/settings/maintenance', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getMaintenanceSettings'])->name('settings.maintenance');
+        Route::post('/settings/maintenance/mode', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMode'])->name('settings.maintenance.mode');
+        Route::post('/settings/maintenance/message', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMessage'])->name('settings.maintenance.message');
+
+
         // Profile
         Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::post('/profile/update', [App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
@@ -116,88 +122,150 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/settings/permanent-delete', [App\Http\Controllers\Admin\SystemSettingsController::class, 'permanentDelete'])->name('settings.permanent-delete');
     });
 
-    Route::get('/buyer/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('buyer.dashboard');
+    // Buyer routes
+    Route::middleware(['role:BUYER'])->group(function () {
+        Route::get('/buyer/dashboard', [App\Http\Controllers\Buyer\DashboardController::class, 'index'])->name('buyer.dashboard');
 
-    // Buyer Request Management
-    Route::group(['prefix' => 'buyer/requests', 'as' => 'buyer.requests.'], function () {
-        Route::get('/', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'index'])->name('index');
-        Route::post('/{id}/approve', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'reject'])->name('reject');
-        Route::post('/{id}/update-status', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'updateStatus'])->name('update-status');
-        Route::get('/{id}/compare', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'compare'])->name('compare');
-        Route::get('/{id}', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'show'])->name('show');
-    });
-
-    // Profile
-    Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
-    Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
-
-    // Buyer Notifications
-    Route::get('/buyer/notifications', [App\Http\Controllers\Buyer\NotificationController::class, 'index'])
-        ->name('buyer.notifications.index');
-    Route::post('/buyer/notifications', [App\Http\Controllers\Buyer\NotificationController::class, 'store'])
-        ->name('buyer.notifications.store');
-    Route::put('/buyer/notifications/{id}', [App\Http\Controllers\Buyer\NotificationController::class, 'update'])
-        ->name('buyer.notifications.update');
-    Route::post('/buyer/notifications/{id}/read', [App\Http\Controllers\Buyer\NotificationController::class, 'markAsRead'])
-        ->name('buyer.notifications.read');
-    Route::post('/buyer/notifications/read-all', [App\Http\Controllers\Buyer\NotificationController::class, 'markAllAsRead'])
-        ->name('buyer.notifications.read-all');
-    Route::delete('/buyer/notifications/{id}', [App\Http\Controllers\Buyer\NotificationController::class, 'destroy'])
-        ->name('buyer.notifications.destroy');
-
-    // Delivery Tracking (Interactive)
-    Route::group(['prefix' => 'buyer/tracking', 'as' => 'buyer.tracking.'], function () {
-        Route::get('/', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'index'])->name('index');
-        Route::get('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'show'])->name('show');
-        Route::put('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'update'])->name('update');
-        Route::post('/items/{itemId}/update', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'updateItem'])->name('update_item');
-    });
-
-    // Buyer Order Management
-    Route::get('/buyer/orders', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'index'])->name('buyer.orders.index');
-    Route::get('/buyer/orders/{id}/details', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'getOrderDetails'])->name('buyer.orders.details');
-    Route::get('/buyer/orders/{id}', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'show'])->name('buyer.orders.show');
-
-
-
-    // Department routes
-    Route::group(['prefix' => 'department', 'as' => 'department.'], function () {
-        // Dashboard
-        Route::get('/dashboard', [\App\Http\Controllers\Department\DashboardController::class, 'index'])->name('dashboard');
-
-        // Inventory Management
-        Route::get('/inventory', [\App\Http\Controllers\Department\InventoryController::class, 'index'])->name('inventory.index');
-        Route::get('/inventory/export', [\App\Http\Controllers\Department\InventoryController::class, 'export'])->name('inventory.export');
-        Route::post('/inventory/sync', [\App\Http\Controllers\Department\InventoryController::class, 'sync'])->name('inventory.sync');
-        Route::post('/inventory/initialize', [\App\Http\Controllers\Department\InventoryController::class, 'initialize'])->name('inventory.initialize');
-        Route::post('/inventory/quick-action', [\App\Http\Controllers\Department\InventoryController::class, 'quickAction'])->name('inventory.quick-action');
-
-        // Order Management
-        Route::group(['prefix' => 'orders', 'as' => 'dept_orders.'], function () {
-            Route::get('/', [\App\Http\Controllers\Department\OrderController::class, 'index'])->name('index');
-            Route::post('/{id}/confirm', [\App\Http\Controllers\Department\OrderController::class, 'confirm'])->name('confirm');
-            Route::post('/{id}/reject', [\App\Http\Controllers\Department\OrderController::class, 'reject'])->name('reject');
+        // Buyer Request Management
+        Route::group(['prefix' => 'buyer/requests', 'as' => 'buyer.requests.'], function () {
+            Route::get('/', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'index'])->name('index');
+            Route::post('/{id}/approve', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'reject'])->name('reject');
+            Route::post('/{id}/update-status', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'updateStatus'])->name('update-status');
+            Route::get('/{id}/compare', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'compare'])->name('compare');
+            Route::get('/{id}', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'show'])->name('show');
         });
 
-        // Purchase Requests
-        Route::get('requests/history', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'history'])->name('requests.history');
-        Route::resource('requests', \App\Http\Controllers\Department\PurchaseRequestController::class);
-        Route::post('requests/{id}/submit', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'submit'])->name('requests.submit');
-        Route::post('requests/{id}/withdraw', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'withdraw'])->name('requests.withdraw');
-
-        // Product Catalog
-        Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
-        Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
-
-        Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
-        Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
-
         // Profile
-        Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
-        Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
-        Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
+        Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
+        Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
+        Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
+
+
+        // Buyer Notifications
+        Route::get('/buyer/notifications', [App\Http\Controllers\Buyer\NotificationController::class, 'index'])
+            ->name('buyer.notifications.index');
+        Route::post('/buyer/notifications', [App\Http\Controllers\Buyer\NotificationController::class, 'store'])
+            ->name('buyer.notifications.store');
+        Route::put('/buyer/notifications/{id}', [App\Http\Controllers\Buyer\NotificationController::class, 'update'])
+            ->name('buyer.notifications.update');
+        Route::post('/buyer/notifications/{id}/read', [App\Http\Controllers\Buyer\NotificationController::class, 'markAsRead'])
+            ->name('buyer.notifications.read');
+        Route::post('/buyer/notifications/read-all', [App\Http\Controllers\Buyer\NotificationController::class, 'markAllAsRead'])
+            ->name('buyer.notifications.read-all');
+        Route::delete('/buyer/notifications/{id}', [App\Http\Controllers\Buyer\NotificationController::class, 'destroy'])
+            ->name('buyer.notifications.destroy');
+
+        // Delivery Tracking (Interactive)
+        Route::group(['prefix' => 'buyer/tracking', 'as' => 'buyer.tracking.'], function () {
+            Route::get('/', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'index'])->name('index');
+            Route::get('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'show'])->name('show');
+            Route::put('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'update'])->name('update');
+            Route::post('/items/{itemId}/update', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'updateItem'])->name('update_item');
+        });
+
+        // Buyer Order Management
+        Route::get('/buyer/orders', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'index'])->name('buyer.orders.index');
+        Route::get('/buyer/orders/{id}/details', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'getOrderDetails'])->name('buyer.orders.details');
+        Route::get('/buyer/orders/{id}', [App\Http\Controllers\Buyer\PurchaseOrderController::class, 'show'])->name('buyer.orders.show');
+
+        // Buyer Products
+        Route::get('/buyer/products', [App\Http\Controllers\Buyer\ProductController::class, 'index'])
+            ->name('buyer.products.index');
+
+        // Buyer Reports
+        Route::get('/buyer/reports', [App\Http\Controllers\Buyer\ReportController::class, 'index'])
+            ->name('buyer.reports.index');
+        Route::get('/buyer/reports/export', [App\Http\Controllers\Buyer\ReportController::class, 'exportQuarterlyReport'])
+            ->name('buyer.reports.export');
+        Route::get('/buyer/reports/export-pdf', [App\Http\Controllers\Buyer\ReportController::class, 'exportPDF'])
+            ->name('buyer.reports.export-pdf');
+
+        // Buyer Settings
+        Route::get('/buyer/settings', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'index'])
+            ->name('buyer.settings.index');
+        Route::post('/buyer/settings/profile', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updateProfile'])
+            ->name('buyer.settings.profile');
+        Route::post('/buyer/settings/password', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updatePassword'])
+            ->name('buyer.settings.password');
+
+        // Buyer Profile
+        Route::get('/buyer/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'index'])->name('buyer.profile.index');
+        Route::post('/buyer/profile/update', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('buyer.profile.update');
+        Route::post('/buyer/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'changePassword'])->name('buyer.profile.password');
+
+
+
+
+        // Supplier Management
+        Route::resource('buyer/suppliers', \App\Http\Controllers\Buyer\SupplierController::class, ['names' => 'buyer.suppliers']);
+
+
+    });
+
+    // Department routes
+    Route::middleware(['role:DEPARTMENT'])->group(function () {
+        Route::group(['prefix' => 'department', 'as' => 'department.'], function () {
+            // Dashboard
+            Route::get('/dashboard', [\App\Http\Controllers\Department\DashboardController::class, 'index'])->name('dashboard');
+
+            // Inventory Management
+            Route::get('/inventory', [\App\Http\Controllers\Department\InventoryController::class, 'index'])->name('inventory.index');
+            Route::get('/inventory/export', [\App\Http\Controllers\Department\InventoryController::class, 'export'])->name('inventory.export');
+            Route::post('/inventory/sync', [\App\Http\Controllers\Department\InventoryController::class, 'sync'])->name('inventory.sync');
+            Route::post('/inventory/initialize', [\App\Http\Controllers\Department\InventoryController::class, 'initialize'])->name('inventory.initialize');
+            Route::post('/inventory/quick-action', [\App\Http\Controllers\Department\InventoryController::class, 'quickAction'])->name('inventory.quick-action');
+
+            // Order Management
+            Route::group(['prefix' => 'orders', 'as' => 'dept_orders.'], function () {
+                Route::get('/', [\App\Http\Controllers\Department\OrderController::class, 'index'])->name('index');
+                Route::post('/{id}/confirm', [\App\Http\Controllers\Department\OrderController::class, 'confirm'])->name('confirm');
+                Route::post('/{id}/reject', [\App\Http\Controllers\Department\OrderController::class, 'reject'])->name('reject');
+            });
+
+            // Purchase Requests
+            Route::get('requests/history', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'history'])->name('requests.history');
+            Route::resource('requests', \App\Http\Controllers\Department\PurchaseRequestController::class);
+            Route::post('requests/{id}/submit', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'submit'])->name('requests.submit');
+            Route::post('requests/{id}/withdraw', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'withdraw'])->name('requests.withdraw');
+
+            // Product Catalog
+            Route::get('/catalog', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('catalog.index');
+            Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
+            Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
+
+            Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
+            Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
+            // Product Catalog
+            Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
+            Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
+
+            Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
+            Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
+
+            // Profile
+            Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
+            Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
+            Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
+        });
+    });
+
+
+
+    // Admin Utility Routes
+    Route::middleware(['role:ADMIN'])->group(function () {
+        // Settings - Backup & Restore
+        Route::get('/settings/deleted/{table}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getDeletedData'])->name('settings.deleted');
+        Route::post('/settings/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreItem'])->name('settings.restore');
+        Route::post('/settings/restore-bulk', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBulk'])->name('settings.restore-bulk');
+        Route::delete('/settings/permanent-delete', [App\Http\Controllers\Admin\SystemSettingsController::class, 'permanentDelete'])->name('settings.permanent-delete');
+
+        // Settings - Database Backup
+        Route::get('/settings/backup/list', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupList'])->name('settings.backup.list');
+        Route::post('/settings/backup', [App\Http\Controllers\Admin\SystemSettingsController::class, 'createBackup'])->name('settings.backup.create');
+        Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
+        Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
+        Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
     });
 
     // Buyer Products

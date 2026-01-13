@@ -20,8 +20,14 @@ class Supplier extends Model
         'is_delete',
     ];
 
+    public function categories()
+    {
+        return $this->belongsToMany(\App\Models\ProductCategory::class, 'category_supplier', 'supplier_id', 'product_category_id')
+            ->withTimestamps();
+    }
+
     public function products()
     {
-        return $this->hasMany(Product::class);
+        return $this->hasMany(\App\Models\Product::class);
     }
 }

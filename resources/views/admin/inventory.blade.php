@@ -1,15 +1,16 @@
 @extends('layouts.admin')
 
 @section('title', 'Quản lý kho')
+@section('page-title', 'Quản lý kho')
 
 @section('content')
 <div class="space-y-6">
     <!-- Page Header -->
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Quản lý kho</h2>
             <p class="text-gray-600 mt-1">Theo dõi tồn kho và quản lý hàng hóa trong các kho của bệnh viện</p>
         </div>
+
         <div class="flex space-x-3">
             <button class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium">
                 <i class="fas fa-file-export mr-2"></i>Xuất báo cáo

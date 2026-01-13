@@ -1,7 +1,9 @@
 @extends('layouts.admin')
 
 @section('title', 'Thông báo Hệ thống')
+@section('page-title', 'Thông báo Hệ thống')
 @section('header_title', 'Thông báo Hệ thống')
+
 @section('page-subtitle', 'Quản lý các cảnh báo, lỗi, bảo trì và sự kiện quan trọng trong hệ thống')
 
 @section('content')
@@ -45,7 +47,6 @@
     {{-- Header with Create Button --}}
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-gray-900">Thông báo Hệ thống</h2>
             <p class="text-gray-600 mt-1">Quản lý các cảnh báo, lỗi, bảo trì và sự kiện quan trọng trong hệ thống</p>
         </div>
         <div class="flex gap-2">

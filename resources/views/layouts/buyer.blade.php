@@ -13,6 +13,11 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        @media print {
+            .d-print-none {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -20,7 +25,7 @@
 
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex">
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex d-print-none">
             <div>
                 <!-- Logo area -->
                 <div class="flex flex-col items-center justify-center px-4 py-6 border-b border-gray-100 text-center">
@@ -115,7 +120,14 @@
                             </svg>
                             Sản phẩm
                         </a>
-
+ <a href="{{ route('buyer.suppliers.index') }}"
+                        class="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg {{ request()->routeIs('buyer.suppliers.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50' }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" target="_blank"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                         Nhà cung cấp
+                    </a>
                         <a href="{{ route('buyer.reports.index') }}"
                             class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg {{ request()->routeIs('buyer.reports.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50' }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +187,7 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
             <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 d-print-none">
 
                 <h1 class="text-xl font-bold text-gray-800">@yield('header_title', 'Dashboard')</h1>
 
@@ -210,10 +222,6 @@
                         <!-- Dropdown -->
                         <div id="notificationDropdown"
                             class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 transform origin-top-right transition-all">
-                            <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-white">
-                                <h3 class="font-bold text-gray-800 text-base">Thông báo</h3>
-                                <button class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
-                            </div>
 
                             <div class="max-h-[400px] overflow-y-auto">
                                 @if(isset($notifications))
@@ -233,8 +241,8 @@
                                                 default => 'fa-info'
                                             };
                                         @endphp
-                                        <div onclick="showRequestDetail('{{ $data['request_id'] ?? '' }}')" 
-                                             class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->read_at ? 'opacity-70' : '' }}">
+                                        <div onclick="showNotificationDetail({{ $notify->id }}, '{{ addslashes($notify->title) }}', '{{ addslashes($notify->message) }}', '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
+                                             class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
                                              
                                              <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
                                                  <i class="fas {{ $icon }}"></i>
@@ -248,7 +256,7 @@
                                                  <p class="text-[10px] text-gray-400 font-medium">{{ $notify->created_at->diffForHumans() }}</p>
                                              </div>
                                              
-                                             @if(!$notify->read_at)
+                                             @if(!$notify->is_read)
                                                 <div class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"></div>
                                              @endif
                                         </div>
@@ -264,7 +272,7 @@
                             </div>
                             
                              <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                                <a href="#" class="text-sm text-gray-600 font-bold hover:text-blue-600 transition">Xem tất cả thông báo</a>
+                                <a href="{{ route('buyer.notifications.index') }}" class="text-sm text-gray-600 font-bold hover:text-blue-600 transition">Xem tất cả thông báo</a>
                             </div>
                         </div>
                     </div>
@@ -312,6 +320,34 @@
         </div>
     </div>
 
+    <!-- Notification Detail Modal -->
+    <div id="notificationDetailModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="font-bold text-gray-800 text-lg flex items-center">
+                    <i class="fas fa-bell mr-2 text-blue-600"></i> Chi tiết thông báo
+                </h3>
+                <button onclick="closeNotificationDetailModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="mb-4">
+                    <span id="notificationBadge" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                </div>
+                <h4 id="notificationTitle" class="text-xl font-bold text-gray-900 mb-4"></h4>
+                <p id="notificationMessage" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></p>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                <button onclick="closeNotificationDetailModal()"
+                    class="px-5 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Dropdown Toggle
         const btn = document.getElementById('notificationBtn');
@@ -327,6 +363,76 @@
                 if (!dropdown.classList.contains('hidden') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
                     dropdown.classList.add('hidden');
                 }
+            });
+        }
+
+        // Show Notification Detail
+        function showNotificationDetail(id, title, message, type, isRead) {
+            const modal = document.getElementById('notificationDetailModal');
+            const titleEl = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+            const badgeEl = document.getElementById('notificationBadge');
+
+            // Set content
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            // Set badge based on type
+            const badgeConfig = {
+                'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
+                'error': { text: 'LỖI', class: 'bg-red-100 text-red-700' },
+                'warning': { text: 'CẢNH BÁO', class: 'bg-yellow-100 text-yellow-700' },
+                'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
+            };
+            const config = badgeConfig[type] || badgeConfig['info'];
+            badgeEl.textContent = config.text;
+            badgeEl.className = `px-3 py-1 rounded-full text-xs font-semibold ${config.class}`;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            dropdown.classList.add('hidden');
+
+            // Mark as read if unread
+            if (!isRead) {
+                fetch(`/buyer/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                }).then(() => {
+                    // Reload page after a short delay to update UI
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
+        }
+
+        // Close Notification Detail Modal
+        function closeNotificationDetailModal() {
+            document.getElementById('notificationDetailModal').classList.add('hidden');
+        }
+
+        // Mark All Notifications as Read
+        function markAllNotificationsAsRead() {
+            fetch('/buyer/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload page to update UI
+                    window.location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi đánh dấu đã đọc');
             });
         }
 

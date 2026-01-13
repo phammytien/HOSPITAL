@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/categories', [App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('categories');
         Route::post('/categories', [App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('categories.store');
         Route::post('/categories/import', [App\Http\Controllers\Admin\CategoryController::class, 'import'])->name('categories.import');
+        Route::get('/categories/{id}/products', [App\Http\Controllers\Admin\CategoryController::class, 'getProducts'])->name('categories.products');
         Route::put('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
 

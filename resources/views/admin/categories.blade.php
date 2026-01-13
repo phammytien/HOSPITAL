@@ -94,7 +94,7 @@
                     </div>
 
                     @foreach($allCategories as $cat)
-                    <a href="{{ route('admin.categories', ['category_id' => $cat->id]) }}" 
+                    <a href="{{ route('admin.products.index', ['category_id' => $cat->id]) }}" 
                        class="flex items-center justify-between px-3 py-2 rounded-lg group transition-colors {{ request('category_id') == $cat->id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
                         <div class="flex items-center">
                             <i class="fas fa-folder w-5 {{ request('category_id') == $cat->id ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500' }}"></i>
@@ -143,6 +143,7 @@
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
+                            <th class="px-6 py-3 text-center w-12"></th>
                             <th class="px-6 py-3 text-left">
                                 <input type="checkbox" class="rounded border-gray-300">
                             </th>
@@ -155,8 +156,12 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                         @forelse($categories as $category)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
+                        <!-- Main Category Row -->
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleProducts({{ $category->id }})">
+                            <td class="px-6 py-4 text-center">
+                                <i id="chevron-{{ $category->id }}" class="fas fa-chevron-right text-gray-400 transition-transform duration-200"></i>
+                            </td>
+                            <td class="px-6 py-4" onclick="event.stopPropagation()">
                                 <input type="checkbox" class="rounded border-gray-300">
                             </td>
                             <td class="px-6 py-4">
@@ -179,7 +184,7 @@
                                     {{ $category->products_count }} sản phẩm
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm space-x-2">
+                            <td class="px-6 py-4 text-sm space-x-2" onclick="event.stopPropagation()">
                                 <button onclick="openEditModal({{ $category->id }}, '{{ addslashes($category->category_name) }}', '{{ addslashes($category->description ?? '') }}', '{{ addslashes($category->category_code ?? '') }}')" 
                                     class="text-blue-600 hover:text-blue-800" title="Sửa">
                                     <i class="fas fa-edit"></i>
@@ -190,9 +195,21 @@
                                 </button>
                             </td>
                         </tr>
+                        <!-- Expandable Products Row -->
+                        <tr id="products-{{ $category->id }}" class="hidden bg-gray-50">
+                            <td colspan="7" class="px-6 py-4">
+                                <div class="flex items-center justify-center py-4" id="loading-{{ $category->id }}">
+                                    <i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>
+                                    <span class="text-sm text-gray-600">Đang tải sản phẩm...</span>
+                                </div>
+                                <div id="products-content-{{ $category->id }}" class="hidden">
+                                    <!-- Products will be loaded here -->
+                                </div>
+                            </td>
+                        </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                                 <i class="fas fa-folder-open text-6xl mb-4 text-gray-300"></i>
                                 <p class="text-lg font-medium">Chưa có danh mục nào</p>
                                 <p class="text-sm mt-2">Thêm danh mục đầu tiên để bắt đầu quản lý</p>
@@ -529,6 +546,97 @@ document.getElementById('searchInput')?.addEventListener('input', function(e) {
     });
 });
 
+
+// Toggle Products Display
+const expandedCategories = new Set();
+
+function toggleProducts(categoryId) {
+    const productsRow = document.getElementById(`products-${categoryId}`);
+    const chevron = document.getElementById(`chevron-${categoryId}`);
+    const loadingDiv = document.getElementById(`loading-${categoryId}`);
+    const contentDiv = document.getElementById(`products-content-${categoryId}`);
+    
+    if (expandedCategories.has(categoryId)) {
+        // Collapse
+        productsRow.classList.add('hidden');
+        chevron.classList.remove('rotate-90');
+        expandedCategories.delete(categoryId);
+    } else {
+        // Expand
+        productsRow.classList.remove('hidden');
+        chevron.classList.add('rotate-90');
+        expandedCategories.add(categoryId);
+        
+        // Load products if not already loaded
+        if (!contentDiv.dataset.loaded) {
+            loadingDiv.classList.remove('hidden');
+            contentDiv.classList.add('hidden');
+            
+            fetch(`/admin/categories/${categoryId}/products`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderProducts(categoryId, data.products);
+                        contentDiv.dataset.loaded = 'true';
+                    }
+                    loadingDiv.classList.add('hidden');
+                    contentDiv.classList.remove('hidden');
+                })
+                .catch(err => {
+                    console.error(err);
+                    contentDiv.innerHTML = '<p class="text-center text-red-600 py-4">Lỗi khi tải sản phẩm</p>';
+                    loadingDiv.classList.add('hidden');
+                    contentDiv.classList.remove('hidden');
+                });
+        }
+    }
+}
+
+function renderProducts(categoryId, products) {
+    const contentDiv = document.getElementById(`products-content-${categoryId}`);
+    
+    if (products.length === 0) {
+        contentDiv.innerHTML = '<p class="text-center text-gray-500 py-4">Danh mục chưa có sản phẩm nào</p>';
+        return;
+    }
+    
+    let html = '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">';
+    
+    products.forEach(product => {
+        const stockBadge = product.stock_quantity <= 0 ? 
+            '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Hết hàng</span>' :
+            product.stock_quantity <= 10 ?
+            '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Sắp hết</span>' :
+            '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Sẵn hàng</span>';
+        
+        html += `
+            <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex items-start gap-3">
+                    <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        ${product.image_url ? 
+                            `<img src="${product.image_url}" alt="${product.product_name}" class="w-full h-full object-cover rounded-lg">` :
+                            '<i class="fas fa-box text-2xl text-gray-400"></i>'
+                        }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                            <h4 class="text-sm font-medium text-gray-900 truncate">${product.product_name}</h4>
+                            ${stockBadge}
+                        </div>
+                        <p class="text-xs text-gray-500 mb-2">${product.product_code}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-gray-600">Tồn kho: <strong>${product.stock_quantity}</strong> ${product.unit}</span>
+                            <span class="text-sm font-semibold text-blue-600">${new Intl.NumberFormat('vi-VN').format(product.unit_price)}đ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    contentDiv.innerHTML = html;
+}
 
 // Import Excel Functionality
 document.getElementById('importExcelInput')?.addEventListener('change', async function(e) {

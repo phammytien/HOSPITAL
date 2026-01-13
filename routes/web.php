@@ -42,6 +42,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/categories', [App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('categories');
         Route::post('/categories', [App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('categories.store');
         Route::post('/categories/import', [App\Http\Controllers\Admin\CategoryController::class, 'import'])->name('categories.import');
+        // Route::get('/categories/{id}/products', [App\Http\Controllers\Admin\CategoryController::class, 'getProducts'])->name('categories.products');
+        Route::get('/categories/{id}/products', [App\Http\Controllers\Admin\CategoryController::class, 'getProducts'])->name('categories.products');
         Route::put('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
 
@@ -59,7 +61,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Placeholder routes for sidebar links
         Route::get('/users', function () {
-            return redirect()->route('admin.departments'); })->name('users');
+            return redirect()->route('admin.departments');
+        })->name('users');
         Route::get('/purchase-history', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('purchase-history');
 
         // Purchase Orders
@@ -215,6 +218,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/{id}/reject', [\App\Http\Controllers\Department\OrderController::class, 'reject'])->name('reject');
             });
 
+            // Profile
+            Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
+            Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
+            Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
+
+
             // Purchase Requests
             Route::get('requests/history', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'history'])->name('requests.history');
             Route::resource('requests', \App\Http\Controllers\Department\PurchaseRequestController::class);
@@ -224,20 +233,22 @@ Route::middleware(['auth'])->group(function () {
             // Product Catalog
             Route::get('/catalog', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('catalog.index');
             Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
+            Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
 
             Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
             Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
 
-            // Profile
-            Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
-            Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
-            Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
+            // // Profile
+            // Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
+            // Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
+            // Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
         });
     });
 
     // Admin Utility Routes
     Route::middleware(['role:ADMIN'])->group(function () {
         // Settings - Backup & Restore
+        // Settings - Backup & Restore (Admin)
         Route::get('/settings/deleted/{table}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getDeletedData'])->name('settings.deleted');
         Route::post('/settings/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreItem'])->name('settings.restore');
         Route::post('/settings/restore-bulk', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBulk'])->name('settings.restore-bulk');

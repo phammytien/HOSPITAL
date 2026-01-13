@@ -139,10 +139,10 @@
                         </div>
                         <div class="flex items-center space-x-3">
                             <span id="maintenanceStatusText" class="text-sm font-medium"></span>
-                            <div class="relative inline-block w-12 align-middle select-none">
-                                <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenanceMode()" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out" />
-                                <label for="maintenanceToggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="maintenanceToggle" onchange="toggleMaintenanceMode()" class="sr-only peer">
+                                <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-7 peer-checked:bg-green-500 after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                            </label>
                         </div>
                     </div>
 
@@ -194,19 +194,7 @@
 
 @push('styles')
 <style>
-/* Toggle Switch Styles */
-.toggle-checkbox:checked {
-    transform: translateX(100%);
-    border-color: #10b981;
-}
-
-.toggle-checkbox:checked + .toggle-label {
-    background-color: #10b981;
-}
-
-.toggle-label {
-    transition: background-color 0.2s ease-in-out;
-}
+/* Toggle Switch Styles - Removed custom styles in favor of pure Tailwind peer classes */
 </style>
 @endpush
 

@@ -23,8 +23,13 @@ class CheckMaintenanceMode
 
         // If maintenance mode is enabled
         if ($maintenanceMode && $maintenanceMode->value == '1') {
+            // Whitelist routes that should be accessible during maintenance
+            if ($request->is('login') || $request->is('logout') || $request->is('support*')) {
+                return $next($request);
+            }
+
             // Allow admin users to bypass maintenance mode
-            if (auth()->check() && auth()->user()->role === 'admin') {
+            if (auth()->check() && auth()->user()->role === 'ADMIN') {
                 return $next($request);
             }
 
@@ -35,14 +40,14 @@ class CheckMaintenanceMode
 
             $message = $maintenanceMessage ? $maintenanceMessage->value : 'Hệ thống đang bảo trì. Vui lòng quay lại sau.';
 
-            // Logout non-admin users
+            // Logout non-admin users if they are logged in and trying to access protected routes
             if (auth()->check()) {
                 auth()->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
             }
 
-            // Return maintenance page
+            // Return maintenance page with 503 status
             return response()->view('maintenance', [
                 'message' => $message
             ], 503);

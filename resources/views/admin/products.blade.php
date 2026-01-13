@@ -465,13 +465,19 @@ function closeModal() {
 
 // Auto-generate Code Logic - works in both Add and Edit mode
 document.getElementById('category_id').addEventListener('change', function() {
-    generateProductCode(this.value);
+    const productId = document.getElementById('productForm').dataset.id;
+    generateProductCode(this.value, productId);
 });
 
-function generateProductCode(categoryId) {
+function generateProductCode(categoryId, productId = null) {
     if(!categoryId) return;
     
-    fetch(`/admin/products/generate-code?category_id=${categoryId}`)
+    let url = `/admin/products/generate-code?category_id=${categoryId}`;
+    if(productId) {
+        url += `&product_id=${productId}`;
+    }
+    
+    fetch(url)
         .then(res => res.json())
         .then(data => {
             if(data.success) {

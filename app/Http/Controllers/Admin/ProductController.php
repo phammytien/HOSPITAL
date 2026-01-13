@@ -164,31 +164,50 @@ class ProductController extends Controller
     public function generateCode(Request $request)
     {
         $categoryId = $request->input('category_id');
-        $category = ProductCategory::find($categoryId);
-
-        if (!$category) {
-            return response()->json(['success' => false, 'message' => 'Category not found']);
+        $productId = $request->input('product_id'); // For edit mode
+        
+        if (!$categoryId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn danh mục trước'
+            ]);
         }
 
-        $prefix = $category->category_code;
+        $category = ProductCategory::find($categoryId);
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh mục không tồn tại'
+            ]);
+        }
+
+        $categoryCode = $category->category_code;
         
-        // Find latest product code with this prefix
-        $latestProduct = Product::where('product_code', 'like', $prefix . '%')
-            ->orderBy('id', 'desc')
-            ->first();
+        // Get the latest product code for this category
+        $query = Product::where('category_id', $categoryId)
+            ->where('product_code', 'like', $categoryCode . '%');
+        
+        // Exclude current product if in edit mode
+        if ($productId) {
+            $query->where('id', '!=', $productId);
+        }
+        
+        $latestProduct = $query->orderBy('product_code', 'desc')->first();
 
         if ($latestProduct) {
-            // Extract number part (assuming format PREFIX+Number)
-            $numberPart = preg_replace('/[^0-9]/', '', substr($latestProduct->product_code, strlen($prefix)));
-            $nextNumber = intval($numberPart) + 1;
+            // Extract number from code (e.g., CNTT002 -> 002)
+            $number = (int) substr($latestProduct->product_code, strlen($categoryCode));
+            $newNumber = str_pad($number + 1, 3, '0', STR_PAD_LEFT);
         } else {
-            $nextNumber = 1;
+            $newNumber = '001';
         }
 
-        // Pad with zeros (e.g., 001, 002)
-        $newCode = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $newCode = $categoryCode . $newNumber;
 
-        return response()->json(['success' => true, 'code' => $newCode]);
+        return response()->json([
+            'success' => true,
+            'code' => $newCode
+        ]);
     }
 
     public function destroy($id)

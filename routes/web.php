@@ -187,31 +187,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/buyer/profile/update', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('buyer.profile.update');
         Route::post('/buyer/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'changePassword'])->name('buyer.profile.password');
 
-
-        // Buyer Reports
-        Route::get('/buyer/reports', [App\Http\Controllers\Buyer\ReportController::class, 'index'])
-            ->name('buyer.reports.index');
-        Route::get('/buyer/reports/export', [App\Http\Controllers\Buyer\ReportController::class, 'exportQuarterlyReport'])
-            ->name('buyer.reports.export');
-        Route::get('/buyer/reports/export-pdf', [App\Http\Controllers\Buyer\ReportController::class, 'exportPDF'])
-            ->name('buyer.reports.export-pdf');
-
-
-        // Buyer Settings
-        Route::get('/buyer/settings', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'index'])
-            ->name('buyer.settings.index');
-        Route::post('/buyer/settings/profile', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updateProfile'])
-            ->name('buyer.settings.profile');
-        Route::post('/buyer/settings/password', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updatePassword'])
-            ->name('buyer.settings.password');
-
-        // Buyer Profile
-        Route::get('/buyer/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'index'])->name('buyer.profile.index');
-        Route::post('/buyer/profile/update', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('buyer.profile.update');
-        Route::post('/buyer/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'changePassword'])->name('buyer.profile.password');
-
-
-
         // Supplier Management
         Route::resource('buyer/suppliers', \App\Http\Controllers\Buyer\SupplierController::class, ['names' => 'buyer.suppliers']);
 

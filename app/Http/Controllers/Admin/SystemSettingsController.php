@@ -415,12 +415,15 @@ class SystemSettingsController extends Controller
         ]);
 
         try {
-            DB::table('system_settings')
-                ->where('key', 'maintenance_mode')
-                ->update([
+            DB::table('system_settings')->updateOrInsert(
+                ['key' => 'maintenance_mode'],
+                [
                     'value' => $request->status ? '1' : '0',
-                    'updated_at' => now()
-                ]);
+                    'description' => 'Trạng thái chế độ bảo trì hệ thống',
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]
+            );
 
             $statusText = $request->status ? 'bật' : 'tắt';
             return response()->json([
@@ -442,12 +445,15 @@ class SystemSettingsController extends Controller
         ]);
 
         try {
-            DB::table('system_settings')
-                ->where('key', 'maintenance_message')
-                ->update([
+            DB::table('system_settings')->updateOrInsert(
+                ['key' => 'maintenance_message'],
+                [
                     'value' => $request->message,
-                    'updated_at' => now()
-                ]);
+                    'description' => 'Thông báo hiển thị khi hệ thống bảo trì',
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]
+            );
 
             return response()->json([
                 'success' => true,

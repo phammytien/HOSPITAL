@@ -40,10 +40,41 @@ class ProfileController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'phone_number' => 'nullable|string|max:20',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         $user->full_name = $request->full_name;
         $user->phone_number = $request->phone_number;
+
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $fileName = 'Avatar_' . $user->username . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $destinationPath = public_path('images/avatars');
+
+            // Move file to public/images/avatars
+            $file->move($destinationPath, $fileName);
+
+            // Save relative path to DB
+            $filePath = 'images/avatars/' . $fileName;
+
+            // Save to files table - FIXED: Do not set user->avatar
+            \App\Models\File::create([
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_type' => 'avatar',
+                'related_table' => 'users',
+                'related_id' => $user->id,
+                'uploaded_by' => $user->id,
+                'uploaded_at' => now(),
+                'is_delete' => false,
+            ]);
+
+            // Optional: Save to files table if needed (as per request)
+            // assuming there is a File model or using DB facade
+            // \App\Models\File::create([...]); 
+            // For now, updating the user's avatar column is the critical part for display.
+        }
+
         $user->save();
 
         return redirect()->back()->with('success', 'Cập nhật thông tin thành công.');

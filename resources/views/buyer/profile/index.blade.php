@@ -32,7 +32,10 @@
                 <div
                     class="w-32 h-32 rounded-xl border-4 border-white shadow-lg bg-teal-700 flex items-center justify-center overflow-hidden">
                     @if($user->avatar)
-                        <img src="{{ asset('storage/' . $user->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                        @php
+                            $avatarPath = str_starts_with($user->avatar, 'images/') ? asset($user->avatar) : asset('storage/' . $user->avatar);
+                        @endphp
+                        <img src="{{ $avatarPath }}" alt="Avatar" class="w-full h-full object-cover">
                     @else
                         <!-- Medical Illusion Avatar -->
                         <img src="https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
@@ -132,10 +135,10 @@
                     <h4 class="text-sm font-bold text-gray-700 mb-3">Quyền hạn hệ thống</h4>
                     <ul class="space-y-2">
                         @foreach($workScope['permissions'] ?? [] as $permission)
-                        <li class="flex items-start text-sm text-gray-600">
-                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
-                            {{ $permission }}
-                        </li>
+                            <li class="flex items-start text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
+                                {{ $permission }}
+                            </li>
                         @endforeach
                     </ul>
                 </div>
@@ -148,9 +151,33 @@
     <div id="editInfoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Chỉnh sửa thông tin</h3>
-            <form action="{{ route('buyer.profile.update') }}" method="POST">
+            <form action="{{ route('buyer.profile.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="space-y-4">
+                    <div class="flex justify-center mb-4">
+                        <div
+                            class="w-24 h-24 rounded-full border-4 border-gray-100 shadow-sm overflow-hidden bg-gray-100 relative group">
+                            @if($user->avatar)
+                                <img src="{{ asset($user->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                            @else
+                                <img src="https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg"
+                                    class="w-full h-full object-cover opacity-80">
+                            @endif
+                            <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 cursor-pointer"
+                                onclick="document.getElementById('avatarInput').click()">
+                                <i class="fas fa-camera text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden">
+                        <input type="file" name="avatar" id="avatarInput" accept="image/*" class="w-full">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh đại diện</label>
+                        <input type="file" name="avatar"
+                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                         <input type="text" name="full_name" value="{{ $user->full_name }}"
@@ -182,7 +209,7 @@
                 </h3>
                 <p class="text-blue-100 text-sm mt-1">Vui lòng nhập thông tin để thay đổi mật khẩu</p>
             </div>
-            
+
             <form action="{{ route('buyer.profile.password') }}" method="POST" autocomplete="off" class="p-8">
                 @csrf
                 <div class="space-y-5">
@@ -194,7 +221,8 @@
                             class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('current_password') border-red-500 @enderror"
                             placeholder="Nhập mật khẩu hiện tại">
                         @error('current_password')
-                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                            </p>
                         @enderror
                     </div>
                     <div>
@@ -205,7 +233,8 @@
                             class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('new_password') border-red-500 @enderror"
                             placeholder="Nhập mật khẩu mới">
                         @error('new_password')
-                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
+                            </p>
                         @enderror
                         <p class="mt-2 text-xs text-gray-500 flex items-center">
                             <i class="fas fa-info-circle mr-1"></i>Tối thiểu 6 ký tự
@@ -223,7 +252,8 @@
                 <div class="mt-8 flex justify-end gap-3">
                     <button type="button" onclick="document.getElementById('changePassModal').classList.add('hidden')"
                         class="px-8 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition text-base">Hủy</button>
-                    <button type="submit" class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 font-medium transition shadow-lg hover:shadow-xl text-base">
+                    <button type="submit"
+                        class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 font-medium transition shadow-lg hover:shadow-xl text-base">
                         <i class="fas fa-check mr-2"></i>Đổi mật khẩu
                     </button>
                 </div>

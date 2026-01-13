@@ -272,8 +272,12 @@
                                 <button onclick="toggleUserMenu()"
                                     class="flex items-center space-x-2 focus:outline-none group">
                                     <div
-                                        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold group-hover:shadow-md transition">
-                                        {{ strtoupper(substr(Auth::user()->full_name, 0, 1)) }}
+                                        class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold group-hover:shadow-md transition overflow-hidden">
+                                        @if(Auth::user()->avatar)
+                                            <img src="{{ asset(Auth::user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                                        @else
+                                            {{ strtoupper(substr(Auth::user()->full_name, 0, 1)) }}
+                                        @endif
                                     </div>
                                     <div class="hidden md:block text-left">
                                         <p class="text-sm font-semibold text-gray-700 group-hover:text-blue-600">

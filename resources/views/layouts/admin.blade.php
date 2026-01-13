@@ -141,8 +141,12 @@
                         <p class="text-xs text-gray-500">{{ Auth::user()->role }}</p>
                     </div>
                     <div class="relative">
-                        <button onclick="toggleUserMenu()" class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                            {{ strtoupper(substr(Auth::user()->full_name, 0, 1)) }}
+                        <button onclick="toggleUserMenu()" class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
+                            @if(Auth::user()->avatar)
+                                <img src="{{ asset(Auth::user()->avatar) }}" alt="Avatar" class="w-full h-full object-cover">
+                            @else
+                                {{ strtoupper(substr(Auth::user()->full_name, 0, 1)) }}
+                            @endif
                         </button>
                         <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                             <a href="{{ route('admin.profile.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

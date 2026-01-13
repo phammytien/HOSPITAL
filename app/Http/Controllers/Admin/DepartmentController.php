@@ -24,11 +24,11 @@ class DepartmentController extends Controller
         $departments = Department::where('is_delete', false)
             ->withCount('users')
             ->with([
-                'purchaseOrders' => function ($query) {
-                    $query->where('is_delete', false)
-                        ->where('status', '!=', 'CANCELLED');
-                }
-            ])
+                    'purchaseOrders' => function ($query) {
+                        $query->where('is_delete', false)
+                            ->where('status', '!=', 'CANCELLED');
+                    }
+                ])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -218,7 +218,6 @@ class DepartmentController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'department_code' => 'required|unique:departments,department_code,' . $id,
             'department_name' => 'required',
             'description' => 'nullable',
             'budget_amount' => 'required|numeric|min:0',

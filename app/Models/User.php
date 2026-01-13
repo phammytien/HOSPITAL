@@ -119,4 +119,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(AuditLog::class);
     }
+
+    /**
+     * Get the user's avatar from the files table.
+     */
+    public function getAvatarAttribute()
+    {
+        // Find the latest file associated with this user as an avatar
+        // Assumes file_type 'avatar' or just matches by related_table/id
+        // For simplicity and to match the controller logic we are about to write,
+        // we will look for a file where related_table = 'users' and related_id = user_id
+        // and sort by uploaded_at desc.
+
+        $file = \App\Models\File::where('related_table', 'users')
+            ->where('related_id', $this->id)
+            ->where('is_delete', false)
+            ->orderBy('uploaded_at', 'desc')
+            ->first();
+
+        return $file ? $file->file_path : null;
+    }
 }

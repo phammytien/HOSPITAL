@@ -171,7 +171,7 @@
                 <div class="flex items-center gap-3">
                     <a href="{{ route('buyer.profile.index') }}" class="flex items-center gap-3 flex-1 min-w-0 hover:bg-gray-100 p-1 rounded-lg transition group">
                         <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
-                            <img src="https://ui-avatars.com/api/?name={{ Auth::user()->full_name ?? 'User' }}&background=random"
+                            <img src="{{ Auth::user()->avatar ? asset(Auth::user()->avatar) : 'https://ui-avatars.com/api/?name=' . (Auth::user()->full_name ?? 'User') . '&background=random' }}"
                                 alt="User Avatar" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 min-w-0 text-left">

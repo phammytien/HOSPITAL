@@ -13,15 +13,7 @@
             background-color: #f8fafc;
         }
 
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
 
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
 
         .glass-effect {
             background: rgba(255, 255, 255, 0.7);
@@ -38,7 +30,7 @@
             <div class="relative">
                 <div class="absolute inset-0 bg-blue-400 opacity-20 blur-3xl rounded-full scale-150 animate-pulse"></div>
                 <img src="{{ asset('images/errors/404-illustration.png') }}" alt="404 Illustration" 
-                     class="relative w-full max-w-sm animate-float drop-shadow-2xl rounded-2xl">
+                     class="relative w-full max-w-sm drop-shadow-2xl rounded-2xl">
             </div>
         </div>
 

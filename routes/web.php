@@ -44,7 +44,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/categories/import', [App\Http\Controllers\Admin\CategoryController::class, 'import'])->name('categories.import');
         Route::put('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{id}', [App\Http\Controllers\Admin\CategoryController::class, 'destroy'])->name('categories.destroy');
-        
+
         // Suppliers
         Route::get('/suppliers', [App\Http\Controllers\Admin\SupplierController::class, 'index'])->name('suppliers');
         Route::post('/suppliers', [App\Http\Controllers\Admin\SupplierController::class, 'store'])->name('suppliers.store');
@@ -53,14 +53,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/suppliers/{id}/products', [App\Http\Controllers\Admin\SupplierController::class, 'getProducts'])->name('suppliers.products');
         Route::put('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'update'])->name('suppliers.update');
         Route::delete('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'destroy'])->name('suppliers.destroy');
-        
+
         // Inventory Management
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
-        
+
         // Placeholder routes for sidebar links
-        Route::get('/users', function () { return redirect()->route('admin.departments'); })->name('users');
+        Route::get('/users', function () {
+            return redirect()->route('admin.departments');
+        })->name('users');
         Route::get('/purchase-history', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('purchase-history');
-        
+
         // Purchase Orders
         Route::get('/orders', [App\Http\Controllers\Admin\PurchaseOrderController::class, 'index'])->name('orders');
         Route::get('/orders/{id}', [App\Http\Controllers\Admin\PurchaseOrderController::class, 'show'])->name('orders.show');
@@ -93,19 +95,19 @@ Route::middleware(['auth'])->group(function () {
 
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('settings');
-        
+
         // Backup Management
         Route::post('/settings/backup/create', [App\Http\Controllers\Admin\SystemSettingsController::class, 'createBackup'])->name('settings.backup.create');
         Route::get('/settings/backup/list', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupList'])->name('settings.backup.list');
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
-        
+
         // Maintenance Mode Management
         Route::get('/settings/maintenance', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getMaintenanceSettings'])->name('settings.maintenance');
         Route::post('/settings/maintenance/mode', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMode'])->name('settings.maintenance.mode');
         Route::post('/settings/maintenance/message', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateMaintenanceMessage'])->name('settings.maintenance.message');
-        
+
         // Profile
         Route::get('/profile', [App\Http\Controllers\Admin\ProfileController::class, 'index'])->name('profile.index');
         Route::post('/profile/update', [App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
@@ -179,19 +181,41 @@ Route::middleware(['auth'])->group(function () {
             ->name('buyer.settings.profile');
         Route::post('/buyer/settings/password', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updatePassword'])
             ->name('buyer.settings.password');
- 
+
         // Buyer Profile
         Route::get('/buyer/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'index'])->name('buyer.profile.index');
         Route::post('/buyer/profile/update', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('buyer.profile.update');
         Route::post('/buyer/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'changePassword'])->name('buyer.profile.password');
 
 
-       
+        // Buyer Reports
+        Route::get('/buyer/reports', [App\Http\Controllers\Buyer\ReportController::class, 'index'])
+            ->name('buyer.reports.index');
+        Route::get('/buyer/reports/export', [App\Http\Controllers\Buyer\ReportController::class, 'exportQuarterlyReport'])
+            ->name('buyer.reports.export');
+        Route::get('/buyer/reports/export-pdf', [App\Http\Controllers\Buyer\ReportController::class, 'exportPDF'])
+            ->name('buyer.reports.export-pdf');
+
+
+        // Buyer Settings
+        Route::get('/buyer/settings', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'index'])
+            ->name('buyer.settings.index');
+        Route::post('/buyer/settings/profile', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updateProfile'])
+            ->name('buyer.settings.profile');
+        Route::post('/buyer/settings/password', [App\Http\Controllers\Buyer\SystemSettingsController::class, 'updatePassword'])
+            ->name('buyer.settings.password');
+
+        // Buyer Profile
+        Route::get('/buyer/profile', [App\Http\Controllers\Buyer\ProfileController::class, 'index'])->name('buyer.profile.index');
+        Route::post('/buyer/profile/update', [App\Http\Controllers\Buyer\ProfileController::class, 'update'])->name('buyer.profile.update');
+        Route::post('/buyer/profile/password', [App\Http\Controllers\Buyer\ProfileController::class, 'changePassword'])->name('buyer.profile.password');
+
+
 
         // Supplier Management
         Route::resource('buyer/suppliers', \App\Http\Controllers\Buyer\SupplierController::class, ['names' => 'buyer.suppliers']);
 
-       
+
     });
 
     // Department routes
@@ -214,6 +238,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/{id}/reject', [\App\Http\Controllers\Department\OrderController::class, 'reject'])->name('reject');
             });
 
+            // Profile
+            Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
+            Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
+            Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
+
+
             // Purchase Requests
             Route::get('requests/history', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'history'])->name('requests.history');
             Route::resource('requests', \App\Http\Controllers\Department\PurchaseRequestController::class);
@@ -223,7 +253,8 @@ Route::middleware(['auth'])->group(function () {
             // Product Catalog
             Route::get('/catalog', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('catalog.index');
             Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
-            
+            Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
+
             Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
             Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
 
@@ -237,19 +268,19 @@ Route::middleware(['auth'])->group(function () {
     // Admin Utility Routes
     Route::middleware(['role:ADMIN'])->group(function () {
         // Settings - Backup & Restore
+        // Settings - Backup & Restore (Admin)
         Route::get('/settings/deleted/{table}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getDeletedData'])->name('settings.deleted');
         Route::post('/settings/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreItem'])->name('settings.restore');
         Route::post('/settings/restore-bulk', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBulk'])->name('settings.restore-bulk');
         Route::delete('/settings/permanent-delete', [App\Http\Controllers\Admin\SystemSettingsController::class, 'permanentDelete'])->name('settings.permanent-delete');
-        
-        // Settings - Database Backup
+
+        // Settings - Database Backup (Admin)
         Route::get('/settings/backup/list', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupList'])->name('settings.backup.list');
         Route::post('/settings/backup', [App\Http\Controllers\Admin\SystemSettingsController::class, 'createBackup'])->name('settings.backup.create');
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
     });
-
 }); // End auth middleware group
 
 

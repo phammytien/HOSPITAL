@@ -70,7 +70,7 @@
                                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                                 </div>
                             </div>
-                            <a href="{{ route('department.catalog.index') }}"
+                            <a href="{{ route('department.products.index') }}"
                                 class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 flex items-center space-x-2 whitespace-nowrap transition shadow-sm hover:shadow-md">
                                 <i class="fas fa-th mr-2"></i>
                                 <span>Chọn từ danh mục</span>
@@ -273,56 +273,56 @@
                 let html = '';
                 selectedProducts.forEach((product, index) => {
                     html += `
-                                                                                                            <div class="p-4">
-                                                                                                                <div class="flex gap-4">
-                                                                                                                    <img src="https://via.placeholder.com/80" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover">
-                                                                                                                    <div class="flex-1">
-                                                                                                                        <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
-                                                                                                                        <div class="grid grid-cols-2 gap-3 mt-3">
-                                                                                                                            <div>
-                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
-                                                                                                                                <input type="number" 
-                                                                                                                                       name="items[${index}][quantity]"
-                                                                                                                                       value="${product.quantity}"
-                                                                                                                                       min="1"
-                                                                                                                                       step="1"
-                                                                                                                                       onchange="updateQuantity(${index}, this.value)"
-                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                                                                                       required>
-                                                                                                                                <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
+                                                                                                                    <div class="p-4">
+                                                                                                                        <div class="flex gap-4">
+                                                                                                                            <img src="https://via.placeholder.com/80" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover">
+                                                                                                                            <div class="flex-1">
+                                                                                                                                <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
+                                                                                                                                <div class="grid grid-cols-2 gap-3 mt-3">
+                                                                                                                                    <div>
+                                                                                                                                        <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
+                                                                                                                                        <input type="number" 
+                                                                                                                                               name="items[${index}][quantity]"
+                                                                                                                                               value="${product.quantity}"
+                                                                                                                                               min="1"
+                                                                                                                                               step="1"
+                                                                                                                                               onchange="updateQuantity(${index}, this.value)"
+                                                                                                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                                                                                                               required>
+                                                                                                                                        <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
+                                                                                                                                    </div>
+                                                                                                                                    <div>
+                                                                                                                                        <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
+                                                                                                                                        <input type="number" 
+                                                                                                                                               name="items[${index}][expected_price]"
+                                                                                                                                               value="${product.price}"
+                                                                                                                                               min="0"
+                                                                                                                                               step="1000"
+                                                                                                                                               onchange="updatePrice(${index}, this.value)"
+                                                                                                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                                                                                                               required>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                                <div class="mt-3">
+                                                                                                                                    <label class="text-xs text-gray-500 block mb-1">Lý do</label>
+                                                                                                                                    <input type="text" 
+                                                                                                                                           name="items[${index}][reason]"
+                                                                                                                                           value="${product.reason}"
+                                                                                                                                           placeholder="Nhập lý do mua..."
+                                                                                                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                                                                                                                </div>
                                                                                                                             </div>
-                                                                                                                            <div>
-                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
-                                                                                                                                <input type="number" 
-                                                                                                                                       name="items[${index}][expected_price]"
-                                                                                                                                       value="${product.price}"
-                                                                                                                                       min="0"
-                                                                                                                                       step="1000"
-                                                                                                                                       onchange="updatePrice(${index}, this.value)"
-                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                                                                                       required>
+                                                                                                                            <div class="text-right">
+                                                                                                                                <p class="font-bold text-gray-900 mb-2">${formatMoney(product.price * product.quantity)} đ</p>
+                                                                                                                                <button type="button" 
+                                                                                                                                        onclick="removeProduct(${index})"
+                                                                                                                                        class="text-red-600 hover:text-red-700 text-sm">
+                                                                                                                                    <i class="fas fa-trash mr-1"></i> Xóa
+                                                                                                                                </button>
                                                                                                                             </div>
                                                                                                                         </div>
-                                                                                                                        <div class="mt-3">
-                                                                                                                            <label class="text-xs text-gray-500 block mb-1">Lý do</label>
-                                                                                                                            <input type="text" 
-                                                                                                                                   name="items[${index}][reason]"
-                                                                                                                                   value="${product.reason}"
-                                                                                                                                   placeholder="Nhập lý do mua..."
-                                                                                                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                                                                                                        </div>
                                                                                                                     </div>
-                                                                                                                    <div class="text-right">
-                                                                                                                        <p class="font-bold text-gray-900 mb-2">${formatMoney(product.price * product.quantity)} đ</p>
-                                                                                                                        <button type="button" 
-                                                                                                                                onclick="removeProduct(${index})"
-                                                                                                                                class="text-red-600 hover:text-red-700 text-sm">
-                                                                                                                            <i class="fas fa-trash mr-1"></i> Xóa
-                                                                                                                        </button>
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                        `;
+                                                                                                                `;
                 });
 
                 container.innerHTML = html;

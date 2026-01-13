@@ -35,15 +35,19 @@
                 </div>
 
                 <div class="w-full md:w-48">
-                    <select name="cat"
+                    <select name="cat" onchange="this.form.submit()"
                         class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
                         <option value="">Tất cả loại vật tư</option>
-                        <!-- Assuming categories are loaded via ViewComposer or checked simply -->
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ request('cat') == $category->id ? 'selected' : '' }}>
+                                {{ $category->category_name }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div class="w-full md:w-48">
-                    <select name="stock_status"
+                    <select name="stock_status" onchange="this.form.submit()"
                         class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700">
                         <option value="">Trạng thái tồn</option>
                         <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>Còn hàng

@@ -25,23 +25,23 @@
             </div>
         </div>
 
-        <!-- Card 2: Processing -->
+        <!-- Card 2: Chờ xử lý (PENDING Orders) -->
         <div
             class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group hover:shadow-md transition">
             <div class="flex justify-between items-start">
                 <div>
-                    <h3 class="text-xs font-medium text-gray-500 mb-1">Đang xử lý</h3>
-                    <span
-                        class="text-2xl font-bold text-gray-800">{{ str_pad($processingCount, 2, '0', STR_PAD_LEFT) }}</span>
+                    <h3 class="text-xs font-medium text-gray-500 mb-1">Chờ xử lý</h3>
+                    <span class="text-2xl font-bold text-gray-800">{{ str_pad($pendingOrderCount, 2, '0', STR_PAD_LEFT) }}</span>
                 </div>
                 <div class="p-2 bg-blue-50 rounded-lg">
                     <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
             </div>
         </div>
+
 
         <!-- Card 3: Approved -->
         <div
@@ -60,21 +60,20 @@
             </div>
         </div>
 
-        <!-- Card 4: Paid (New) -->
+
+
+        <!-- Card 4: Đã bàn giao (COMPLETED Orders) -->
         <div
             class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group hover:shadow-md transition">
             <div class="flex justify-between items-start">
                 <div>
                     <h3 class="text-xs font-medium text-gray-500 mb-1">Đã bàn giao</h3>
-                    <span class="text-2xl font-bold text-gray-800">{{ str_pad($paidCount, 2, '0', STR_PAD_LEFT) }}</span>
-                    <p class="text-[0.65rem] text-gray-400 mt-1">Đã thanh toán</p>
+                    <span class="text-2xl font-bold text-gray-800">{{ str_pad($completedCount, 2, '0', STR_PAD_LEFT) }}</span>
                 </div>
-                <div class="p-2 bg-indigo-50 rounded-lg">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-purple-50 rounded-lg">
+                    <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
             </div>
@@ -191,18 +190,20 @@
                                     @php
                                         $statusClass = match ($request->status) {
                                             'SUBMITTED' => 'bg-yellow-100 text-yellow-700',
+                                            'PENDING' => 'bg-yellow-100 text-yellow-700',
                                             'APPROVED' => 'bg-green-100 text-green-700',
                                             'REJECTED' => 'bg-red-100 text-red-700',
-                                            'PROCESSING' => 'bg-blue-100 text-blue-700',
-                                            'PAID' => 'bg-indigo-100 text-indigo-700',
+                                            'COMPLETED' => 'bg-green-100 text-green-700', // Completed is also green
+
                                             default => 'bg-gray-100 text-gray-700'
                                         };
                                         $statusLabel = match ($request->status) {
                                             'SUBMITTED' => 'Chờ duyệt',
+                                            'PENDING'   => 'Chờ duyệt', // Handle PENDING if distinct or same as submitted
                                             'APPROVED' => 'Đã duyệt',
-                                            'REJECTED' => 'Từ chối',
-                                            'PROCESSING' => 'Đang xử lý',
-                                            'PAID' => 'Đã bàn giao',
+                                            'REJECTED' => 'Đã từ chối',
+                                            'COMPLETED' => 'Hoàn thành',
+
                                             default => $request->status
                                         };
                                     @endphp

@@ -24,8 +24,7 @@
                     <option value="SUBMITTED" {{ request('status') == 'SUBMITTED' ? 'selected' : '' }}>Chờ duyệt</option>
                     <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
                     <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Đã từ chối</option>
-                    <option value="PROCESSING" {{ request('status') == 'PROCESSING' ? 'selected' : '' }}>Đang xử lý</option>
-                    <option value="PAID" {{ request('status') == 'PAID' ? 'selected' : '' }}>Đã hoàn thành</option>
+                    <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
                 </select>
 
                 <select name="period" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
@@ -86,8 +85,16 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     @php
-                                        $statusClass = get_request_status_class($req->status);
-                                        $statusLabel = get_request_status_label($req->status);
+                                        if ($req->status) {
+                                            $statusClass = get_request_status_class($req->status);
+                                            $statusLabel = get_request_status_label($req->status);
+                                        } elseif ($req->is_submitted) {
+                                            $statusClass = 'bg-yellow-100 text-yellow-800'; // Pending/Submitted
+                                            $statusLabel = 'Chờ duyệt';
+                                        } else {
+                                            $statusClass = 'bg-gray-100 text-gray-800';
+                                            $statusLabel = 'Bản nháp';
+                                        }
                                     @endphp
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
                                         {{ $statusLabel }}
@@ -100,7 +107,7 @@
                                         So kết quả
                                     </button>
 
-                                    @if($req->status == 'SUBMITTED')
+                                    @if($req->is_submitted && (!$req->status || $req->status == 'SUBMITTED'))
                                         <span class="text-gray-300">|</span>
                                         <form action="{{ route('buyer.requests.approve', $req->id) }}" method="POST"
                                             class="inline-block"
@@ -278,34 +285,34 @@
                     itemsHtml += '<thead class="bg-gray-50"><tr><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Sản phẩm</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">SL</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Giá dự kiến</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Thành tiền</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">';
                     data.items.forEach(item => {
                         itemsHtml += `<tr>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${item.product ? item.product.product_name : 'N/A'}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${item.quantity}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(item.expected_price)}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 font-medium text-right">${currency.format(item.quantity * item.expected_price)}</td>
-                        </tr>`;
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">${item.product ? item.product.product_name : 'N/A'}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${item.quantity}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(item.expected_price)}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 font-medium text-right">${currency.format(item.quantity * item.expected_price)}</td>
+                            </tr>`;
                     });
                     itemsHtml += '</tbody></table>';
 
                     // --- Category Comparison Table ---
                     let compHtml = '<table class="min-w-full divide-y divide-gray-200 mt-2 border border-gray-200 rounded-lg overflow-hidden">';
                     compHtml += `<thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Nhóm sản phẩm</th>
-                            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Kỳ này (${data.current_period})</th>
-                            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Kỳ trước (${data.previous_period || 'N/A'})</th>
-                            <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Chênh lệch</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">`;
+                            <tr>
+                                <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Nhóm sản phẩm</th>
+                                <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Kỳ này (${data.current_period})</th>
+                                <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Kỳ trước (${data.previous_period || 'N/A'})</th>
+                                <th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Chênh lệch</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">`;
                     data.comparison.forEach(row => {
                         const diffClass = row.diff > 0 ? 'text-red-600' : (row.diff < 0 ? 'text-green-600' : 'text-gray-500');
                         const diffPrefix = row.diff > 0 ? '+' : '';
                         compHtml += `<tr>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${row.category}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">${currency.format(row.current_amount)}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(row.previous_amount)}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm font-bold ${diffClass} text-right">${diffPrefix}${currency.format(row.diff)}</td>
-                        </tr>`;
+                                <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${row.category}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">${currency.format(row.current_amount)}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(row.previous_amount)}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm font-bold ${diffClass} text-right">${diffPrefix}${currency.format(row.diff)}</td>
+                            </tr>`;
                     });
                     compHtml += '</tbody></table>';
 
@@ -317,14 +324,14 @@
                         prevItemsHtml += '<thead class="bg-gray-50"><tr><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase">Sản phẩm</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">SL</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Đơn giá</th><th class="px-3 py-2 text-xs font-medium text-gray-500 uppercase text-right">Thành tiền</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">';
                         data.previous_items.forEach(item => {
                             prevItemsHtml += `<tr>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                    ${item.product_name} 
-                                    <span class="text-xs text-gray-400 block">${item.request_code}</span>
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${item.quantity}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(item.unit_price)}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 font-medium text-right">${currency.format(item.total)}</td>
-                            </tr>`;
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        ${item.product_name} 
+                                        <span class="text-xs text-gray-400 block">${item.request_code}</span>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${item.quantity}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right">${currency.format(item.unit_price)}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 font-medium text-right">${currency.format(item.total)}</td>
+                                </tr>`;
                         });
                         prevItemsHtml += '</tbody></table></div>';
                     } else {
@@ -341,90 +348,90 @@
                         const icon = isOver ? '<i class="fas fa-exclamation-triangle text-red-500 mr-1"></i>' : '';
 
                         budgetHtml = `
-                            <div class="bg-white p-4 rounded-lg border ${isOver ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200'} mb-6">
-                                <h4 class="text-sm font-bold text-gray-800 uppercase mb-3 flex items-center justify-between">
-                                    <span>${icon}Thông tin Ngân sách (${data.current_period})</span>
-                                    <span class="${isOver ? 'text-red-600' : 'text-gray-600'} text-xs font-semibold">
-                                        ${isOver ? 'ĐÃ VƯỢT NGÂN SÁCH' : 'Trong hạn mức'}
-                                    </span>
-                                </h4>
+                                <div class="bg-white p-4 rounded-lg border ${isOver ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200'} mb-6">
+                                    <h4 class="text-sm font-bold text-gray-800 uppercase mb-3 flex items-center justify-between">
+                                        <span>${icon}Thông tin Ngân sách (${data.current_period})</span>
+                                        <span class="${isOver ? 'text-red-600' : 'text-gray-600'} text-xs font-semibold">
+                                            ${isOver ? 'ĐÃ VƯỢT NGÂN SÁCH' : 'Trong hạn mức'}
+                                        </span>
+                                    </h4>
 
-                                <div class="flex justify-between items-end mb-2">
-                                    <div>
-                                        <p class="text-xs text-gray-500">Đã dùng (gồm yêu cầu này)</p>
-                                        <p class="text-xl font-bold ${textColor}">${currency.format(data.accumulated_total)}</p>
+                                    <div class="flex justify-between items-end mb-2">
+                                        <div>
+                                            <p class="text-xs text-gray-500">Đã dùng (gồm yêu cầu này)</p>
+                                            <p class="text-xl font-bold ${textColor}">${currency.format(data.accumulated_total)}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-500">Ngân sách Quý</p>
+                                            <p class="text-xl font-bold text-gray-900">${currency.format(data.budget_limit)}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                                        <div class="${barColor} h-2.5 rounded-full" style="width: ${percent}%"></div>
                                     </div>
                                     <div class="text-right">
-                                        <p class="text-xs text-gray-500">Ngân sách Quý</p>
-                                        <p class="text-xl font-bold text-gray-900">${currency.format(data.budget_limit)}</p>
+                                        <span class="text-xs font-medium ${textColor}">${percent}%</span>
                                     </div>
                                 </div>
-
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-                                    <div class="${barColor} h-2.5 rounded-full" style="width: ${percent}%"></div>
-                                </div>
-                                <div class="text-right">
-                                    <span class="text-xs font-medium ${textColor}">${percent}%</span>
-                                </div>
-                            </div>
-                        `;
+                            `;
                     }
 
                     // --- Rejection Reason Display ---
                     let feedbackHtml = '';
                     if (data.status === 'REJECTED' && data.rejection_reason) {
                         feedbackHtml = `
-                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm leading-5 font-medium text-red-800">
-                                            Yêu cầu này đã bị từ chối
-                                        </h3>
-                                        <div class="mt-1 text-sm leading-5 text-red-700">
-                                            <p class="font-bold">Lý do: ${data.rejection_reason}</p>
+                                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm leading-5 font-medium text-red-800">
+                                                Yêu cầu này đã bị từ chối
+                                            </h3>
+                                            <div class="mt-1 text-sm leading-5 text-red-700">
+                                                <p class="font-bold">Lý do: ${data.rejection_reason}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        `;
+                            `;
                     }
 
                     const html = `
-                        ${budgetHtml}
-                        ${feedbackHtml}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                                <h4 class="text-sm font-bold text-blue-800 uppercase mb-2">Tổng yêu cầu hiện tại</h4>
-                                <p class="text-2xl font-bold text-blue-600">${currency.format(data.current_total)}</p>
-                                <p class="text-xs text-blue-500 mt-1">Khoa: ${data.department}</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h4 class="text-sm font-bold text-gray-700 uppercase mb-2">Tổng kỳ trước (${data.previous_period || 'Không có'})</h4>
-                                <p class="text-2xl font-bold text-gray-800">${currency.format(data.previous_total)}</p>
-                            </div>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm mb-2 border-l-4 border-blue-500 pl-2">So sánh theo Nhóm sản phẩm</h4>
-                                ${compHtml}
-                            </div>
-
-                            <div>
-                                <div class="flex justify-between items-center bg-gray-100 p-3 rounded-t-lg">
-                                    <h4 class="font-bold text-gray-800 text-sm">Chi tiết hàng hóa yêu cầu (${data.current_period})</h4>
+                            ${budgetHtml}
+                            ${feedbackHtml}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <h4 class="text-sm font-bold text-blue-800 uppercase mb-2">Tổng yêu cầu hiện tại</h4>
+                                    <p class="text-2xl font-bold text-blue-600">${currency.format(data.current_total)}</p>
+                                    <p class="text-xs text-blue-500 mt-1">Khoa: ${data.department}</p>
                                 </div>
-                                ${itemsHtml}
+                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <h4 class="text-sm font-bold text-gray-700 uppercase mb-2">Tổng kỳ trước (${data.previous_period || 'Không có'})</h4>
+                                    <p class="text-2xl font-bold text-gray-800">${currency.format(data.previous_total)}</p>
+                                </div>
                             </div>
 
-                            ${prevItemsHtml}
-                        </div>
-                    `;
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm mb-2 border-l-4 border-blue-500 pl-2">So sánh theo Nhóm sản phẩm</h4>
+                                    ${compHtml}
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-t-lg">
+                                        <h4 class="font-bold text-gray-800 text-sm">Chi tiết hàng hóa yêu cầu (${data.current_period})</h4>
+                                    </div>
+                                    ${itemsHtml}
+                                </div>
+
+                                ${prevItemsHtml}
+                            </div>
+                        `;
                     content.innerHTML = html;
                 })
                 .catch(err => {

@@ -11,9 +11,8 @@ class ProductCatalogController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with('category')->where('is_delete', false)->whereNotNull('category_id');
+        $query = Product::with('category')->where('is_delete', false);
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -22,15 +21,36 @@ class ProductCatalogController extends Controller
             });
         }
 
-        // Filter by Category
         if ($request->filled('category_id') && $request->category_id != 'all') {
             $query->where('category_id', $request->category_id);
         }
 
         $products = $query->paginate(4)->withQueryString();
-        $categories = ProductCategory::all();
 
-        return view('department.products.index', compact('products', 'categories'));
+        // Sidebar data: Categories with product counts
+        $categories = ProductCategory::withCount([
+            'products' => function ($q) {
+                $q->where('is_delete', false);
+            }
+        ])->where('is_delete', false)->get();
+
+        // Cart count for header/stats
+        $cartCount = 0;
+        $user = auth()->user();
+        if ($user) {
+            $currentPeriod = date('Y') . '_' . ceil(date('n') / 3);
+            $draftRequest = \App\Models\PurchaseRequest::where('department_id', $user->department_id)
+                ->where('is_submitted', false)
+                ->where('is_delete', false)
+                ->where('period', $currentPeriod)
+                ->first();
+
+            if ($draftRequest) {
+                $cartCount = $draftRequest->items()->where('is_delete', false)->count();
+            }
+        }
+
+        return view('department.products.index', compact('products', 'categories', 'cartCount'));
     }
     public function show($id)
     {

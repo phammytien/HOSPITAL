@@ -124,7 +124,7 @@
                             <span class="font-medium text-sm">Yêu cầu mua hàng</span>
                             @php
                                 $pendingCount = \App\Models\PurchaseRequest::where('department_id', Auth::user()->department_id)
-                                    ->whereIn('status', ['SUBMITTED', 'PROCESSING'])
+                                    ->whereIn('status', ['SUBMITTED'])
                                     ->where('is_delete', false)
                                     ->count();
                             @endphp
@@ -147,7 +147,13 @@
                         <a href="{{ route('department.products.index') }}"
                             class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.products.index') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-box-open w-5 text-sm"></i>
-                            <span class="font-medium text-sm">Danh mục sản phẩm</span>
+                            <span class="font-medium text-sm">Sản phẩm</span>
+                        </a>
+
+                        <a href="{{ route('department.proposals.index') }}"
+                            class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.proposals.*') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-lightbulb w-5 text-sm"></i>
+                            <span class="font-medium text-sm">Đề xuất sản phẩm</span>
                         </a>
 
                         <a href="{{ route('department.inventory.index') }}"

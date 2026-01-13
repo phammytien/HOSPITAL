@@ -216,6 +216,12 @@
                         <span class="ml-3">Nhà cung cấp</span>
                     </a>
 
+                    <a href="{{ route('admin.proposals.index') }}" 
+                       class="sidebar-link flex items-center px-6 py-3 text-gray-700 {{ request()->routeIs('admin.proposals*') ? 'active' : '' }}">
+                        <i class="fas fa-lightbulb w-5 text-gray-500"></i>
+                        <span class="ml-3">Đề xuất sản phẩm</span>
+                    </a>
+
                     <a href="{{ route('admin.inventory') }}" 
                        class="sidebar-link flex items-center px-6 py-3 text-gray-700 {{ request()->routeIs('admin.inventory*') ? 'active' : '' }}">
                         <i class="fas fa-warehouse w-5 text-gray-500"></i>

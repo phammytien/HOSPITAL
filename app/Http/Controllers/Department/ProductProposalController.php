@@ -3,86 +3,66 @@
 namespace App\Http\Controllers\Department;
 
 use App\Http\Controllers\Controller;
+use App\Models\ProductProposal;
 use Illuminate\Http\Request;
-use App\Models\Product;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ProductProposalController extends Controller
 {
+    public function index()
+    {
+        $proposals = ProductProposal::with(['department', 'createdBy', 'buyer'])
+            ->where('department_id', Auth::user()->department_id)
+            ->notDeleted()
+            ->latest()
+            ->paginate(15);
+
+        return view('department.proposals.index', compact('proposals'));
+    }
+
+    public function create()
+    {
+        return view('department.proposals.create');
+    }
+
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'product_name' => 'required|string|max:255',
-            'unit' => 'required|string|max:50',
-            'unit_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 
-        $user = auth()->user();
-        // Generate temporary code: SUG_{timestamp}_{department_id}
-        $tempCode = 'SUG_' . time() . '_' . ($user->department_id ?? '0');
-
-        Product::create([
-            'product_code' => $tempCode,
-            'product_name' => $request->product_name,
-            'category_id' => null, // Pending category
-            'unit' => $request->unit,
-            'unit_price' => $request->unit_price ?? 0,
-            'stock_quantity' => 0,
-            'description' => '(Đề xuất bởi ' . ($user->full_name ?? 'User') . ') ' . $request->description,
-            'is_delete' => 0
+        $proposal = ProductProposal::create([
+            'product_name' => $validated['product_name'],
+            'description' => $validated['description'],
+            'department_id' => Auth::user()->department_id,
+            'created_by' => Auth::id(),
+            'status' => 'PENDING',
         ]);
 
-        return redirect()->back()->with('success', 'Đã gửi đề xuất sản phẩm thành công!');
+        return redirect()->route('department.proposals.index')
+            ->with('success', 'Đề xuất sản phẩm đã được tạo thành công!');
     }
 
-    public function import(Request $request)
+    public function show($id)
     {
-        $request->validate([
-            'file' => 'required|file',
+        $proposal = ProductProposal::with(['category', 'supplier', 'department', 'createdBy', 'buyer', 'approver', 'primaryImage'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'id' => $proposal->id,
+            'product_name' => $proposal->product_name,
+            'description' => $proposal->description,
+            'product_code' => $proposal->product_code,
+            'category' => $proposal->category,
+            'unit' => $proposal->unit,
+            'unit_price' => $proposal->unit_price,
+            'supplier' => $proposal->supplier,
+            'image' => $proposal->primaryImage ? $proposal->primaryImage->file_name : null,
+            'status' => $proposal->status,
+            'status_label' => get_status_label($proposal->status),
+            'status_class' => get_status_class($proposal->status),
+            'rejection_reason' => $proposal->rejection_reason,
         ]);
-
-        $file = $request->file('file');
-        $user = auth()->user();
-        $deptId = $user->department_id ?? '0';
-
-        try {
-            $handle = fopen($file->getPathname(), 'r');
-            $header = fgetcsv($handle); // Skip header
-
-            DB::beginTransaction();
-            while (($row = fgetcsv($handle)) !== false) {
-                // Expected CSV format: Name, Unit, Price, Description
-                if (count($row) < 2)
-                    continue;
-
-                $name = $row[0] ?? 'Sản phẩm mới';
-                $unit = $row[1] ?? 'Cái';
-                $price = isset($row[2]) ? (float) preg_replace('/[^0-9.]/', '', $row[2]) : 0;
-                $desc = $row[3] ?? '';
-
-                $tempCode = 'SUG_' . uniqid() . '_' . $deptId;
-
-                Product::create([
-                    'product_code' => $tempCode,
-                    'product_name' => $name,
-                    'category_id' => null,
-                    'unit' => $unit,
-                    'unit_price' => $price,
-                    'stock_quantity' => 0,
-                    'description' => "(Import đề xuất) " . $desc,
-                    'is_delete' => 0
-                ]);
-            }
-            DB::commit();
-            fclose($handle);
-
-            return redirect()->back()->with('success', 'Đã import đề xuất sản phẩm thành công!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($e);
-            return redirect()->back()->with('error', 'Lỗi khi import file: ' . $e->getMessage());
-        }
     }
 }

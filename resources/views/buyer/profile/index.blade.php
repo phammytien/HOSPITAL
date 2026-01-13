@@ -5,6 +5,25 @@
 @section('content')
     <div class="max-w-6xl mx-auto space-y-6">
 
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                    <p class="text-green-700 font-medium">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                    <p class="text-red-700 font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Header / Banner -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="h-32 bg-gradient-to-r from-blue-500 to-blue-300"></div>
@@ -94,27 +113,30 @@
                 <!-- Work Scope -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">Phạm vi công việc</h3>
-                    <div class="flex gap-4">
-                        <div class="flex-1 bg-blue-50 p-3 rounded-lg text-center">
-                            <h4 class="text-2xl font-bold text-blue-600">--</h4>
-                            <p class="text-[10px] uppercase font-bold text-blue-400">Đơn hàng</p>
+                    <div class="flex gap-4 mb-6">
+                        <div class="flex-1 text-center">
+                            <h4 class="text-3xl font-bold text-blue-600">{{ $workScope['total_requests'] ?? 0 }}</h4>
+                            <p class="text-xs uppercase font-bold text-blue-400 mt-1">Yêu cầu</p>
                         </div>
-                        <div class="flex-1 bg-purple-50 p-3 rounded-lg text-center">
-                            <h4 class="text-2xl font-bold text-purple-600">--%</h4>
-                            <p class="text-[10px] uppercase font-bold text-purple-400">Hoàn thành</p>
+                        <div class="flex-1 text-center">
+                            @php
+                                $totalReqs = $workScope['total_requests'] ?? 1;
+                                $completedReqs = $totalReqs - ($workScope['pending_requests'] ?? 0);
+                                $percentage = $totalReqs > 0 ? round(($completedReqs / $totalReqs) * 100) : 0;
+                            @endphp
+                            <h4 class="text-3xl font-bold text-purple-600">{{ $percentage }}%</h4>
+                            <p class="text-xs uppercase font-bold text-purple-400 mt-1">Hiệu suất</p>
                         </div>
                     </div>
 
-                    <h4 class="text-sm font-bold text-gray-700 mt-6 mb-3">Quyền hạn hệ thống</h4>
+                    <h4 class="text-sm font-bold text-gray-700 mb-3">Quyền hạn hệ thống</h4>
                     <ul class="space-y-2">
+                        @foreach($workScope['permissions'] ?? [] as $permission)
                         <li class="flex items-start text-sm text-gray-600">
                             <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
-                            Xử lý yêu cầu mua hàng
+                            {{ $permission }}
                         </li>
-                        <li class="flex items-start text-sm text-gray-600">
-                            <i class="fas fa-check-circle text-green-500 mt-1 mr-2"></i>
-                            Theo dõi & Quản lý đơn hàng
-                        </li>
+                        @endforeach
                     </ul>
                 </div>
             </div>
@@ -152,34 +174,77 @@
 
     <!-- Change Password Modal -->
     <div id="changePassModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Đổi mật khẩu</h3>
-            <form action="{{ route('buyer.profile.password') }}" method="POST" autocomplete="off">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden">
+            <!-- Header with gradient -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+                <h3 class="text-2xl font-bold text-white flex items-center">
+                    <i class="fas fa-key mr-3 text-xl"></i> Đổi mật khẩu
+                </h3>
+                <p class="text-blue-100 text-sm mt-1">Vui lòng nhập thông tin để thay đổi mật khẩu</p>
+            </div>
+            
+            <form action="{{ route('buyer.profile.password') }}" method="POST" autocomplete="off" class="p-8">
                 @csrf
-                <div class="space-y-4">
+                <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-lock text-gray-400 mr-2"></i>Mật khẩu hiện tại
+                        </label>
                         <input type="password" name="current_password" required
-                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('current_password') border-red-500 @enderror"
+                            placeholder="Nhập mật khẩu hiện tại">
+                        @error('current_password')
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-key text-gray-400 mr-2"></i>Mật khẩu mới
+                        </label>
                         <input type="password" name="new_password" required
-                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('new_password') border-red-500 @enderror"
+                            placeholder="Nhập mật khẩu mới">
+                        @error('new_password')
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                        @enderror
+                        <p class="mt-2 text-xs text-gray-500 flex items-center">
+                            <i class="fas fa-info-circle mr-1"></i>Tối thiểu 6 ký tự
+                        </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-check-circle text-gray-400 mr-2"></i>Xác nhận mật khẩu mới
+                        </label>
                         <input type="password" name="new_password_confirmation" required
-                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            placeholder="Nhập lại mật khẩu mới">
                     </div>
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
+                <div class="mt-8 flex justify-end gap-3">
                     <button type="button" onclick="document.getElementById('changePassModal').classList.add('hidden')"
-                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Đổi mật
-                        khẩu</button>
+                        class="px-8 py-3 text-gray-600 hover:bg-gray-100 rounded-xl font-medium transition text-base">Hủy</button>
+                    <button type="submit" class="px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 font-medium transition shadow-lg hover:shadow-xl text-base">
+                        <i class="fas fa-check mr-2"></i>Đổi mật khẩu
+                    </button>
                 </div>
             </form>
         </div>
     </div>
+
+    <script>
+        // Auto-hide success/error messages after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"]');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Close modal if password change was successful
+        @if(session('success') && str_contains(session('success'), 'mật khẩu'))
+            document.getElementById('changePassModal').classList.add('hidden');
+        @endif
+    </script>
 @endsection

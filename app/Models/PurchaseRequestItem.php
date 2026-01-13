@@ -16,6 +16,7 @@ class PurchaseRequestItem extends Model
         'quantity',
         'expected_price',
         'reason',
+        'is_submitted',
         'is_delete',
     ];
 

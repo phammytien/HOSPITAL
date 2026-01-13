@@ -50,7 +50,7 @@ class PurchaseOrderController extends Controller
         $stats = [
             'total' => PurchaseOrder::where('is_delete', false)->count(),
             'pending' => PurchaseOrder::where('is_delete', false)->where('status', 'PENDING')->count(),
-            'processing' => PurchaseOrder::where('is_delete', false)->where('status', 'PROCESSING')->count(),
+
             'completed' => PurchaseOrder::where('is_delete', false)->where('status', 'COMPLETED')->count(),
             'cancelled' => PurchaseOrder::where('is_delete', false)->where('status', 'CANCELLED')->count(),
         ];
@@ -86,13 +86,13 @@ class PurchaseOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:PENDING,APPROVED,PROCESSING,DELIVERED,PAID,COMPLETED,CANCELLED',
+            'status' => 'required|in:PENDING,APPROVED,DELIVERED,COMPLETED,CANCELLED',
             'note' => 'nullable|string'
         ]);
 
         try {
             $order = PurchaseOrder::where('is_delete', false)->findOrFail($id);
-            
+
             $order->update([
                 'status' => $validated['status'],
                 'admin_note' => $validated['note'] ?? $order->admin_note

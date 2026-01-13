@@ -18,6 +18,7 @@ class PurchaseRequestController extends Controller
     public function index(Request $request)
     {
         $query = PurchaseRequest::with(['department', 'requester', 'purchaseOrder'])
+            ->where('is_submitted', true) // Added: Only show submitted requests
             ->orderBy('created_at', 'desc');
 
         if ($request->has('department_id') && $request->department_id != '') {
@@ -25,7 +26,13 @@ class PurchaseRequestController extends Controller
         }
 
         if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+            if ($request->status == 'SUBMITTED') {
+                $query->where(function ($q) {
+                    $q->where('status', 'PENDING')->orWhere('status', 'SUBMITTED')->orWhereNull('status');
+                });
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         if ($request->has('period') && $request->period != '') {
@@ -55,22 +62,21 @@ class PurchaseRequestController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:SUBMITTED,APPROVED,REJECTED,PROCESSING,PAID,COMPLETED,CANCELLED',
+            'status' => 'required|in:APPROVED,REJECTED,COMPLETED,CANCELLED',
             'note' => 'nullable|string',
             'rejection_reason' => 'nullable|string|required_if:status,REJECTED'
         ]);
 
         $purchaseRequest = PurchaseRequest::findOrFail($id);
-        $oldStatus = $purchaseRequest->status;
+        // Treat null status as SUBMITTED if is_submitted is true
+        $oldStatus = $purchaseRequest->status ?: ($purchaseRequest->is_submitted ? 'SUBMITTED' : 'DRAFT');
         $newStatus = $request->status;
 
         // Strict Status Transitions
         $validTransitions = [
             'SUBMITTED' => ['APPROVED', 'REJECTED'],
-            'APPROVED' => ['PROCESSING'],
-            'PROCESSING' => ['PAID', 'COMPLETED'],
+            'APPROVED' => ['COMPLETED'],
             'REJECTED' => [],
-            'PAID' => [],
             'COMPLETED' => [],
             'CANCELLED' => [],
         ];
@@ -90,37 +96,7 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->note = $request->note ?? $purchaseRequest->note; // Optional: update note
             $purchaseRequest->save();
 
-            // Auto-create Purchase Order if status is PROCESSING
-            if ($newStatus == 'PROCESSING' && !$purchaseRequest->purchaseOrder) {
-                $totalAmount = $purchaseRequest->items->sum(function ($item) {
-                    return $item->quantity * $item->expected_price;
-                });
 
-                $orderCode = 'PO_' . now()->format('Ymd') . '_' . $purchaseRequest->id;
-
-                $purchaseOrder = \App\Models\PurchaseOrder::create([
-                    'order_code' => $orderCode,
-                    'purchase_request_id' => $purchaseRequest->id,
-                    'department_id' => $purchaseRequest->department_id,
-                    'approved_by' => auth()->id(),
-                    'order_date' => now(),
-                    // expected_delivery_date will be updated later by Buyer
-                    'total_amount' => $totalAmount,
-                    'status' => 'CREATED', // Initial status for Order
-                    'is_delete' => 0
-                ]);
-
-                // Create Order Items
-                foreach ($purchaseRequest->items as $item) {
-                    \App\Models\PurchaseOrderItem::create([
-                        'purchase_order_id' => $purchaseOrder->id,
-                        'product_id' => $item->product_id,
-                        'quantity' => $item->quantity,
-                        'unit_price' => $item->expected_price,
-                        'is_delete' => 0
-                    ]);
-                }
-            }
 
             // Log Workflow
             PurchaseRequestWorkflow::create([
@@ -152,12 +128,13 @@ class PurchaseRequestController extends Controller
     {
         $purchaseRequest = PurchaseRequest::findOrFail($id);
 
-        if ($purchaseRequest->status !== 'SUBMITTED') {
-            return redirect()->back()->with('error', 'Only submitted requests can be approved.');
+        // Check if submitted and not already processed (status is null)
+        if (!$purchaseRequest->is_submitted || $purchaseRequest->status) {
+            return redirect()->back()->with('error', 'Only submitted (pending) requests can be approved.');
         }
 
         DB::transaction(function () use ($purchaseRequest) {
-            $oldStatus = $purchaseRequest->status;
+            $oldStatus = 'SUBMITTED'; // Since we checked it's submitted and status is null
 
             // Update Request Status
             $purchaseRequest->status = 'APPROVED';
@@ -239,12 +216,13 @@ class PurchaseRequestController extends Controller
 
         $purchaseRequest = PurchaseRequest::findOrFail($id);
 
-        if ($purchaseRequest->status !== 'SUBMITTED') {
-            return redirect()->back()->with('error', 'Only submitted requests can be rejected.');
+        // Check if submitted and not already processed
+        if (!$purchaseRequest->is_submitted || $purchaseRequest->status) {
+            return redirect()->back()->with('error', 'Only submitted (pending) requests can be rejected.');
         }
 
         DB::transaction(function () use ($purchaseRequest, $request) {
-            $oldStatus = $purchaseRequest->status;
+            $oldStatus = 'SUBMITTED';
 
             $purchaseRequest->status = 'REJECTED';
             $purchaseRequest->save();

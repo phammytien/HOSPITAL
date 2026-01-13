@@ -81,14 +81,19 @@
                                 <!-- Simple progress indicator or just count of items delivered? -->
                                 @php
                                     $totalItems = $order->items_count ?? $order->items->count();
-                                    $deliveredItems = $order->items->whereIn('status', ['DELIVERED', 'COMPLETED', 'PAID'])->count();
+                                    // If order is COMPLETED, all items are considered delivered
+                                    if (in_array($order->status, ['COMPLETED', 'DELIVERED'])) {
+                                        $deliveredItems = $totalItems;
+                                    } else {
+                                        $deliveredItems = $order->items->whereIn('status', ['DELIVERED', 'COMPLETED'])->count();
+                                    }
                                 @endphp
                                 {{ $deliveredItems }}/{{ $totalItems }} sản phẩm về kho
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <a href="{{ route('buyer.tracking.show', $order->id) }}"
                                     class="text-blue-600 hover:text-blue-900 text-sm font-medium flex items-center justify-end gap-1">
-                                    @if(in_array($order->status, ['COMPLETED', 'PAID', 'CANCELLED']))
+                                    @if(in_array($order->status, ['COMPLETED', 'CANCELLED']))
                                         <i class="fas fa-eye"></i> Xem chi tiết
                                     @else
                                         <i class="fas fa-truck-loading"></i> Cập nhật

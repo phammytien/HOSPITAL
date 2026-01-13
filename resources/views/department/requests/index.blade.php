@@ -30,6 +30,10 @@
                             class="px-4 py-2 rounded-lg {{ request('status') == 'CANCELLED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Đã hủy
                         </a>
+                        <a href="{{ route($baseRoute, ['status' => 'REJECTED']) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'REJECTED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                            Đã từ chối
+                        </a>
                     @else
                         {{-- Tabs for Active Requests --}}
                         <a href="{{ route($baseRoute, ['status' => 'DRAFT']) }}"
@@ -38,7 +42,7 @@
                         </a>
                         <a href="{{ route($baseRoute, ['status' => 'SUBMITTED']) }}"
                             class="px-4 py-2 rounded-lg {{ request('status') == 'SUBMITTED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            Mới
+                            Đã gửi
                         </a>
                         <a href="{{ route($baseRoute, ['status' => 'APPROVED']) }}"
                             class="px-4 py-2 rounded-lg {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
@@ -119,9 +123,18 @@
                                     <p class="font-semibold text-gray-900">{{ number_format($total, 0, ',', '.') }} đ</p>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span
-                                        class="px-3 py-1 rounded-full text-xs font-semibold {{ get_request_status_class($request->status) }}">
-                                        {{ get_request_status_label($request->status) }}
+                                    @php
+                                        $statusLabel = $request->status ? get_request_status_label($request->status) : ($request->is_submitted ? 'Đã gửi' : 'Bản nháp');
+
+                                        $statusClass = 'bg-gray-100 text-gray-800'; // Default draft
+                                        if ($request->status) {
+                                            $statusClass = get_request_status_class($request->status);
+                                        } elseif ($request->is_submitted) {
+                                            $statusClass = 'bg-yellow-100 text-yellow-800'; // 'Submitted' style
+                                        }
+                                    @endphp
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
+                                        {{ $statusLabel }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
@@ -134,7 +147,7 @@
                                             class="text-gray-400 hover:text-blue-600" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @if($request->status == 'DRAFT')
+                                        @if(!$request->is_submitted)
                                             <a href="{{ route('department.requests.edit', $request->id) }}"
                                                 class="text-gray-400 hover:text-green-600" title="Chỉnh sửa">
                                                 <i class="fas fa-edit"></i>
@@ -148,7 +161,7 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
-                                        @elseif($request->status == 'SUBMITTED')
+                                        @elseif($request->is_submitted && !$request->status)
                                             <form action="{{ route('department.requests.withdraw', $request->id) }}" method="POST"
                                                 class="inline-block"
                                                 onsubmit="return confirm('Bạn muốn rút yêu cầu này về nháp để chỉnh sửa?');">

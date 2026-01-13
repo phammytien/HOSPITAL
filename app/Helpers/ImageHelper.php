@@ -21,16 +21,21 @@ if (!function_exists('getProductImage')) {
             if (filter_var($file->file_path, FILTER_VALIDATE_URL)) {
                 return $file->file_path;
             }
-            
-            // Construct storage URL with cache-busting timestamp
-            $url = asset('storage/' . $file->file_path);
-            
+
+            // Check if path starts with 'images/' (Legacy/Public path from Proposals)
+            if (str_starts_with($file->file_path, 'images/')) {
+                $url = asset($file->file_path);
+            } else {
+                // Default to storage path (Admin Code)
+                $url = asset('storage/' . $file->file_path);
+            }
+
             // Add timestamp to prevent browser caching when image is updated
             if ($file->uploaded_at) {
                 $timestamp = strtotime($file->uploaded_at);
                 $url .= '?t=' . $timestamp;
             }
-            
+
             return $url;
         }
 
@@ -55,6 +60,8 @@ if (!function_exists('getProductImages')) {
             ->map(function ($file) {
                 if (filter_var($file->file_path, FILTER_VALIDATE_URL)) {
                     $file->url = $file->file_path;
+                } elseif (str_starts_with($file->file_path, 'images/')) {
+                    $file->url = asset($file->file_path);
                 } else {
                     $file->url = asset('storage/' . $file->file_path);
                 }
@@ -79,27 +86,27 @@ if (!function_exists('uploadProductImage')) {
             $originalName = $file->getClientOriginalName();
             $mimeType = $file->getMimeType();
             $filename = $file->hashName();
-            
+
             // Save DIRECTLY to public/storage/products (no symlink needed!)
             $destinationPath = public_path('storage/products');
-            
+
             // Create directory if it doesn't exist
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0755, true);
             }
-            
+
             // Move uploaded file to public directory
             $file->move($destinationPath, $filename);
-            
+
             // Store relative path (just "products/filename.jpg")
             $path = 'products/' . $filename;
-            
+
             \Log::info('Image uploaded successfully', [
                 'filename' => $filename,
                 'path' => $path,
                 'original_name' => $originalName
             ]);
-            
+
             // Create file record in database
             return \App\Models\File::create([
                 'file_name' => $originalName,

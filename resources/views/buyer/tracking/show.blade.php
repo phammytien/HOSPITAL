@@ -24,9 +24,14 @@
                             class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
                         <button type="submit" name="status" value="ORDERED"
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center">
-                            <i class="fas fa-shopping-cart mr-2"></i> Xác nhận Đặt hàng
+                            <i class="fas fa-clock mr-2"></i> Xác nhận / Chờ xử lý
                         </button>
                     </div>
+                @elseif($order->status == 'PENDING')
+                    <button type="submit" name="status" value="ORDERED"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center">
+                        <i class="fas fa-shopping-cart mr-2"></i> Xác nhận Đặt hàng
+                    </button>
                 @elseif($order->status == 'ORDERED')
                     <button type="submit" name="status" value="DELIVERING"
                         class="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition shadow-sm flex items-center">
@@ -84,6 +89,8 @@
                         $date = null;
                         if ($key == 'CREATED')
                             $date = $order->created_at;
+                        elseif ($key == 'PENDING')
+                             $date = $order->updated_at; // Or updated_at since pending doesn't have a specific timestamp column yet
                         elseif ($key == 'ORDERED')
                             $date = $order->ordered_at;
                         elseif ($key == 'DELIVERING')

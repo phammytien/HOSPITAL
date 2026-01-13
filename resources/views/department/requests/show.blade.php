@@ -13,29 +13,34 @@
         </a>
         
         <div class="flex items-center space-x-3">
-            @if($request->status == 'DRAFT')
+            @if(!$request->is_submitted)
+            {{-- DRAFT STATUS --}}
             <form action="{{ route('department.requests.submit', $request->id) }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" 
                         onclick="return confirm('Bạn có chắc muốn gửi yêu cầu này để duyệt?')"
-                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition shadow-sm hover:shadow-md">
                     <i class="fas fa-paper-plane mr-2"></i> Gửi duyệt
                 </button>
             </form>
             <a href="{{ route('department.requests.edit', $request->id) }}" 
-               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm hover:shadow-md">
                 <i class="fas fa-edit mr-2"></i> Chỉnh sửa
             </a>
-            @elseif($request->status == 'SUBMITTED')
+            
+            @elseif($request->is_submitted && !$request->status)
+            {{-- SUBMITTED / PENDING STATUS --}}
             <form action="{{ route('department.requests.withdraw', $request->id) }}" method="POST" class="inline" onsubmit="return confirm('Bạn muốn rút yêu cầu này về nháp để chỉnh sửa?');">
                 @csrf
-                <button type="submit" class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                <button type="submit" class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition shadow-sm hover:shadow-md">
                     <i class="fas fa-undo mr-2"></i> Rút yêu cầu
                 </button>
             </form>
+
             @elseif($request->status == 'REJECTED')
+             {{-- REJECTED STATUS --}}
             <a href="{{ route('department.requests.edit', $request->id) }}" 
-               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+               class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm hover:shadow-md">
                 <i class="fas fa-redo mr-2"></i> Yêu cầu làm lại
             </a>
             @endif
@@ -47,23 +52,23 @@
     </div>
     
     <!-- Status Banner -->
-    <div class="bg-white rounded-xl p-6 border-l-4 
-        @if($request->status == 'DRAFT') border-gray-400 bg-gray-50
-        @elseif($request->status == 'SUBMITTED') border-blue-400 bg-blue-50
+    <div class="bg-white rounded-xl p-6 border-l-4 shadow-sm
+        @if(!$request->is_submitted) border-gray-400 bg-gray-50
+        @elseif($request->is_submitted && !$request->status) border-blue-400 bg-blue-50
         @elseif($request->status == 'APPROVED') border-green-400 bg-green-50
         @elseif($request->status == 'REJECTED') border-red-400 bg-red-50
         @endif">
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-lg font-bold 
-                    @if($request->status == 'DRAFT') text-gray-900
-                    @elseif($request->status == 'SUBMITTED') text-blue-900
+                    @if(!$request->is_submitted) text-gray-900
+                    @elseif($request->is_submitted && !$request->status) text-blue-900
                     @elseif($request->status == 'APPROVED') text-green-900
                     @elseif($request->status == 'REJECTED') text-red-900
                     @endif">
-                    @if($request->status == 'DRAFT')
+                    @if(!$request->is_submitted)
                         <i class="fas fa-file-alt mr-2"></i> Yêu cầu đang ở trạng thái nháp
-                    @elseif($request->status == 'SUBMITTED')
+                    @elseif($request->is_submitted && !$request->status)
                         <i class="fas fa-clock mr-2"></i> Yêu cầu đang chờ phê duyệt
                     @elseif($request->status == 'APPROVED')
                         <i class="fas fa-check-circle mr-2"></i> Yêu cầu đã được phê duyệt
@@ -72,8 +77,8 @@
                     @endif
                 </h3>
                 <p class="text-sm mt-1
-                    @if($request->status == 'DRAFT') text-gray-600
-                    @elseif($request->status == 'SUBMITTED') text-blue-600
+                    @if(!$request->is_submitted) text-gray-600
+                    @elseif($request->is_submitted && !$request->status) text-blue-600
                     @elseif($request->status == 'APPROVED') text-green-600
                     @elseif($request->status == 'REJECTED') text-red-600
                     @endif">
@@ -81,14 +86,15 @@
                     Ngày tạo: {{ $request->created_at ? $request->created_at->format('d/m/Y H:i') : 'N/A' }}
                 </p>
             </div>
-            @if($request->status == 'DRAFT')
-            <span class="badge badge-draft text-lg px-6 py-2">Nháp</span>
-            @elseif($request->status == 'SUBMITTED')
-            <span class="badge badge-submitted text-lg px-6 py-2">Chờ duyệt</span>
+            
+            @if(!$request->is_submitted)
+                <span class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-bold">Nháp</span>
+            @elseif($request->is_submitted && !$request->status)
+                <span class="px-4 py-2 rounded-lg bg-blue-200 text-blue-800 font-bold">Chờ duyệt</span>
             @elseif($request->status == 'APPROVED')
-            <span class="badge badge-approved text-lg px-6 py-2">Đã duyệt</span>
+                <span class="px-4 py-2 rounded-lg bg-green-200 text-green-800 font-bold">Đã duyệt</span>
             @elseif($request->status == 'REJECTED')
-            <span class="badge badge-rejected text-lg px-6 py-2">Từ chối</span>
+                <span class="px-4 py-2 rounded-lg bg-red-200 text-red-800 font-bold">Từ chối</span>
             @endif
         </div>
     </div>

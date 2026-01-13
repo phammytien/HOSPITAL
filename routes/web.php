@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 
+use App\Http\Controllers\Department\DepartmentProfileController;
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -95,6 +97,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/permissions/users/{userId}/toggle-status', [App\Http\Controllers\Admin\PermissionController::class, 'toggleUserStatus'])->name('permissions.toggle-status');
         Route::get('/permissions/role-info/{role}', [App\Http\Controllers\Admin\PermissionController::class, 'getRoleInfo'])->name('permissions.role-info');
 
+        // Product Proposals
+        Route::prefix('proposals')->name('proposals.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ProductProposalController::class, 'index'])->name('index');
+            Route::post('/{id}/approve', [\App\Http\Controllers\Admin\ProductProposalController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [\App\Http\Controllers\Admin\ProductProposalController::class, 'reject'])->name('reject');
+        });
+
         // Settings
         Route::get('/settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'index'])->name('settings');
 
@@ -135,6 +144,15 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/{id}/update-status', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'updateStatus'])->name('update-status');
             Route::get('/{id}/compare', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'compare'])->name('compare');
             Route::get('/{id}', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'show'])->name('show');
+        });
+
+        // Buyer Product Proposals
+        Route::group(['prefix' => 'buyer/proposals', 'as' => 'buyer.proposals.'], function () {
+            Route::get('/', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'index'])->name('index');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'update'])->name('update');
+            Route::post('/{id}/submit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'submit'])->name('submit');
+            Route::post('/{id}/reject', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'reject'])->name('reject');
         });
 
         // Buyer Notifications
@@ -214,17 +232,20 @@ Route::middleware(['auth'])->group(function () {
             // Order Management
             Route::group(['prefix' => 'orders', 'as' => 'dept_orders.'], function () {
                 Route::get('/', [\App\Http\Controllers\Department\OrderController::class, 'index'])->name('index');
+                Route::get('/{id}', [\App\Http\Controllers\Department\OrderController::class, 'show'])->name('show');
                 Route::post('/{id}/confirm', [\App\Http\Controllers\Department\OrderController::class, 'confirm'])->name('confirm');
                 Route::post('/{id}/reject', [\App\Http\Controllers\Department\OrderController::class, 'reject'])->name('reject');
             });
 
-            // Profile
-            Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
-            Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
-            Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
+            // // Profile
+            // Route::get('/profile', [DepartmentProfileController::class, 'index'])->name('profile.index');
+            // Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
+            // Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
 
 
             // Purchase Requests
+            Route::post('requests/add-item', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'addToDraft'])->name('requests.add_item');
+            Route::post('requests/add-items-batch', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'addItemsBatch'])->name('requests.add_items_batch');
             Route::get('requests/history', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'history'])->name('requests.history');
             Route::resource('requests', \App\Http\Controllers\Department\PurchaseRequestController::class);
             Route::post('requests/{id}/submit', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'submit'])->name('requests.submit');
@@ -235,13 +256,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
             Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
 
-            Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
-            Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
+            // Product Proposals
+            Route::prefix('proposals')->name('proposals.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Department\ProductProposalController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Department\ProductProposalController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('store');
+                Route::get('/{id}', [\App\Http\Controllers\Department\ProductProposalController::class, 'show'])->name('show');
+            });
 
-            // // Profile
-            // Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
-            // Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
-            // Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
+            // Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
+            // Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');
+
+            // Profile
+            Route::get('/profile', [\App\Http\Controllers\Department\ProfileController::class, 'index'])->name('profile.index');
+            Route::post('/profile/update', [\App\Http\Controllers\Department\ProfileController::class, 'update'])->name('profile.update');
+            Route::post('/profile/password', [\App\Http\Controllers\Department\ProfileController::class, 'changePassword'])->name('profile.password');
         });
     });
 

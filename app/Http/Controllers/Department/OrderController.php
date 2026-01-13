@@ -20,12 +20,30 @@ class OrderController extends Controller
             ->where('department_id', $departmentId) // Filter by Department
             ->where('is_delete', 0)
             ->when(request('status') && request('status') != 'all', function ($query) {
-                return $query->where('status', request('status'));
+                $status = request('status');
+                if ($status == 'processing') {
+                    return $query->whereIn('status', ['ORDERED', 'DELIVERING']);
+                } elseif ($status == 'action_required') {
+                    return $query->where('status', 'DELIVERED');
+                } elseif ($status == 'history') {
+                    return $query->whereIn('status', ['COMPLETED', 'REJECTED', 'CANCELLED']);
+                } else {
+                    return $query->where('status', $status);
+                }
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return view('department.orders.index', compact('orders'));
+    }
+
+    public function show($id)
+    {
+        $order = PurchaseOrder::with(['items.product', 'purchaseRequest.requester', 'purchaseRequest.department'])
+            ->where('department_id', auth()->user()->department_id)
+            ->findOrFail($id);
+
+        return view('department.orders.show', compact('order'));
     }
 
     public function confirm(Request $request, $id)
@@ -47,7 +65,7 @@ class OrderController extends Controller
                     'feedback_by' => auth()->id(),
                     'feedback_content' => $request->feedback_content ?? 'Xác nhận nhận hàng',
                     'rating' => $request->rating,
-                    'status' => 'PENDING',
+                    'status' => 'RESOLVED',
                     'feedback_date' => now(),
                 ]);
             }
@@ -60,8 +78,8 @@ class OrderController extends Controller
                 $purchaseRequest->save();
             }
 
-            // User requested Items status to be PAID
-            $order->items()->update(['status' => 'PAID']);
+            // User requested Items status to be COMPLETED (formerly PAID)
+            $order->items()->update(['status' => 'COMPLETED']);
 
             // Log workflow
             \App\Models\PurchaseRequestWorkflow::create([
@@ -148,11 +166,11 @@ class OrderController extends Controller
                 $reason = $otherReason ?? 'Lý do khác';
             }
 
-            $order->status = 'REJECTED';
+            $order->status = 'CANCELLED';
             $order->save();
 
             // Update order items status to REJECTED
-            $order->items()->update(['status' => 'REJECTED']);
+            $order->items()->update(['status' => 'CANCELLED']);
 
             // Sync PurchaseRequest status if applicable
             $purchaseRequest = $order->purchaseRequest;
@@ -177,7 +195,7 @@ class OrderController extends Controller
                 'purchase_request_id' => $order->purchase_request_id,
                 'action_by' => auth()->id(),
                 'from_status' => 'DELIVERED',
-                'to_status' => 'REJECTED',
+                'to_status' => 'CANCELLED',
                 'action_note' => 'Từ chối nhận hàng: ' . $reason,
                 'action_time' => now(),
             ]);

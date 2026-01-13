@@ -15,13 +15,13 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // Stats
-        $pendingCount = PurchaseRequest::where('status', 'SUBMITTED')->count();
-        $processingCount = PurchaseRequest::where('status', 'PROCESSING')->count();
-        $approvedMonthCount = PurchaseRequest::where('status', '!=', 'SUBMITTED')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+        $pendingCount = PurchaseRequest::where('is_submitted', true)->whereNull('status')->count();
+        $pendingOrderCount = PurchaseOrder::where('status', 'PENDING')->count();
+        $approvedMonthCount = PurchaseRequest::where('status', 'APPROVED')
+            ->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)
             ->count();
-        $paidCount = PurchaseOrder::where('status', 'PAID')->count();
+        $completedCount = PurchaseOrder::where('status', 'COMPLETED')->count();
         $rejectedCount = PurchaseRequest::where('status', 'REJECTED')->count();
 
         // Recent Requests (last 5)
@@ -99,9 +99,9 @@ class DashboardController extends Controller
 
         return view('dashboard.buyer', compact(
             'pendingCount',
-            'processingCount',
+            'pendingOrderCount',
             'approvedMonthCount',
-            'paidCount',
+            'completedCount',
             'rejectedCount',
             'recentRequests',
             'recentFeedbacks',

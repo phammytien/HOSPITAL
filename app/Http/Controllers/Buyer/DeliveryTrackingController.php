@@ -44,7 +44,6 @@ class DeliveryTrackingController extends Controller
     {
         $order = PurchaseOrder::with(['department', 'approver', 'items.product', 'purchaseRequest'])->findOrFail($id);
 
-        // Define steps for Stepper
         $steps = [
             'CREATED' => ['label' => 'Mới tạo', 'icon' => 'fa-file-invoice'],
             'ORDERED' => ['label' => 'Đã đặt hàng', 'icon' => 'fa-shopping-cart'],
@@ -59,8 +58,6 @@ class DeliveryTrackingController extends Controller
 
         if ($order->status == 'CANCELLED') {
             $progress = 0;
-        } else if ($order->status == 'PAID') {
-            $progress = 100;
         } else {
             $progress = ($currentIndex !== false) ? ($currentIndex / (count($steps) - 1)) * 100 : 0;
         }
@@ -72,13 +69,18 @@ class DeliveryTrackingController extends Controller
     {
         $request->validate([
             'expected_delivery_date' => 'nullable|date',
-            'status' => 'required|in:CREATED,ORDERED,DELIVERING,DELIVERED,COMPLETED,CANCELLED,PAID',
+            'status' => 'required|in:CREATED,ORDERED,PENDING,DELIVERING,DELIVERED,COMPLETED,CANCELLED',
         ]);
 
         $order = PurchaseOrder::findOrFail($id);
 
         if ($request->filled('expected_delivery_date')) {
             $order->expected_delivery_date = $request->expected_delivery_date;
+            // When buyer confirms date, if status is CREATED, move to PENDING (Chờ xử lý) as requested
+            if ($order->status == 'CREATED') {
+                $order->status = 'PENDING';
+                $request->merge(['status' => 'PENDING']); // Override request status for downstream logic
+            }
         }
 
         // Update timestamps based on status
@@ -89,7 +91,7 @@ class DeliveryTrackingController extends Controller
             $order->shipping_at = $now;
         } elseif ($request->status == 'DELIVERED' && !$order->delivered_at) {
             $order->delivered_at = $now;
-        } elseif (($request->status == 'COMPLETED' || $request->status == 'PAID') && !$order->completed_at) {
+        } elseif ($request->status == 'COMPLETED' && !$order->completed_at) {
             $order->completed_at = $now;
         }
 
@@ -122,24 +124,30 @@ class DeliveryTrackingController extends Controller
         }
 
         // 1. If Order is ORDERED (Đã đặt hàng) -> Request becomes PROCESSING (Đang xử lý)
-        if ($request->status == 'ORDERED') {
+        if ($request->status == 'PENDING') {
             $purchaseRequest = $order->purchaseRequest;
             // Fallback: try to find by ID if relation not loaded
             if (!$purchaseRequest && $order->purchase_request_id) {
                 $purchaseRequest = \App\Models\PurchaseRequest::find($order->purchase_request_id);
             }
 
-            if ($purchaseRequest) {
-                $purchaseRequest->status = 'PROCESSING';
-                $purchaseRequest->save();
-                session()->flash('info', "Đã cập nhật trạng thái Yêu cầu #{$purchaseRequest->request_code} sang Đang xử lý.");
-            }
+            // Also update Items to PENDING
+            $order->items()->where('status', 'PENDING')->update(['status' => 'PENDING']);
+
+            // Notification: Order Confirmed/Pending by Buyer
+            Notification::create([
+                'title' => 'Đơn hàng chờ xử lý',
+                'message' => "Bộ phận mua hàng đã xác nhận ngày giao cho đơn #{$order->order_code}: " . \Carbon\Carbon::parse($request->expected_delivery_date)->format('d/m/Y'),
+                'type' => 'info',
+                'target_role' => 'department',
+                'created_by' => auth()->id(),
+            ]);
         }
 
         // 2. If Order is COMPLETED or PAID -> Request becomes PAID
         // Note: The user said COMPLETED triggers PAID for request. 
         // But if Buyer sets it to PAID manually here, we should probably also sync it.
-        if (in_array($request->status, ['COMPLETED', 'PAID'])) {
+        if ($request->status == 'COMPLETED') {
             $purchaseRequest = $order->purchaseRequest;
             // Fallback
             if (!$purchaseRequest && $order->purchase_request_id) {
@@ -147,9 +155,9 @@ class DeliveryTrackingController extends Controller
             }
 
             if ($purchaseRequest) {
-                $purchaseRequest->status = 'PAID';
+                $purchaseRequest->status = 'COMPLETED';
                 $purchaseRequest->save();
-                session()->flash('info', "Đã cập nhật trạng thái Yêu cầu #{$purchaseRequest->request_code} sang Đã thnh toán.");
+                session()->flash('info', "Đã cập nhật trạng thái Yêu cầu #{$purchaseRequest->request_code} sang Hoàn thành.");
             }
         }
 

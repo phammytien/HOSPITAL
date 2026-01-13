@@ -15,6 +15,7 @@ class PurchaseRequest extends Model
         'period',
         'requested_by',
         'status',
+        'is_submitted', // Added
         'note',
         'is_delete',
     ];

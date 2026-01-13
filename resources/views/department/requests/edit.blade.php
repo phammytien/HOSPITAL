@@ -84,10 +84,15 @@
                                     onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}')">
                                     <div class="flex items-center space-x-3">
                                         <!-- Image Placeholder -->
-                                        <div
-                                            class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
-                                            {{ substr($product->product_name, 0, 1) }}
-                                        </div>
+                                        <!-- Image Display -->
+                                        @php $img = getProductImage($product->id); @endphp
+                                        @if($img)
+                                            <img src="{{ $img }}" alt="{{ $product->product_name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                                        @else
+                                            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
+                                                {{ substr($product->product_name, 0, 1) }}
+                                            </div>
+                                        @endif
 
                                         <div class="flex-1 flex items-center justify-between">
                                             <div>
@@ -173,16 +178,7 @@
                     </button>
 
                     <!-- Chính sách phê duyệt -->
-                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <div class="flex items-start space-x-2">
-                            <i class="fas fa-info-circle text-blue-600 mt-1"></i>
-                            <div class="text-sm text-blue-900">
-                                <p class="font-semibold mb-1">Chính sách phê duyệt</p>
-                                <p class="text-blue-700">Đơn hàng của bạn sẽ được xét duyệt trong vòng 81,000 giờ và được
-                                    phê duyệt trong vòng 24 giờ làm việc sau khi được duyệt.</p>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -282,14 +278,14 @@
                                                                 </div>
                                                                 <div>
                                                                     <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
-                                                                    <input type="number" 
-                                                                            name="items[${index}][expected_price]"
-                                                                            value="${product.price}"
-                                                                            min="0"
-                                                                            step="1000"
-                                                                            onchange="updatePrice(${index}, this.value)"
-                                                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                            required>
+                                                                    <div class="relative">
+                                                                        <input type="number" 
+                                                                                name="items[${index}][expected_price]"
+                                                                                value="${product.price}"
+                                                                                readonly
+                                                                                class="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed focus:outline-none"
+                                                                                required>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             <div class="mt-3">

@@ -87,10 +87,15 @@
                                     onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}')">
                                     <div class="flex items-center space-x-3">
                                         <!-- Image Placeholder -->
-                                        <div
-                                            class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
-                                            {{ substr($product->product_name, 0, 1) }}
-                                        </div>
+                                        <!-- Image Display -->
+                                        @php $img = getProductImage($product->id); @endphp
+                                        @if($img)
+                                            <img src="{{ $img }}" alt="{{ $product->product_name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                                        @else
+                                            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
+                                                {{ substr($product->product_name, 0, 1) }}
+                                            </div>
+                                        @endif
 
                                         <div class="flex-1 flex items-center justify-between">
                                             <div>
@@ -181,6 +186,11 @@
         <script>
             let selectedProducts = [];
             let productCounter = 0;
+
+            // Initialize from Session (Preselected)
+            @if(isset($preselectedProducts) && count($preselectedProducts) > 0)
+                selectedProducts = @json($preselectedProducts);
+            @endif
 
             // Update period field with current Quarter
             function updatePeriodTime() {
@@ -273,56 +283,54 @@
                 let html = '';
                 selectedProducts.forEach((product, index) => {
                     html += `
-                                                                                                                    <div class="p-4">
-                                                                                                                        <div class="flex gap-4">
-                                                                                                                            <img src="https://via.placeholder.com/80" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover">
-                                                                                                                            <div class="flex-1">
-                                                                                                                                <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
-                                                                                                                                <div class="grid grid-cols-2 gap-3 mt-3">
-                                                                                                                                    <div>
-                                                                                                                                        <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
-                                                                                                                                        <input type="number" 
-                                                                                                                                               name="items[${index}][quantity]"
-                                                                                                                                               value="${product.quantity}"
-                                                                                                                                               min="1"
-                                                                                                                                               step="1"
-                                                                                                                                               onchange="updateQuantity(${index}, this.value)"
-                                                                                                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                                                                                               required>
-                                                                                                                                        <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
+                                                                                                                            <div class="p-4">
+                                                                                                                                <div class="flex gap-4">
+                                                                                                                                    <img src="https://via.placeholder.com/80" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover">
+                                                                                                                                    <div class="flex-1">
+                                                                                                                                        <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
+                                                                                                                                        <div class="grid grid-cols-2 gap-3 mt-3">
+                                                                                                                                            <div>
+                                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
+                                                                                                                                                <input type="number" 
+                                                                                                                                                       name="items[${index}][quantity]"
+                                                                                                                                                       value="${product.quantity}"
+                                                                                                                                                       min="1"
+                                                                                                                                                       step="1"
+                                                                                                                                                       onchange="updateQuantity(${index}, this.value)"
+                                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                                                                                                                       required>
+                                                                                                                                                <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
+                                                                                                                                            </div>
+                                                                                                                                            <div>
+                                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
+                                                                                                                                                 <input type="number" 
+                                                                                                                                                        name="items[${index}][expected_price]"
+                                                                                                                                                        value="${product.price}"
+                                                                                                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
+                                                                                                                                                        readonly
+                                                                                                                                                        required>
+                                                                                                                                            </div>
+                                                                                                                                        </div>
+                                                                                                                                        <div class="mt-3">
+                                                                                                                                            <label class="text-xs text-gray-500 block mb-1">Lý do</label>
+                                                                                                                                            <input type="text" 
+                                                                                                                                                   name="items[${index}][reason]"
+                                                                                                                                                   value="${product.reason}"
+                                                                                                                                                   placeholder="Nhập lý do mua..."
+                                                                                                                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                                                                                                                                        </div>
                                                                                                                                     </div>
-                                                                                                                                    <div>
-                                                                                                                                        <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
-                                                                                                                                        <input type="number" 
-                                                                                                                                               name="items[${index}][expected_price]"
-                                                                                                                                               value="${product.price}"
-                                                                                                                                               min="0"
-                                                                                                                                               step="1000"
-                                                                                                                                               onchange="updatePrice(${index}, this.value)"
-                                                                                                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                                                                                                                               required>
+                                                                                                                                    <div class="text-right">
+                                                                                                                                        <p class="font-bold text-gray-900 mb-2">${formatMoney(product.price * product.quantity)} đ</p>
+                                                                                                                                        <button type="button" 
+                                                                                                                                                onclick="removeProduct(${index})"
+                                                                                                                                                class="text-red-600 hover:text-red-700 text-sm">
+                                                                                                                                            <i class="fas fa-trash mr-1"></i> Xóa
+                                                                                                                                        </button>
                                                                                                                                     </div>
                                                                                                                                 </div>
-                                                                                                                                <div class="mt-3">
-                                                                                                                                    <label class="text-xs text-gray-500 block mb-1">Lý do</label>
-                                                                                                                                    <input type="text" 
-                                                                                                                                           name="items[${index}][reason]"
-                                                                                                                                           value="${product.reason}"
-                                                                                                                                           placeholder="Nhập lý do mua..."
-                                                                                                                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                                                                                                                </div>
                                                                                                                             </div>
-                                                                                                                            <div class="text-right">
-                                                                                                                                <p class="font-bold text-gray-900 mb-2">${formatMoney(product.price * product.quantity)} đ</p>
-                                                                                                                                <button type="button" 
-                                                                                                                                        onclick="removeProduct(${index})"
-                                                                                                                                        class="text-red-600 hover:text-red-700 text-sm">
-                                                                                                                                    <i class="fas fa-trash mr-1"></i> Xóa
-                                                                                                                                </button>
-                                                                                                                            </div>
-                                                                                                                        </div>
-                                                                                                                    </div>
-                                                                                                                `;
+                                                                                                                        `;
                 });
 
                 container.innerHTML = html;
@@ -484,41 +492,10 @@
                 }
             });
 
-            // Auto-load products from Catalog (localStorage)
+            // Auto-load products from Session (handled above) or specific initialization
             document.addEventListener('DOMContentLoaded', function () {
-                const pendingCart = localStorage.getItem('pendingRequestCart');
-                if (pendingCart) {
-                    try {
-                        const products = JSON.parse(pendingCart);
-                        let addedCount = 0;
-
-                        products.forEach(p => {
-                            const exists = selectedProducts.find(sp => sp.id == p.id);
-                            if (!exists) {
-                                selectedProducts.push({
-                                    id: p.id,
-                                    name: p.name,
-                                    price: parseFloat(p.price),
-                                    unit: p.unit,
-                                    quantity: p.quantity || 1,
-                                    reason: ''
-                                });
-                                addedCount++;
-                            }
-                        });
-
-                        if (addedCount > 0) {
-                            renderProducts();
-                            updateTotal();
-                            showToast(`Đã thêm ${addedCount} sản phẩm từ danh mục`, 'success');
-                        }
-
-                        // Clear storage
-                        localStorage.removeItem('pendingRequestCart');
-                    } catch (e) {
-                        console.error('Error loading cart from catalog', e);
-                    }
-                }
+                renderProducts();
+                updateTotal();
             });
         </script>
     @endpush

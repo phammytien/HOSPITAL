@@ -22,6 +22,10 @@
                 class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'CREATED' ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-600 hover:bg-orange-100' }}">
                 Mới tạo
             </a>
+            <a href="{{ route('department.dept_orders.index', ['status' => 'PENDING']) }}"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'PENDING' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
+                Chờ xử lý
+            </a>
             <a href="{{ route('department.dept_orders.index', ['status' => 'DELIVERING']) }}"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'DELIVERING' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
                 Đang giao
@@ -69,19 +73,21 @@
                                     @php
                                         $statusLabel = match ($order->status) {
                                             'CREATED' => 'Mới tạo',
+                                            'PENDING' => 'Chờ xử lý',
                                             'DELIVERING' => 'Đang giao',
                                             'DELIVERED' => 'Đã giao hàng',
                                             'COMPLETED' => 'Đã hoàn tất',
-                                            'PAID' => 'Đã thanh toán',
+
                                             'CANCELLED' => 'Đã hủy',
                                             default => $order->status
                                         };
                                         $statusClass = match ($order->status) {
                                             'CREATED' => 'bg-gray-100 text-gray-700',
+                                            'PENDING' => 'bg-yellow-100 text-yellow-700',
                                             'DELIVERING' => 'bg-blue-100 text-blue-700',
                                             'DELIVERED' => 'bg-purple-100 text-purple-700',
                                             'COMPLETED' => 'bg-green-100 text-green-700',
-                                            'PAID' => 'bg-green-100 text-green-700',
+
                                             'CANCELLED' => 'bg-red-100 text-red-700',
                                             default => 'bg-gray-100 text-gray-700'
                                         };
@@ -114,8 +120,7 @@
 
                                     <!-- Reject Button (Only if Delivered) -->
                                     @if($order->status == 'DELIVERED')
-                                                        <button
-                                                            onclick="openRejectModal('{{ $order->id }}', {{ $order->items->map(function ($i) {
+                                                        <button onclick="openRejectModal('{{ $order->id }}', {{ $order->items->map(function ($i) {
                                         return ['id' => $i->id, 'name' => $i->product->product_name ?? 'SP']; }) }})"
                                                             class="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 font-medium text-xs shadow-sm transition flex items-center gap-1"
                                                             title="Từ chối nhận hàng">
@@ -213,9 +218,9 @@
                 const div = document.createElement('div');
                 div.className = 'flex items-center gap-2';
                 div.innerHTML = `
-                        <input type="checkbox" name="wrong_items[]" value="${item.id}" class="rounded text-red-600 focus:ring-red-500">
-                        <span class="text-sm text-gray-700">${item.name}</span>
-                    `;
+                            <input type="checkbox" name="wrong_items[]" value="${item.id}" class="rounded text-red-600 focus:ring-red-500">
+                            <span class="text-sm text-gray-700">${item.name}</span>
+                        `;
                 listContainer.appendChild(div);
             });
 

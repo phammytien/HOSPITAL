@@ -27,7 +27,6 @@
             <select name="status" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">-- Tất cả Trạng thái --</option>
                 <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Chờ xác nhận</option>
-                <option value="PAID" {{ request('status') == 'PAID' ? 'selected' : '' }}>Đã thanh toán</option>
                 <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
             </select>
 
@@ -75,8 +74,12 @@
                         {{ number_format($order->total_amount, 0, ',', '.') }} ₫
                     </td>
                     <td class="px-6 py-4 text-center">
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($order->status) }}">
-                            {{ get_status_label($order->status) }}
+                        @php
+                            // Display status from purchase_request, not purchase_order
+                            $requestStatus = $order->purchaseRequest->status ?? $order->status;
+                        @endphp
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($requestStatus) }}">
+                            {{ get_status_label($requestStatus) }}
                         </span>
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-600 text-center">

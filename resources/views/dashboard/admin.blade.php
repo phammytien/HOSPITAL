@@ -161,7 +161,7 @@
                 <h3 class="text-base font-bold text-gray-800 flex items-center">
                     <i class="bi bi-file-earmark-text text-blue-600 mr-2"></i> Yêu cầu mua sắm gần đây
                 </h3>
-                <a href="#" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center group">
+                <a href="{{ route('admin.history') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center group">
                     Xem tất cả <i class="bi bi-arrow-right ml-1 group-hover:translate-x-1 transition-transform"></i>
                 </a>
             </div>

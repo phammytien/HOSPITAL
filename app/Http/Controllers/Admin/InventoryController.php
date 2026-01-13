@@ -49,6 +49,13 @@ class InventoryController extends Controller
         $inventory = $query->orderBy('inventory.updated_at', 'desc')->paginate(20);
         $inventory->appends($request->except('page'));
 
+        // Add product images
+        $inventory->each(function($item) {
+            if ($item->product) {
+                $item->product->image_url = getProductImage($item->product_id);
+            }
+        });
+
         // Get all data for filters
         $departments = Department::where('is_delete', false)->get();
         $warehouses = Warehouse::with('department')

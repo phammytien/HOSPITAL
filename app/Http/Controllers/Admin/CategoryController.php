@@ -171,4 +171,30 @@ class CategoryController extends Controller
             ], 500);
         }
     }
+
+    public function getProducts($id)
+    {
+        try {
+            $products = Product::where('category_id', $id)
+                ->where('is_delete', false)
+                ->with(['category', 'supplier', 'primaryImage'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            // Add image URLs to products
+            $products->each(function($product) {
+                $product->image_url = getProductImage($product->id);
+            });
+            
+            return response()->json([
+                'success' => true,
+                'products' => $products
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

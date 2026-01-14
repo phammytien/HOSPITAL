@@ -82,3 +82,19 @@ php artisan migrate
 php artisan db:seed
 
 git commit -m "Update README"
+
+
+## Lấy code từ github
+git fetch origin 
+
+git switch master
+
+git branch -v (Kiểm tra nhánh đang ở hiện tại)
+
+git pull origin master
+
+git checkout -b <tên_branch> (Tạo nhánh mới từ master)
+
+git stash -u (cất code chưa commit để pull push không bị báo lỗi)
+
+git stash pop (lấy code chưa commit đã cất từ lênh git stash -u, đổi nhánh rồi stash pop cũng được)

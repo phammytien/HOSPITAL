@@ -25,8 +25,8 @@
 
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col justify-between hidden md:flex d-print-none">
-            <div>
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex d-print-none h-full">
+            <div class="flex flex-col flex-1 min-h-0">
                 <!-- Logo area -->
                 <div class="flex flex-col items-center justify-center px-4 py-6 border-b border-gray-100 text-center">
                     <!-- Logo -->
@@ -48,7 +48,7 @@
 
 
                 <!-- Navigation -->
-                <nav class="mt-6 px-4 space-y-1 overflow-y-auto">
+                <nav class="mt-6 px-4 space-y-1 overflow-y-auto flex-1">
                     <!-- HỆ THỐNG Section -->
                     <div class="mb-4">
                         <p class="px-4 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Hệ thống</p>

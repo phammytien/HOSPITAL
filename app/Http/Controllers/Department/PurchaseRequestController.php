@@ -46,7 +46,7 @@ class PurchaseRequestController extends Controller
                         $sub->where('is_submitted', true)
                             ->where(function ($s) {
                                 $s->whereNull('status')
-                                    ->orWhereNotIn('status', ['COMPLETED', 'DELIVERED', 'CANCELLED', 'REJECTED']);
+                                    ->orWhereNotIn('status', ['COMPLETED', 'CANCELLED', 'REJECTED']);
                             });
                     });
             });
@@ -83,7 +83,8 @@ class PurchaseRequestController extends Controller
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         } else {
-            $query->whereIn('status', ['COMPLETED', 'CANCELLED', 'REJECTED']); // Added REJECTED
+            // Show ALL submitted requests in history to provide full visibility
+            $query->where('is_submitted', true);
         }
 
         // Search
@@ -553,23 +554,32 @@ class PurchaseRequestController extends Controller
     private function generateRequestCode($departmentId, $period)
     {
         $department = DB::table('departments')->find($departmentId);
-        $deptCode = $department->department_code ?? 'DEPT';
 
+        // 1. Generate Department Code Part
+        $deptName = $department->department_name;
+        $slug = \Illuminate\Support\Str::ascii($deptName);
+        $slug = strtoupper(str_replace(' ', '_', $slug));
+        $slug = preg_replace('/[^A-Z0-9_]/', '', $slug);
+
+        if (str_starts_with($slug, 'KHOA_')) {
+            $slug = substr($slug, 5);
+        } elseif (str_starts_with($slug, 'PHONG_')) {
+            $slug = substr($slug, 6);
+        }
+
+        // 2. Determine Year and Quarter from REAL TIME
         $year = date('Y');
-        $count = PurchaseRequest::where('department_id', $departmentId)
-            ->whereYear('created_at', $year)
+        $month = (int) date('n');
+        $quarter = 'Q' . ceil($month / 3);
+
+        // Pattern: REQ_2026_Q1_NOI_0001
+        $prefix = sprintf('REQ_%s_%s_%s_', $year, $quarter, $slug);
+
+        // 3. Count existing requests with THIS prefix
+        $count = PurchaseRequest::where('request_code', 'LIKE', $prefix . '%')
             ->count() + 1;
 
-        // Use Department NAME for the code part (e.g. "Khoa Cap Cuu")
-        // Convert "Khoa Cấp Cứu" -> "Khoa Cap Cuu" -> "Khoa_Cap_Cuu"
-        $deptName = $department->department_name;
-        $deptCodePart = \Illuminate\Support\Str::ascii($deptName);
-        $deptCodePart = str_replace(' ', '_', $deptCodePart);
-
-        // Remove strictly non-alphanumeric/underscore (optional, for safety)
-        $deptCodePart = preg_replace('/[^A-Za-z0-9_]/', '', $deptCodePart);
-
-        return sprintf('REQ_%s_%s_%04d', $year, $deptCodePart, $count);
+        return $prefix . sprintf('%04d', $count);
     }
 
     /**

@@ -306,9 +306,12 @@ class InventoryController extends Controller
             'note' => "Thao tác nhanh: {$actionText} {$request->quantity} sản phẩm",
         ]);
 
+        $message = "Đã {$actionText} {$request->quantity} sản phẩm thành công!";
+        session()->flash('success', $message);
+
         return response()->json([
             'success' => true,
-            'message' => "Đã {$actionText} {$request->quantity} sản phẩm thành công!",
+            'message' => $message,
             'new_quantity' => $inventory->quantity
         ]);
     }

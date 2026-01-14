@@ -56,23 +56,15 @@
                 <h3 class="text-gray-600 text-sm font-medium mb-1">Đã sử dụng</h3>
                 <div class="flex items-baseline space-x-1">
                     <p class="text-2xl font-bold text-gray-900">
-                        @if($usedBudget >= 1000000)
-                            {{ number_format($usedBudget / 1000000, 1) }}M
-                        @else
-                            {{ number_format($usedBudget, 0, ',', '.') }} đ
-                        @endif
+                        {{ number_format($usedBudget, 0, ',', '.') }} vnđ
                     </p>
                     <span class="text-sm text-gray-500">/
-                        {{ $department ? number_format($department->budget_amount / 1000000, 0) : 0 }}M đ</span>
+                        {{ $department ? number_format($department->budget_amount, 0, ',', '.') : 0 }} vnđ</span>
                 </div>
                 @if($pendingBudget > 0)
                     <div class="mt-2 text-xs text-orange-500 font-medium">
                         <i class="fas fa-clock mr-1"></i> Chờ duyệt:
-                        @if($pendingBudget >= 1000000)
-                            {{ number_format($pendingBudget / 1000000, 1) }}M
-                        @else
-                            {{ number_format($pendingBudget, 0, ',', '.') }} đ
-                        @endif
+                        {{ number_format($pendingBudget, 0, ',', '.') }} vnđ
                     </div>
                 @endif
             </div>
@@ -114,13 +106,13 @@
                                     </div>
                                     <div class="flex items-center space-x-3">
                                         @if($request->status == 'DRAFT')
-                                            <span class="badge badge-draft">Nháp</span>
-                                        @elseif($request->status == 'SUBMITTED')
-                                            <span class="badge badge-submitted">Chờ duyệt</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Nháp</span>
+                                        @elseif($request->status == 'SUBMITTED' || $request->status == 'PENDING' || $request->status == null)
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Chờ duyệt</span>
                                         @elseif($request->status == 'APPROVED')
-                                            <span class="badge badge-approved">Đã duyệt</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Đã duyệt</span>
                                         @elseif($request->status == 'REJECTED')
-                                            <span class="badge badge-rejected">Từ chối</span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Từ chối</span>
                                         @endif
 
                                         <a href="{{ route('department.requests.show', $request->id) }}"

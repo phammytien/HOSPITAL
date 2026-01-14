@@ -224,8 +224,8 @@
                                         </span>
                                     @elseif($request->status == 'SUBMITTED')
                                         <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-1.5"></span>Chờ duyệt
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>Chờ duyệt
                                         </span>
                                     @elseif($request->status == 'REJECTED')
                                         <span
@@ -236,6 +236,11 @@
                                         <span
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
                                             <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>Hoàn thành
+                                        </span>
+                                    @elseif(!$request->status || $request->status == 'PENDING')
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>Chờ duyệt
                                         </span>
                                     @else
                                         <span

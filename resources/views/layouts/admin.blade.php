@@ -32,9 +32,9 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 h-screen overflow-hidden flex flex-col">
     <!-- Top Header -->
-    <header class="bg-white border-b border-gray-200">
+    <header class="bg-white border-b border-gray-200 flex-none">
         <div class="px-6 py-3">
             <div class="flex items-center justify-between">
                 <!-- Logo & Title -->
@@ -168,7 +168,7 @@
 
 
     <!-- Main Layout with Sidebar -->
-    <div class="flex h-screen overflow-hidden" style="height: calc(100vh - 80px);">
+    <div class="flex flex-1 overflow-hidden">
         <!-- Sidebar -->
         <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
             <!-- Navigation -->

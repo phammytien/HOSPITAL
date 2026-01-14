@@ -122,42 +122,31 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col gap-2">
-                                        <!-- Quick Take (Lấy) Buttons -->
+                                        <!-- Take (Lấy) Section -->
                                         <div class="flex items-center gap-1">
                                             <span class="text-xs font-semibold text-green-700 w-8">Lấy:</span>
-                                            <button onclick="quickAction({{ $item->id }}, 'take', 1)"
-                                                class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition font-medium">1</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'take', 2)"
-                                                class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition font-medium">2</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'take', 3)"
-                                                class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition font-medium">3</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'take', 5)"
-                                                class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition font-medium">5</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'take', 10)"
-                                                class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition font-medium">10</button>
-                                            <button onclick="customAction({{ $item->id }}, 'take')"
-                                                class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition font-medium"
-                                                title="Số tùy chỉnh">
-                                                <i class="fas fa-edit"></i>
+                                            <input type="number" id="qty-take-{{ $item->id }}" value="0" min="0" class="w-12 h-7 text-xs border border-green-200 rounded text-center focus:ring-1 focus:ring-green-500 outline-none" onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'take')">
+                                            
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 1)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+1</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 2)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+2</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 5)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+5</button>
+                                            
+                                            <button onclick="confirmAction({{ $item->id }}, 'take')" class="ml-1 px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition font-bold shadow-sm">
+                                                Lấy
                                             </button>
                                         </div>
-                                        <!-- Quick Return (Trả) Buttons -->
+
+                                        <!-- Return (Trả) Section -->
                                         <div class="flex items-center gap-1">
                                             <span class="text-xs font-semibold text-blue-700 w-8">Trả:</span>
-                                            <button onclick="quickAction({{ $item->id }}, 'return', 1)"
-                                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition font-medium">1</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'return', 2)"
-                                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition font-medium">2</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'return', 3)"
-                                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition font-medium">3</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'return', 5)"
-                                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition font-medium">5</button>
-                                            <button onclick="quickAction({{ $item->id }}, 'return', 10)"
-                                                class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition font-medium">10</button>
-                                            <button onclick="customAction({{ $item->id }}, 'return')"
-                                                class="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition font-medium"
-                                                title="Số tùy chỉnh">
-                                                <i class="fas fa-edit"></i>
+                                            <input type="number" id="qty-return-{{ $item->id }}" value="0" min="0" class="w-12 h-7 text-xs border border-blue-200 rounded text-center focus:ring-1 focus:ring-blue-500 outline-none" onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'return')">
+                                            
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 1)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+1</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 2)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+2</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 5)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+5</button>
+                                            
+                                            <button onclick="confirmAction({{ $item->id }}, 'return')" class="ml-1 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition font-bold shadow-sm">
+                                                Trả
                                             </button>
                                         </div>
                                     </div>
@@ -191,18 +180,35 @@
     </div>
 
     <script>
+        function addToQty(productId, action, amount) {
+            const inputId = `qty-${action}-${productId}`;
+            const input = document.getElementById(inputId);
+            if (input) {
+                let currentVal = parseInt(input.value) || 0;
+                input.value = currentVal + amount;
+            }
+        }
+
+        function confirmAction(productId, action) {
+            const inputId = `qty-${action}-${productId}`;
+            const input = document.getElementById(inputId);
+            
+            if (!input) return;
+
+            const quantity = parseInt(input.value);
+            
+            if (!quantity || quantity <= 0) {
+                alert('Vui lòng nhập số lượng lớn hơn 0!');
+                return;
+            }
+
+            // Reuse existing quickAction logic but pass true for skipConfirm if needed, 
+            // or just call it directly. Ideally we prompt once.
+            quickAction(productId, action, quantity);
+        }
+
         function quickAction(productId, action, quantity) {
-            const actionText = action === 'take' ? 'lấy' : 'trả';
-            const confirmMsg = `Bạn có chắc muốn ${actionText} ${quantity} sản phẩm này?`;
-
-            if (confirm(confirmMsg)) {
-                // Show loading state
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-                fetch('{{ route("department.inventory.quick-action") }}', {
+             fetch('{{ route("department.inventory.quick-action") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -218,32 +224,16 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            // Auto reload without showing alert
+                            // Auto reload
                             location.reload();
                         } else {
                             alert(data.message || 'Có lỗi xảy ra!');
-                            btn.disabled = false;
-                            btn.innerHTML = originalText;
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         alert('Có lỗi xảy ra khi thực hiện thao tác!');
-                        btn.disabled = false;
-                        btn.innerHTML = originalText;
                     });
-            }
-        }
-
-        function customAction(productId, action) {
-            const actionText = action === 'take' ? 'lấy' : 'trả';
-            const quantity = prompt(`Nhập số lượng muốn ${actionText}:`, '1');
-
-            if (quantity && !isNaN(quantity) && parseInt(quantity) > 0) {
-                quickAction(productId, action, parseInt(quantity));
-            } else if (quantity !== null) {
-                alert('Vui lòng nhập số lượng hợp lệ!');
-            }
         }
     </script>
 @endsection

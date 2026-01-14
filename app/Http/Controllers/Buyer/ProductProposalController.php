@@ -14,7 +14,7 @@ class ProductProposalController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier'])
+        $query = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier', 'primaryImage'])
             ->notDeleted();
 
         // Filter by status
@@ -75,12 +75,12 @@ class ProductProposalController extends Controller
             // Upload new image
             $image = $request->file('image');
             $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('images/products'), $imageName);
+            $image->move(public_path('products'), $imageName);
 
             // Create file record
             \App\Models\File::create([
                 'file_name' => $imageName,
-                'file_path' => 'images/products/' . $imageName,
+                'file_path' => 'products/' . $imageName,
                 'file_type' => 'image',
                 'related_table' => 'product_proposals',
                 'related_id' => $proposal->id,

@@ -321,17 +321,23 @@
                     <!-- Flash Messages -->
                     @if(session('success'))
                         <div
-                            class="flash-message mb-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            {{ session('success') }}
+                            class="flash-message fixed top-24 right-5 z-50 min-w-[300px] p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center shadow-lg transition-all duration-500 transform translate-x-0">
+                            <i class="fas fa-check-circle mr-2 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-sm">Thành công</h4>
+                                <p class="text-sm">{{ session('success') }}</p>
+                            </div>
                         </div>
                     @endif
 
                     @if(session('error'))
                         <div
-                            class="flash-message mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg flex items-center">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            {{ session('error') }}
+                            class="flash-message fixed top-24 right-5 z-50 min-w-[300px] p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg flex items-center shadow-lg transition-all duration-500 transform translate-x-0">
+                            <i class="fas fa-exclamation-circle mr-2 text-xl"></i>
+                            <div>
+                                <h4 class="font-bold text-sm">Lỗi</h4>
+                                <p class="text-sm">{{ session('error') }}</p>
+                            </div>
                         </div>
                     @endif
 

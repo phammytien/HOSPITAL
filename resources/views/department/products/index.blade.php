@@ -125,7 +125,7 @@
                                         <div class="flex items-center gap-1">
                                              <input type="number" 
                                                     id="qty-{{ $product->id }}"
-                                                    value="1" min="1" step="0.01"
+                                                    value="1" min="1" step="1"
                                                     disabled
                                                     class="w-16 px-2 py-1 text-center text-sm border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-400 font-bold"
                                                     onchange="updateQuantity({{ $product->id }}, this.value)"
@@ -260,7 +260,7 @@
                                     <div class="w-32">
                                         <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Số lượng
                                             mua</label>
-                                        <input type="number" id="modalQuantity" value="1" min="1" step="0.01"
+                                        <input type="number" id="modalQuantity" value="1" min="1" step="1"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
                                     </div>
                                     <button type="submit"
@@ -310,7 +310,7 @@
         
         if (checkbox.checked) {
             // Add to selection
-            const qty = parseFloat(quantityInput.value) || 1;
+            const qty = parseInt(quantityInput.value) || 1;
             selectedItems.set(productId, qty);
             
             // UI Updates
@@ -331,7 +331,7 @@
     // Update Quantity in Selection Map
     function updateQuantity(productId, value) {
          if (selectedItems.has(productId)) {
-             selectedItems.set(productId, parseFloat(value) || 1);
+             selectedItems.set(productId, parseInt(value) || 1);
          }
     }
 

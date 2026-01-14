@@ -29,37 +29,38 @@
 <div class="mb-6 flex items-center justify-between gap-4">
     
     <!-- Left: Category Filter -->
-    <div class="flex items-center gap-4">
-        <label for="category_filter" class="text-sm font-medium text-gray-700 whitespace-nowrap">
-            Lọc theo danh mục:
-        </label>
+    <div class="flex items-center gap-3 bg-blue-50/50 p-2 rounded-xl border border-blue-100 shadow-sm">
+        <div class="flex items-center gap-2 px-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                <i class="fas fa-filter text-xs"></i>
+            </div>
+            <span class="text-sm font-bold text-gray-700 whitespace-nowrap">
+                Lọc theo danh mục:
+            </span>
+        </div>
 
-        <select id="category_filter"
-            onchange="window.location.href=this.value"
-            class="block w-64 pl-3 pr-10 py-2 text-sm border-gray-300 
-                   focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md">
-            <option value="{{ route('buyer.products.index', ['search' => request('search')]) }}">
-                Tất cả danh mục
-            </option>
-            @foreach($categories as $cat)
-                <option value="{{ route('buyer.products.index', ['category_id' => $cat->id, 'search' => request('search')]) }}"
-                    {{ request('category_id') == $cat->id ? 'selected' : '' }}>
-                    {{ $cat->category_name }}
+        <div class="relative">
+            <select id="category_filter"
+                onchange="window.location.href=this.value"
+                class="block w-64 pl-4 pr-10 py-2.5 text-sm font-bold text-gray-700 bg-white border-2 border-blue-200 
+                       focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 rounded-xl appearance-none cursor-pointer hover:border-blue-400 hover:shadow-md transition-all">
+                <option value="{{ route('buyer.products.index', ['search' => request('search')]) }}">
+                    Tất cả danh mục
                 </option>
-            @endforeach
-        </select>
+                @foreach($categories as $cat)
+                    <option value="{{ route('buyer.products.index', ['category_id' => $cat->id, 'search' => request('search')]) }}"
+                        {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                        {{ $cat->category_name }}
+                    </option>
+                @endforeach
+            </select>
+            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-blue-500">
+                <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+        </div>
     </div>
 
-    <!-- Right: Suggest Button -->
-    <a href="#"
-       class="inline-flex items-center gap-2 px-5 py-2 
-              bg-gradient-to-r from-blue-500 to-purple-500 
-              text-white text-sm font-semibold rounded-lg
-              hover:from-blue-600 hover:to-purple-600 
-              transition shadow whitespace-nowrap">
-        ✨ Xem gợi ý đề xuất
-    </a>
-
+    
 </div>
 
     </div>

@@ -144,7 +144,12 @@
                     ];
                     $config = $icons[$notification->type] ?? $icons['info'];
                 @endphp
-                <div class="p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 {{ !$notification->is_read ? 'bg-blue-50' : '' }}">
+                <div class="notification-item p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 {{ !$notification->is_read ? 'bg-blue-50' : '' }} cursor-pointer"
+                     data-id="{{ $notification->id }}"
+                     data-title="{{ $notification->title }}"
+                     data-message="{{ $notification->message }}"
+                     data-type="{{ $notification->type }}"
+                     data-is-read="{{ $notification->is_read ? 'true' : 'false' }}">
                     <div class="flex items-start gap-4">
                         {{-- Icon --}}
                         <div class="relative flex-shrink-0">
@@ -179,22 +184,6 @@
                                     {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
                                 </span>
                             </div>
-                        </div>
-
-                        {{-- Action buttons --}}
-                        <div class="flex items-center gap-2">
-                            <button onclick="editNotification({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $notification->type }}', '{{ $notification->target_role }}')" 
-                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <form method="POST" action="{{ route('buyer.notifications.destroy', $notification->id) }}" 
-                                  onsubmit="return confirm('Bạn có chắc muốn xóa thông báo này?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
@@ -399,6 +388,108 @@ function editNotification(id, title, message, type, targetRole) {
     
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// View notification detail
+let currentNotificationId = null;
+let currentNotificationWasRead = false;
+
+// Add event delegation for notification items
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        const notificationItem = e.target.closest('.notification-item');
+        if (notificationItem) {
+            const id = notificationItem.dataset.id;
+            const title = notificationItem.dataset.title;
+            const message = notificationItem.dataset.message;
+            const type = notificationItem.dataset.type;
+            const isRead = notificationItem.dataset.isRead === 'true';
+            
+            viewNotificationDetail(id, title, message, type, isRead);
+        }
+    });
+});
+
+function viewNotificationDetail(id, title, message, type, isRead) {
+    currentNotificationId = id;
+    currentNotificationWasRead = isRead;
+    
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('notificationDetailModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'notificationDetailModal';
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modal.innerHTML = `
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <h3 class="font-bold text-gray-800 text-lg flex items-center">
+                        <i class="fas fa-bell mr-2 text-blue-600"></i> Chi tiết thông báo
+                    </h3>
+                    <button onclick="closeNotificationDetail()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-1">
+                    <div class="mb-4">
+                        <span id="modalNotificationBadge" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                    </div>
+                    <h4 id="modalNotificationTitle" class="text-xl font-bold text-gray-900 mb-4"></h4>
+                    <p id="modalNotificationMessage" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></p>
+                </div>
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                    <button onclick="closeNotificationDetail()" class="px-5 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors">Đóng</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Set content
+    document.getElementById('modalNotificationTitle').textContent = title;
+    document.getElementById('modalNotificationMessage').textContent = message;
+    
+    // Set badge based on type
+    const badgeConfig = {
+        'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
+        'error': { text: 'LỖI', class: 'bg-red-100 text-red-700' },
+        'warning': { text: 'CẢNH BÁO', class: 'bg-yellow-100 text-yellow-700' },
+        'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
+    };
+    const config = badgeConfig[type] || badgeConfig['info'];
+    const badgeEl = document.getElementById('modalNotificationBadge');
+    badgeEl.textContent = config.text;
+    badgeEl.className = `px-3 py-1 rounded-full text-xs font-semibold ${config.class}`;
+    
+    // Show modal
+    modal.classList.remove('hidden');
+}
+
+function closeNotificationDetail() {
+    const modal = document.getElementById('notificationDetailModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    
+    // Mark as read if it wasn't read before
+    if (currentNotificationId && !currentNotificationWasRead) {
+        fetch(`/buyer/notifications/${currentNotificationId}/read`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        }).then(() => {
+            // Reload page to update UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        });
+    }
+    
+    // Reset current notification tracking
+    currentNotificationId = null;
+    currentNotificationWasRead = false;
 }
 
 // Toast functions

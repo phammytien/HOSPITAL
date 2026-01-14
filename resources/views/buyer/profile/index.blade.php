@@ -179,14 +179,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Họ và tên</label>
                         <input type="text" name="full_name" value="{{ $user->full_name }}"
-                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-3 text-base font-medium rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Số điện thoại</label>
                         <input type="text" name="phone_number" value="{{ $user->phone_number }}"
-                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-3 text-base font-medium rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
@@ -217,9 +217,15 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-lock text-gray-400 mr-2"></i>Mật khẩu hiện tại
                         </label>
-                        <input type="password" name="current_password" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('current_password') border-red-500 @enderror"
-                            placeholder="Nhập mật khẩu hiện tại">
+                        <div class="relative">
+                            <input type="password" id="currentPassword" name="current_password" required
+                                class="w-full px-5 py-4 pr-12 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('current_password') border-red-500 @enderror"
+                                placeholder="Nhập mật khẩu hiện tại">
+                            <button type="button" onclick="togglePasswordVisibility('currentPassword', 'currentPasswordIcon')"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                <i id="currentPasswordIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         @error('current_password')
                             <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
                             </p>
@@ -229,9 +235,15 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-key text-gray-400 mr-2"></i>Mật khẩu mới
                         </label>
-                        <input type="password" name="new_password" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('new_password') border-red-500 @enderror"
-                            placeholder="Nhập mật khẩu mới">
+                        <div class="relative">
+                            <input type="password" id="newPassword" name="new_password" required
+                                class="w-full px-5 py-4 pr-12 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('new_password') border-red-500 @enderror"
+                                placeholder="Nhập mật khẩu mới">
+                            <button type="button" onclick="togglePasswordVisibility('newPassword', 'newPasswordIcon')"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                <i id="newPasswordIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
                         @error('new_password')
                             <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
                             </p>
@@ -244,9 +256,15 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-check-circle text-gray-400 mr-2"></i>Xác nhận mật khẩu mới
                         </label>
-                        <input type="password" name="new_password_confirmation" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder="Nhập lại mật khẩu mới">
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" name="new_password_confirmation" required
+                                class="w-full px-5 py-4 pr-12 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                placeholder="Nhập lại mật khẩu mới">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPassword', 'confirmPasswordIcon')"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                                <i id="confirmPasswordIcon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end gap-3">
@@ -262,6 +280,22 @@
     </div>
 
     <script>
+        // Toggle password visibility
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         // Auto-hide success/error messages after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"]');

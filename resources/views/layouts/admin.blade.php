@@ -71,9 +71,6 @@
 
                <!-- User Menu -->
                 <div class="flex items-center space-x-3">
-                    <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                        <i class="fas fa-search text-lg"></i>
-                    </button>
                     <div class="relative">
                         <button onclick="document.getElementById('adminNotificationDropdown').classList.toggle('hidden')" class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none">
                             <i class="fas fa-bell text-lg"></i>

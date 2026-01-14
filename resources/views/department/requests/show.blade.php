@@ -156,7 +156,7 @@
             <!-- Lịch sử & Workflow -->
             <div class="bg-white rounded-xl border border-gray-200">
                 <div class="p-6 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-900">Lịch sử mua hàng & Sơ sánh</h3>
+                    <h3 class="text-lg font-bold text-gray-900">Lịch sử mua hàng & So sánh</h3>
                 </div>
                 
                 <div class="p-6">

@@ -188,11 +188,6 @@
                 </div>
             @endif
         </div>
-
-        <!-- Footer Info -->
-        <div class="text-center text-xs text-gray-400 italic mt-6">
-            &copy; {{ date('Y') }} Hệ Thống Quản Lý Vật Tư Bệnh Viện.
-        </div>
     </div>
 
     <script>

@@ -150,6 +150,7 @@ Route::middleware(['auth'])->group(function () {
         Route::group(['prefix' => 'buyer/proposals', 'as' => 'buyer.proposals.'], function () {
             Route::get('/', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'index'])->name('index');
             Route::get('/{id}/edit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'edit'])->name('edit');
+            Route::get('/generate-code', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'generateCode'])->name('generate-code');
             Route::put('/{id}', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'update'])->name('update');
             Route::post('/{id}/submit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'submit'])->name('submit');
             Route::post('/{id}/reject', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'reject'])->name('reject');

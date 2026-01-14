@@ -98,10 +98,30 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Đơn vị tính <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="unit" required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                               placeholder="VD: Cái, Hộp, Lọ, Chai"
-                               value="{{ old('unit', $proposal->unit) }}">
+                        <div class="relative">
+                            <input type="hidden" name="unit" id="unitInput" value="{{ old('unit', $proposal->unit) }}">
+                            
+                            <button type="button" id="unitButton"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                    onclick="toggleUnitDropdown()">
+                                <span id="unitButtonText" class="{{ old('unit', $proposal->unit) ? 'text-gray-900' : 'text-gray-500' }}">
+                                    {{ old('unit', $proposal->unit) ?: '-- Chọn đơn vị --' }}
+                                </span>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200" id="unitChevron"></i>
+                            </button>
+                        
+                            <div id="unitDropdown" class="hidden absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                @php
+                                    $units = ['Hộp', 'Viên', 'Vỉ', 'Lọ', 'Chai', 'Ống', 'Gói', 'Cái', 'Chiếc', 'Kg', 'Gam', 'Lít', 'Ml', 'Cuộn', 'Bộ', 'Đôi', 'Thùng', 'Ram'];
+                                @endphp
+                                @foreach($units as $u)
+                                <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-gray-700 border-b border-gray-50 last:border-0 transition-colors duration-150"
+                                     onclick="selectUnit('{{ $u }}')">
+                                    {{ $u }}
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
                         @error('unit')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -256,16 +276,32 @@
 function generateProductCode() {
     const categorySelect = document.getElementById('category_id');
     const productCodeInput = document.getElementById('product_code');
+    const categoryId = categorySelect.value;
+    const proposalId = '{{ $proposal->id }}';
     
-    if (categorySelect.value) {
-        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-        const categoryCode = selectedOption.getAttribute('data-code') || 'SP';
-        const timestamp = Date.now().toString().slice(-6);
-        const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    if (categoryId) {
+        // Show loading state
+        productCodeInput.setAttribute('placeholder', 'Đang tạo mã...');
         
-        productCodeInput.value = `${categoryCode}${timestamp}${randomNum}`;
+        fetch(`{{ route('buyer.proposals.generate-code') }}?category_id=${categoryId}&proposal_id=${proposalId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    productCodeInput.value = data.code;
+                } else {
+                    console.error(data.message);
+                    productCodeInput.value = '';
+                    productCodeInput.setAttribute('placeholder', 'Lỗi tạo mã');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                productCodeInput.value = '';
+                productCodeInput.setAttribute('placeholder', 'Lỗi kết nối');
+            });
     } else {
         productCodeInput.value = '';
+        productCodeInput.setAttribute('placeholder', 'Chọn danh mục để tạo mã');
     }
 }
 
@@ -312,5 +348,39 @@ function openRejectModal() {
 function closeRejectModal() {
     document.getElementById('rejectModal').classList.add('hidden');
 }
+
+// Custom Dropdown Logic
+function toggleUnitDropdown() {
+    const dropdown = document.getElementById('unitDropdown');
+    const chevron = document.getElementById('unitChevron');
+    dropdown.classList.toggle('hidden');
+    
+    if (!dropdown.classList.contains('hidden')) {
+        chevron.style.transform = 'rotate(180deg)';
+    } else {
+        chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+function selectUnit(value) {
+    document.getElementById('unitInput').value = value;
+    const btnText = document.getElementById('unitButtonText');
+    btnText.innerText = value;
+    btnText.className = 'text-gray-900';
+    
+    // Close dropdown
+    toggleUnitDropdown();
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('unitDropdown');
+    const button = document.getElementById('unitButton');
+    
+    if (dropdown && button && !button.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.add('hidden');
+        document.getElementById('unitChevron').style.transform = 'rotate(0deg)';
+    }
+});
     </script>
 @endsection

@@ -22,11 +22,15 @@ if (!function_exists('getProductImage')) {
                 return $file->file_path;
             }
 
+            // Check if path starts with 'products/' (New public path)
+            if (str_starts_with($file->file_path, 'products/')) {
+                $url = asset($file->file_path);
+            }
             // Check if path starts with 'images/' (Legacy/Public path from Proposals)
-            if (str_starts_with($file->file_path, 'images/')) {
+            elseif (str_starts_with($file->file_path, 'images/')) {
                 $url = asset($file->file_path);
             } else {
-                // Default to storage path (Admin Code)
+                // Default to storage path (Legacy Admin Code)
                 $url = asset('storage/' . $file->file_path);
             }
 
@@ -60,6 +64,8 @@ if (!function_exists('getProductImages')) {
             ->map(function ($file) {
                 if (filter_var($file->file_path, FILTER_VALIDATE_URL)) {
                     $file->url = $file->file_path;
+                } elseif (str_starts_with($file->file_path, 'products/')) {
+                    $file->url = asset($file->file_path);
                 } elseif (str_starts_with($file->file_path, 'images/')) {
                     $file->url = asset($file->file_path);
                 } else {
@@ -87,8 +93,8 @@ if (!function_exists('uploadProductImage')) {
             $mimeType = $file->getMimeType();
             $filename = $file->hashName();
 
-            // Save DIRECTLY to public/storage/products (no symlink needed!)
-            $destinationPath = public_path('storage/products');
+            // Save DIRECTLY to public/products (User Request)
+            $destinationPath = public_path('products');
 
             // Create directory if it doesn't exist
             if (!file_exists($destinationPath)) {

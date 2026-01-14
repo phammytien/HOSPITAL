@@ -16,16 +16,16 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'supplier', 'primaryImage'])
             ->where('is_delete', false);
-        
+
         // Keyword search - search in product_name and product_code
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', '%' . $search . '%')
-                  ->orWhere('product_code', 'like', '%' . $search . '%');
+                    ->orWhere('product_code', 'like', '%' . $search . '%');
             });
         }
-        
+
         // Category filter
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
@@ -47,19 +47,19 @@ class ProductController extends Controller
                 $query->where('stock_quantity', '>', 10);
             }
         }
-        
+
         // Pagination - 4 items per page
         $perPage = $request->input('per_page', 4);
         $products = $query->orderBy('created_at', 'desc')->paginate($perPage);
-        
+
         // Preserve query parameters in pagination links
         $products->appends($request->except('page'));
-        
+
         $categories = ProductCategory::where('is_delete', false)->get();
         $suppliers = Supplier::where('is_delete', false)->get();
         // Get unique units for suggestions
         $units = Product::where('is_delete', false)->whereNotNull('unit')->distinct()->orderBy('unit')->pluck('unit');
-        
+
         return view('admin.products', compact('products', 'categories', 'suppliers', 'units'));
     }
     public function store(Request $request)
@@ -90,17 +90,17 @@ class ProductController extends Controller
         \Log::info('=== PRODUCT STORE DEBUG ===');
         \Log::info('Has file: ' . ($request->hasFile('image') ? 'YES' : 'NO'));
         \Log::info('All files: ' . json_encode($request->allFiles()));
-        
+
         if ($request->hasFile('image')) {
             \Log::info('File name: ' . $request->file('image')->getClientOriginalName());
             \Log::info('File size: ' . $request->file('image')->getSize());
-            
+
             $result = uploadProductImage(
                 $request->file('image'),
                 $product->id,
                 auth()->id()
             );
-            
+
             \Log::info('Upload result: ' . ($result ? 'SUCCESS - ID: ' . $result->id : 'FAILED'));
         }
 
@@ -116,7 +116,7 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'product_code' => 'required|unique:products,product_code,'.$id,
+            'product_code' => 'required|unique:products,product_code,' . $id,
             'product_name' => 'required',
             'category_id' => 'required|exists:product_categories,id',
             'unit' => 'required',
@@ -138,6 +138,18 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
         $product->update($request->except('image'));
 
+        // Handle image deletion
+        if ($request->input('delete_image') == '1') {
+            $oldImage = \App\Models\File::where('related_table', 'products')
+                ->where('related_id', $product->id)
+                ->where('is_delete', false)
+                ->first();
+
+            if ($oldImage) {
+                $oldImage->update(['is_delete' => true]);
+            }
+        }
+
         // Handle image upload
         if ($request->hasFile('image')) {
             // Delete old image first (soft delete)
@@ -145,11 +157,11 @@ class ProductController extends Controller
                 ->where('related_id', $product->id)
                 ->where('is_delete', false)
                 ->first();
-            
+
             if ($oldImage) {
                 $oldImage->update(['is_delete' => true]);
             }
-            
+
             // Upload new image
             uploadProductImage(
                 $request->file('image'),
@@ -165,7 +177,7 @@ class ProductController extends Controller
     {
         $categoryId = $request->input('category_id');
         $productId = $request->input('product_id'); // For edit mode
-        
+
         if (!$categoryId) {
             return response()->json([
                 'success' => false,
@@ -182,24 +194,51 @@ class ProductController extends Controller
         }
 
         $categoryCode = $category->category_code;
-        
+
+        // Dynamic Prefix Generation from Category Name
+        // Logic: "Thuốc Kháng Sinh" -> "Thuoc Khang Sinh" -> "TKS"
+        $categoryNameAscii = \Illuminate\Support\Str::ascii($category->category_name);
+        $words = preg_split('/\s+/', $categoryNameAscii);
+        $dynamicPrefix = '';
+
+        foreach ($words as $word) {
+            // Take the first character of each word if it's alphanumeric
+            $firstChar = substr($word, 0, 1);
+            if (ctype_alnum($firstChar)) {
+                $dynamicPrefix .= strtoupper($firstChar);
+            }
+        }
+
+        // Use the generated prefix if valid, otherwise fallback to existing category code
+        if (!empty($dynamicPrefix)) {
+            $categoryCode = $dynamicPrefix;
+        }
+
         // Get the latest product code for this category
         $query = Product::where('category_id', $categoryId)
             ->where('product_code', 'like', $categoryCode . '%');
-        
+
         // Exclude current product if in edit mode
         if ($productId) {
             $query->where('id', '!=', $productId);
         }
-        
+
         $latestProduct = $query->orderBy('product_code', 'desc')->first();
 
         if ($latestProduct) {
-            // Extract number from code (e.g., CNTT002 -> 002)
-            $number = (int) substr($latestProduct->product_code, strlen($categoryCode));
-            $newNumber = str_pad($number + 1, 3, '0', STR_PAD_LEFT);
+            // Extract number from code (e.g., TKS0002 -> 0002)
+            $currentPrefixLen = strlen($categoryCode);
+            $numberStr = substr($latestProduct->product_code, $currentPrefixLen);
+
+            if (is_numeric($numberStr)) {
+                $number = (int) $numberStr;
+            } else {
+                $number = 0;
+            }
+
+            $newNumber = str_pad($number + 1, 4, '0', STR_PAD_LEFT);
         } else {
-            $newNumber = '001';
+            $newNumber = '0001';
         }
 
         $newCode = $categoryCode . $newNumber;
@@ -222,27 +261,27 @@ class ProductController extends Controller
     {
         try {
             $product = Product::findOrFail($id);
-            
+
             // Check if product is already approved (has supplier)
             if ($product->supplier_id) {
                 return response()->json([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Sản phẩm đã được duyệt trước đó!'
                 ]);
             }
-            
+
             // For now, just mark as approved by setting a default supplier
             // In real scenario, admin should select supplier when approving
             // We'll return success and let the edit modal handle supplier selection
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => 'Sản phẩm đã được duyệt thành công!',
                 'product_id' => $product->id
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
             ], 500);
         }
@@ -252,9 +291,9 @@ class ProductController extends Controller
     {
         $categoryId = $request->input('category_id');
         $search = $request->input('search');
-        
+
         $fileName = 'danh-sach-san-pham-' . date('Y-m-d-His') . '.xlsx';
-        
+
         return Excel::download(new ProductsExport($categoryId, $search), $fileName);
     }
 

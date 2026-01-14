@@ -144,4 +144,80 @@ class ProductProposalController extends Controller
         return redirect()->route('buyer.proposals.index')
             ->with('success', 'Đã từ chối đề xuất và gửi về Khoa!');
     }
+
+    public function generateCode(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+        $proposalId = $request->input('proposal_id'); // For checking existing proposals if needed
+
+        if (!$categoryId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn danh mục trước'
+            ]);
+        }
+
+        $category = ProductCategory::find($categoryId);
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh mục không tồn tại'
+            ]);
+        }
+
+        $categoryCode = $category->category_code;
+
+        // Dynamic Prefix Generation from Category Name
+        // Logic: "Thuốc Kháng Sinh" -> "Thuoc Khang Sinh" -> "TKS"
+        $categoryNameAscii = \Illuminate\Support\Str::ascii($category->category_name);
+        $words = preg_split('/\s+/', $categoryNameAscii);
+        $dynamicPrefix = '';
+
+        foreach ($words as $word) {
+            // Take the first character of each word if it's alphanumeric
+            $firstChar = substr($word, 0, 1);
+            if (ctype_alnum($firstChar)) {
+                $dynamicPrefix .= strtoupper($firstChar);
+            }
+        }
+
+        // Use the generated prefix if valid, otherwise fallback to existing category code
+        if (!empty($dynamicPrefix)) {
+            $categoryCode = $dynamicPrefix;
+        }
+
+        // Check against ACTUAL products table to ensure uniqueness
+        // Because a proposal will eventually become a product
+        $query = \App\Models\Product::where('category_id', $categoryId)
+            ->where('product_code', 'like', $categoryCode . '%');
+
+        $latestProduct = $query->orderBy('product_code', 'desc')->first();
+
+        // Also check against other proposals that might have taken the code?
+        // Ideally we should but for simplicity let's stick to Product table to avoid gaps
+        // If we want to be super safe we should also check ProductProposal where status=APPROVED (but not yet products?)
+
+        if ($latestProduct) {
+            // Extract number from code (e.g., TKS0002 -> 0002)
+            $currentPrefixLen = strlen($categoryCode);
+            $numberStr = substr($latestProduct->product_code, $currentPrefixLen);
+
+            if (is_numeric($numberStr)) {
+                $number = (int) $numberStr;
+            } else {
+                $number = 0;
+            }
+
+            $newNumber = str_pad($number + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+
+        $newCode = $categoryCode . $newNumber;
+
+        return response()->json([
+            'success' => true,
+            'code' => $newCode
+        ]);
+    }
 }

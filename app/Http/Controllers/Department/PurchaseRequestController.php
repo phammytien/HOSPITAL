@@ -300,11 +300,11 @@ class PurchaseRequestController extends Controller
             ->where('department_id', $user->department_id)
             ->where('is_delete', false)
             ->with([
-                'items.product.category',
-                'requester',
-                'department',
-                'workflows.actionBy'
-            ])
+                    'items.product.category',
+                    'requester',
+                    'department',
+                    'workflows.actionBy'
+                ])
             ->firstOrFail();
 
         // Tính tổng tiền
@@ -560,7 +560,16 @@ class PurchaseRequestController extends Controller
             ->whereYear('created_at', $year)
             ->count() + 1;
 
-        return sprintf('REQ_%s_%s_%04d', $year, $deptCode, $count);
+        // Use Department NAME for the code part (e.g. "Khoa Cap Cuu")
+        // Convert "Khoa Cấp Cứu" -> "Khoa Cap Cuu" -> "Khoa_Cap_Cuu"
+        $deptName = $department->department_name;
+        $deptCodePart = \Illuminate\Support\Str::ascii($deptName);
+        $deptCodePart = str_replace(' ', '_', $deptCodePart);
+
+        // Remove strictly non-alphanumeric/underscore (optional, for safety)
+        $deptCodePart = preg_replace('/[^A-Za-z0-9_]/', '', $deptCodePart);
+
+        return sprintf('REQ_%s_%s_%04d', $year, $deptCodePart, $count);
     }
 
     /**

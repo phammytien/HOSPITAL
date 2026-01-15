@@ -156,7 +156,18 @@ class PurchaseRequestController extends Controller
                     return $item->quantity * $item->expected_price;
                 });
 
-                $orderCode = 'PO_' . now()->format('Ymd') . '_' . $purchaseRequest->id;
+                // Generate Order Code: PO_Year_Quarter_Dept_Seq
+                $year = now()->year;
+                $quarter = 'Q' . ceil(now()->month / 3);
+                $deptSlug = $purchaseRequest->department->slug;
+
+                $prefix = "PO_{$year}_{$quarter}_{$deptSlug}_";
+
+                // Count existing POs for this Department in this Quarter
+                $count = \App\Models\PurchaseOrder::where('order_code', 'LIKE', $prefix . '%')->count();
+                $seq = $count + 1;
+
+                $orderCode = $prefix . sprintf('%02d', $seq);
 
                 $purchaseOrder = \App\Models\PurchaseOrder::create([
                     'order_code' => $orderCode,

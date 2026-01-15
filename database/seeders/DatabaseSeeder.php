@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             WarehouseSeeder::class,
             WarehouseInventorySeeder::class,
             InventorySeeder::class,
+            SqlDataSeeder::class,
         ]);
     }
 }

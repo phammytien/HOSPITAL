@@ -81,8 +81,17 @@ php artisan migrate
 
 php artisan db:seed
 
+
 git commit -m "Update README"
 
+## chạy dữ liệu 18 bảng từ file sql_insert_data.sql
+//Chỉ chạy dữ liệu file sql_insert_data.sql để thêm tất cả dữ liệu file sql_insert_data.sql vào mysql
+
+php artisan db:seed --class=SqlDataSeeder 
+
+//Chỉnh sửa ở file sql_insert_data.sql chạy lệnh lại lệnh này để tự động cập nhật lại từ đầu như sql_insert_data.sql mới chỉnh sửa
+
+php artisan migrate:fresh --seed --seeder=SqlDataSeeder 
 
 ## Lấy code từ github
 git fetch origin 

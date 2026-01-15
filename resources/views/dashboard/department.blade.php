@@ -111,6 +111,8 @@
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">Chờ duyệt</span>
                                         @elseif($request->status == 'APPROVED')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Đã duyệt</span>
+                                        @elseif($request->status == 'COMPLETED' || $request->status == 'PAID')
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Hoàn thành</span>
                                         @elseif($request->status == 'REJECTED')
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">Từ chối</span>
                                         @endif

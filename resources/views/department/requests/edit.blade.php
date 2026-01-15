@@ -153,10 +153,6 @@
                             <span class="text-gray-600">Tạm tính (<span id="itemCount">0</span> mục)</span>
                             <span class="font-semibold" id="subtotal">0 đ</span>
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tạm tính (<span id="itemCount">0</span> mục)</span>
-                            <span class="font-semibold" id="subtotal">0 đ</span>
-                        </div>
                     </div>
 
                     <div class="pt-4 border-t border-gray-200 mb-6">

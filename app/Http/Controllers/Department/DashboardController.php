@@ -30,7 +30,7 @@ class DashboardController extends Controller
                 ->count(),
 
             'approved' => PurchaseRequest::where('department_id', $departmentId)
-                ->where('status', 'APPROVED')
+                ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
                 ->where('is_delete', false)
                 ->count(),
 
@@ -45,10 +45,10 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
-        // Tính tổng số vật tư đã nhận (từ các đơn đã approved)
+        // Tính tổng số vật tư đã nhận (từ các đơn đã approved/completed)
         $totalItems = PurchaseRequestItem::whereHas('purchaseRequest', function ($query) use ($departmentId) {
             $query->where('department_id', $departmentId)
-                ->where('status', 'APPROVED')
+                ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
                 ->where('is_delete', false);
         })->sum('quantity');
 

@@ -753,10 +753,6 @@
                                 </tbody>
                                 <tfoot class="bg-gray-50">
                                     <tr>
-                                        <td colspan="3" class="px-6 py-3 text-right text-gray-600 font-medium">Tạm tính:</td>
-                                        <td class="px-6 py-3 text-right font-bold text-gray-900">${formatCurrency(data.total_amount)}</td>
-                                    </tr>
-                                    <tr>
                                         <td colspan="3" class="px-6 py-3 text-right text-gray-600 font-medium border-none">Thuế (0%):</td>
                                         <td class="px-6 py-3 text-right font-bold text-gray-900 border-none">0 ₫</td>
                                     </tr>

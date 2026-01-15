@@ -256,15 +256,6 @@
 
                 <!-- Footer Summaries -->
                 <div class="mt-8 pt-4 border-t border-gray-100 flex flex-col items-end gap-1">
-                    <div class="flex justify-between w-72 text-gray-500 text-sm">
-                        <span>Tạm tính:</span>
-                        <span class="font-semibold text-gray-900">{{ number_format($order->total_amount, 0, ',', '.') }}
-                            đ</span>
-                    </div>
-                    <div class="flex justify-between w-72 text-gray-500 text-sm">
-                        <span>VAT (0%):</span>
-                        <span class="font-semibold text-gray-900">0 đ</span>
-                    </div>
                     <div
                         class="flex justify-between w-72 text-blue-600 text-xl font-bold mt-3 pt-3 border-t border-gray-100">
                         <span>Tổng cộng:</span>

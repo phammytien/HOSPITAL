@@ -253,7 +253,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('requests/{id}/withdraw', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'withdraw'])->name('requests.withdraw');
 
             // Product Catalog
-            Route::get('/catalog', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('catalog.index');
+
             Route::get('/products', [\App\Http\Controllers\Department\ProductCatalogController::class, 'index'])->name('products.index');
             Route::get('/products/{id}', [\App\Http\Controllers\Department\ProductCatalogController::class, 'show'])->name('products.show');
 

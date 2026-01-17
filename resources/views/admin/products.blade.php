@@ -13,7 +13,7 @@
             </div>
 
             <div class="flex space-x-3">
-                <a href="{{ route('admin.products.export', ['category_id' => request('category_id'), 'search' => request('search')]) }}" 
+                <a href="{{ route('admin.products.export', ['category_id' => request('category_id'), 'search' => request('search'), 'supplier_id' => request('supplier_id')]) }}" 
                    class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium inline-flex items-center">
                     <i class="fas fa-file-export mr-2"></i>Xuất Excel
                 </a>

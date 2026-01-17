@@ -93,16 +93,27 @@
                         <p class="text-xs font-semibold text-gray-500 uppercase px-3 mb-2">DANH SÁCH DANH MỤC</p>
                     </div>
 
-                    @foreach($allCategories as $cat)
-                    <a href="{{ route('admin.products.index', ['category_id' => $cat->id]) }}" 
-                       class="flex items-center justify-between px-3 py-2 rounded-lg group transition-colors {{ request('category_id') == $cat->id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
-                        <div class="flex items-center">
-                            <i class="fas fa-folder w-5 {{ request('category_id') == $cat->id ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500' }}"></i>
-                            <span class="ml-2 truncate max-w-[120px]" title="{{ $cat->category_name }}">{{ $cat->category_name }}</span>
-                        </div>
-                        <span class="text-xs {{ request('category_id') == $cat->id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }} px-2 py-0.5 rounded-full">{{ $cat->products_count ?? 0 }}</span>
-                    </a>
-                    @endforeach
+                    <div id="categoryList">
+                        @foreach($allCategories as $index => $cat)
+                        <a href="{{ route('admin.products.index', ['category_id' => $cat->id]) }}" 
+                           class="category-item flex items-center justify-between px-3 py-2 rounded-lg group transition-colors {{ request('category_id') == $cat->id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50' }} {{ $index >= 6 ? 'hidden' : '' }}"
+                           data-index="{{ $index }}">
+                            <div class="flex items-center">
+                                <i class="fas fa-folder w-5 {{ request('category_id') == $cat->id ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500' }}"></i>
+                                <span class="ml-2 truncate max-w-[120px]" title="{{ $cat->category_name }}">{{ $cat->category_name }}</span>
+                            </div>
+                            <span class="text-xs {{ request('category_id') == $cat->id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }} px-2 py-0.5 rounded-full">{{ $cat->products_count ?? 0 }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+
+                    @if($allCategories->count() > 6)
+                        <button onclick="toggleCategories()" id="toggleCategoriesBtn" 
+                                class="w-full mt-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-chevron-down mr-1"></i>
+                            <span id="toggleText">Xem tất cả ({{ $allCategories->count() - 6 }} danh mục)</span>
+                        </button>
+                    @endif
 
                     @if($allCategories->isEmpty())
                         <div class="px-3 py-4 text-center text-sm text-gray-500">
@@ -712,6 +723,39 @@ document.getElementById('importExcelInput')?.addEventListener('change', async fu
     // Reset input
     this.value = '';
 });
+
+// Toggle Categories Show More/Less
+let categoriesExpanded = false;
+
+function toggleCategories() {
+    const categoryItems = document.querySelectorAll('.category-item');
+    const toggleBtn = document.getElementById('toggleCategoriesBtn');
+    const toggleText = document.getElementById('toggleText');
+    const icon = toggleBtn.querySelector('i');
+    
+    categoriesExpanded = !categoriesExpanded;
+    
+    categoryItems.forEach((item, index) => {
+        if (index >= 6) {
+            if (categoriesExpanded) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        }
+    });
+    
+    if (categoriesExpanded) {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+        toggleText.textContent = 'Thu gọn';
+    } else {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+        const hiddenCount = categoryItems.length - 6;
+        toggleText.textContent = `Xem tất cả (${hiddenCount} danh mục)`;
+    }
+}
 </script>
 @endpush
 @endsection

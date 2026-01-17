@@ -8,6 +8,8 @@ use App\Models\PurchaseOrder;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\PurchaseHistoryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseHistoryController extends Controller
 {
@@ -83,7 +85,7 @@ class PurchaseHistoryController extends Controller
     }
 
     /**
-     * Export history to CSV
+     * Export history to Excel
      */
     public function export(Request $request)
     {
@@ -103,42 +105,20 @@ class PurchaseHistoryController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
+        if ($request->has('search') && $request->search != '') {
+            $query->where(function ($q) use ($request) {
+                $q->where('request_code', 'like', '%' . $request->search . '%')
+                    ->orWhere('note', 'like', '%' . $request->search . '%');
+            });
+        }
+
         $history = $query->orderBy('created_at', 'desc')->get();
 
-        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.csv';
+        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.xlsx';
         
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($history) {
-            $file = fopen('php://output', 'w');
-            
-            // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            // Header row
-            fputcsv($file, ['Mã yêu cầu', 'Ngày tạo', 'Khoa/Phòng', 'Người yêu cầu', 'Tổng tiền', 'Trạng thái']);
-
-            foreach ($history as $request) {
-                $total = $request->items->sum(function($item) {
-                    return $item->quantity * $item->expected_price;
-                });
-
-                fputcsv($file, [
-                    $request->request_code,
-                    $request->created_at->format('d/m/Y H:i'),
-                    $request->department->department_name ?? 'N/A',
-                    $request->requester->full_name ?? 'N/A',
-                    number_format($total, 0, ',', '.') . ' VNĐ',
-                    $request->status,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new PurchaseHistoryExport($history, $request->all()), 
+            $filename
+        );
     }
 }

@@ -69,9 +69,8 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Từ khóa tìm kiếm</label>
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <input type="text" name="search" value="{{ request('search') }}" 
+                    <input type="text" name="search" id="searchInput" value="{{ request('search') }}" 
                            placeholder="Nhập mã yêu cầu, ghi chú..." 
-                           onchange="document.getElementById('filterForm').submit()"
                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
             </div>
@@ -79,8 +78,7 @@
             {{-- Department --}}
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Khoa / Phòng</label>
-                <select name="department_id" 
-                        onchange="document.getElementById('filterForm').submit()"
+                <select name="department_id" id="departmentFilter"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Tất cả phòng ban</option>
                     @foreach($departments as $dept)
@@ -94,26 +92,29 @@
             {{-- Date From --}}
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian</label>
-                <input type="date" name="date_from" value="{{ request('date_from') }}" 
+                <input type="date" name="date_from" id="dateFromFilter" value="{{ request('date_from') }}" 
                        placeholder="mm/dd/yyyy"
-                       onchange="document.getElementById('filterForm').submit()"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             {{-- Date To --}}
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" 
+                <input type="date" name="date_to" id="dateToFilter" value="{{ request('date_to') }}" 
                        placeholder="mm/dd/yyyy"
-                       onchange="document.getElementById('filterForm').submit()"
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            {{-- Download Button Only --}}
-            <div class="md:col-span-3 flex justify-end">
-                <a href="{{ route('admin.history.export') }}" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+            {{-- Export and Clear Buttons --}}
+            <div class="md:col-span-3 flex justify-end gap-2">
+                <a href="{{ route('admin.history.export', ['search' => request('search'), 'department_id' => request('department_id'), 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition" title="Xuất Excel">
                     <i class="fas fa-download"></i>
                 </a>
+                <button type="button" onclick="clearFilters()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition" title="Xóa lọc">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </form>
     </div>
@@ -195,4 +196,35 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+// Clear all filters
+function clearFilters() {
+    window.location.href = '{{ route('admin.history') }}';
+}
+
+// Auto-submit form on filter change
+document.getElementById('departmentFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('dateFromFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('dateToFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+// Search with debounce
+let searchTimeout;
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        document.getElementById('filterForm').submit();
+    }, 500);
+});
+</script>
+@endpush
 @endsection

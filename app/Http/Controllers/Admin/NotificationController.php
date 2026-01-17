@@ -16,6 +16,17 @@ class NotificationController extends Controller
     {
         $query = Notification::query();
 
+        // Refined visibility permissions for Admin:
+        // 1. Notifications targeted to ADMIN
+        // 2. Notifications targeted to ALL (null or 'ALL')
+        // 3. Notifications created by the current user (Admin sent them)
+        $query->where(function($q) {
+            $q->where('target_role', 'ADMIN')
+              ->orWhere('target_role', 'ALL')
+              ->orWhereNull('target_role')
+              ->orWhere('created_by', Auth::id());
+        });
+
         // Filter by type
         if ($request->has('type') && $request->type != '') {
             $query->where('type', $request->type);
@@ -37,9 +48,24 @@ class NotificationController extends Controller
         $notifications = $query->orderBy('id', 'desc')->paginate(5);
 
         $stats = [
-            'total' => Notification::count(),
-            'unread' => Notification::where('is_read', false)->count(),
-            'read' => Notification::where('is_read', true)->count(),
+            'total' => Notification::where(function($q) {
+                $q->where('target_role', 'ADMIN')
+                  ->orWhere('target_role', 'ALL')
+                  ->orWhereNull('target_role')
+                  ->orWhere('created_by', Auth::id());
+            })->count(),
+            'unread' => Notification::where(function($q) {
+                $q->where('target_role', 'ADMIN')
+                  ->orWhere('target_role', 'ALL')
+                  ->orWhereNull('target_role')
+                  ->orWhere('created_by', Auth::id());
+            })->where('is_read', false)->count(),
+            'read' => Notification::where(function($q) {
+                $q->where('target_role', 'ADMIN')
+                  ->orWhere('target_role', 'ALL')
+                  ->orWhereNull('target_role')
+                  ->orWhere('created_by', Auth::id());
+            })->where('is_read', true)->count(),
         ];
 
         return view('admin.notifications.index', compact('notifications', 'stats'));

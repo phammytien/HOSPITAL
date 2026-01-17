@@ -217,12 +217,17 @@ document.getElementById('dateToFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 
-// Search with debounce
+// Search with debounce - only submit if there's content
 let searchTimeout;
 document.getElementById('searchInput')?.addEventListener('input', function(e) {
     clearTimeout(searchTimeout);
+    const searchValue = this.value.trim();
+    
     searchTimeout = setTimeout(() => {
-        document.getElementById('filterForm').submit();
+        // Only submit if search has content OR if we're clearing a previous search
+        if (searchValue.length > 0 || '{{ request('search') }}' !== '') {
+            document.getElementById('filterForm').submit();
+        }
     }, 500);
 });
 </script>

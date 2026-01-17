@@ -96,7 +96,7 @@
                     <select name="type" required
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="info">Thông tin</option>
-                        <option value="success">Thành công</option>
+                        <option value="success">Hoàn thành</option>
                         <option value="warning">Cảnh báo</option>
                         <option value="error">Lỗi</option>
                     </select>
@@ -110,7 +110,6 @@
                     <select name="target_role" required
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="ALL">Tất cả người dùng</option>
-                        <option value="ADMIN">Quản trị viên</option>
                         <option value="BUYER">Nhân viên mua hàng</option>
                         <option value="DEPARTMENT">Khoa/Phòng</option>
                     </select>
@@ -213,7 +212,7 @@
             <a href="{{ route('admin.notifications', ['type' => 'success']) }}" 
                class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'success' ? 'bg-green-50 text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:bg-gray-50' }}">
                 <i class="fas fa-check-circle mr-2"></i>
-                Thành công
+                Hoàn thành
             </a>
         </div>
     </div>
@@ -245,7 +244,7 @@
                     'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50', 'badge' => 'KHẨN CẤP'],
                     'warning' => ['icon' => 'chart-line', 'color' => 'orange', 'bg' => 'orange-50', 'badge' => 'CẢNH BÁO'],
                     'info' => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50', 'badge' => 'THÔNG TIN'],
-                    'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'THÀNH CÔNG'],
+                    'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'HOÀN THÀNH'],
                 ];
                 $config = $icons[$notification->type] ?? $icons['info'];
             @endphp
@@ -281,7 +280,19 @@
                             </span>
                             <span class="flex items-center gap-1">
                                 <i class="far fa-building"></i>
-                                Đối tượng nhận: {{ $notification->target_role ?? 'Tất cả' }}
+                                @php
+                                    $roleNames = [
+                                        'ALL' => 'Tất cả',
+                                        'ADMIN' => 'Quản trị viên',
+                                        'BUYER' => 'Nhân viên mua hàng',
+                                        'DEPARTMENT' => 'Khoa/Phòng',
+                                        'staff' => 'Nhân viên',
+                                        'department_head' => 'Trưởng khoa',
+                                        'buyer' => 'Người mua hàng'
+                                    ];
+                                    $displayRole = $roleNames[$notification->target_role] ?? ($notification->target_role ?? 'Tất cả');
+                                @endphp
+                                Đối tượng nhận: {{ $displayRole }}
                             </span>
                             <span class="flex items-center gap-1">
                                 <i class="far fa-clock"></i>
@@ -391,7 +402,7 @@
                         <select id="editType" name="type" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="info">Thông tin</option>
-                            <option value="success">Thành công</option>
+                            <option value="success">Hoàn thành</option>
                             <option value="warning">Cảnh báo</option>
                             <option value="error">Lỗi</option>
                         </select>
@@ -404,7 +415,6 @@
                         <select id="editTargetRole" name="target_role" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="ALL">Tất cả người dùng</option>
-                            <option value="ADMIN">Quản trị viên</option>
                             <option value="BUYER">Nhân viên mua hàng</option>
                             <option value="DEPARTMENT">Khoa/Phòng</option>
                         </select>

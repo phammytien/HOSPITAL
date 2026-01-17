@@ -124,17 +124,24 @@
                             <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3 ml-4">
-                        <select class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option>Trạng thái</option>
-                            <option>Còn hàng</option>
-                            <option>Hết hàng</option>
-                            <option>Sắp hết</option>
+                    <form method="GET" action="{{ route('admin.categories') }}" id="categoryFilterForm" class="flex items-center space-x-3 ml-4">
+                        <select name="category_filter" id="categoryFilter" onchange="this.form.submit()"
+                                class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach($allCategories as $cat)
+                                <option value="{{ $cat->id }}" {{ request('category_filter') == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->category_name }}
+                                </option>
+                            @endforeach
                         </select>
-                        <button class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                            <i class="fas fa-filter text-gray-600"></i>
-                        </button>
-                    </div>
+                        @if(request('category_filter'))
+                            <a href="{{ route('admin.categories') }}" 
+                               class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600"
+                               title="Xóa bộ lọc">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        @endif
+                    </form>
                 </div>
             </div>
 
@@ -144,9 +151,6 @@
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th class="px-6 py-3 text-center w-12"></th>
-                            <th class="px-6 py-3 text-left">
-                                <input type="checkbox" class="rounded border-gray-300">
-                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên danh mục</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã danh mục</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mô tả</th>
@@ -160,9 +164,6 @@
                         <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleProducts({{ $category->id }})">
                             <td class="px-6 py-4 text-center">
                                 <i id="chevron-{{ $category->id }}" class="fas fa-chevron-right text-gray-400 transition-transform duration-200"></i>
-                            </td>
-                            <td class="px-6 py-4" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="rounded border-gray-300">
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -197,7 +198,7 @@
                         </tr>
                         <!-- Expandable Products Row -->
                         <tr id="products-{{ $category->id }}" class="hidden bg-gray-50">
-                            <td colspan="7" class="px-6 py-4">
+                            <td colspan="6" class="px-6 py-4">
                                 <div class="flex items-center justify-center py-4" id="loading-{{ $category->id }}">
                                     <i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>
                                     <span class="text-sm text-gray-600">Đang tải sản phẩm...</span>
@@ -209,7 +210,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                 <i class="fas fa-folder-open text-6xl mb-4 text-gray-300"></i>
                                 <p class="text-lg font-medium">Chưa có danh mục nào</p>
                                 <p class="text-sm mt-2">Thêm danh mục đầu tiên để bắt đầu quản lý</p>
@@ -395,6 +396,21 @@ document.getElementById('add_category_name')?.addEventListener('input', function
     document.getElementById('add_category_code').value = code;
 });
 
+// Auto-generate Category Code for Edit Modal
+document.getElementById('edit_category_name')?.addEventListener('input', function(e) {
+    const name = e.target.value;
+    // Get initials: "Thiết bị y tế" -> "TBYT"
+    const code = name.normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                    .split(/\s+/) // Split by whitespace
+                    .map(word => word.charAt(0)) // Get first char of each word
+                    .join('')
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
+    
+    document.getElementById('edit_category_code').value = code;
+});
+
 // Modal functions
 function openAddModal() {
     document.getElementById('addCategoryModal').classList.remove('hidden');
@@ -562,7 +578,18 @@ function toggleProducts(categoryId) {
         chevron.classList.remove('rotate-90');
         expandedCategories.delete(categoryId);
     } else {
-        // Expand
+        // Collapse all other categories first
+        expandedCategories.forEach(otherId => {
+            if (otherId !== categoryId) {
+                const otherRow = document.getElementById(`products-${otherId}`);
+                const otherChevron = document.getElementById(`chevron-${otherId}`);
+                otherRow.classList.add('hidden');
+                otherChevron.classList.remove('rotate-90');
+            }
+        });
+        expandedCategories.clear(); // Clear set
+        
+        // Expand current category
         productsRow.classList.remove('hidden');
         chevron.classList.add('rotate-90');
         expandedCategories.add(categoryId);

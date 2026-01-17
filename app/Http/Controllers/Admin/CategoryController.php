@@ -18,6 +18,11 @@ class CategoryController extends Controller
                 $query->where('is_delete', false);
             }]);
 
+        // Filter by specific category
+        if ($request->filled('category_filter')) {
+            $query->where('id', $request->input('category_filter'));
+        }
+
         if ($request->has('category_id')) {
             $query->where('id', $request->category_id);
         }

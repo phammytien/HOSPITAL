@@ -36,12 +36,12 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        // Date range filter
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('order_date', '>=', $request->date_from);
-        }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('order_date', '<=', $request->date_to);
+
+        // Month filter
+        if ($request->has('month') && $request->month != '') {
+            $month = $request->month; // Format: YYYY-MM
+            $query->whereYear('order_date', '=', substr($month, 0, 4))
+                  ->whereMonth('order_date', '=', substr($month, 5, 2));
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(15);

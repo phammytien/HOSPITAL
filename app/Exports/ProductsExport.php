@@ -20,11 +20,13 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
 {
     protected $categoryId;
     protected $search;
+    protected $supplierId;
 
-    public function __construct($categoryId = null, $search = null)
+    public function __construct($categoryId = null, $search = null, $supplierId = null)
     {
         $this->categoryId = $categoryId;
         $this->search = $search;
+        $this->supplierId = $supplierId;
     }
 
     public function collection()
@@ -35,6 +37,11 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
         // Filter by category
         if ($this->categoryId && $this->categoryId != 'all') {
             $query->where('category_id', $this->categoryId);
+        }
+
+        // Filter by supplier
+        if ($this->supplierId && $this->supplierId != 'all') {
+            $query->where('supplier_id', $this->supplierId);
         }
 
         // Search
@@ -101,25 +108,66 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
         return [
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet;
+                
+                // Insert title rows at the top
+                $sheet->insertNewRowBefore(1, 3);
+                
+                // Add main title
+                $sheet->setCellValue('A1', 'DANH SÁCH SẢN PHẨM');
+                $sheet->mergeCells('A1:I1');
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 16],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+                
+                // Add filter info
+                $filterInfo = 'Ngày xuất: ' . date('d/m/Y H:i:s');
+                if ($this->categoryId) {
+                    $category = \App\Models\ProductCategory::find($this->categoryId);
+                    $filterInfo .= ' | Danh mục: ' . ($category->category_name ?? 'N/A');
+                }
+                if ($this->supplierId) {
+                    $supplier = \App\Models\Supplier::find($this->supplierId);
+                    $filterInfo .= ' | Nhà cung cấp: ' . ($supplier->supplier_name ?? 'N/A');
+                }
+                if ($this->search) {
+                    $filterInfo .= ' | Tìm kiếm: ' . $this->search;
+                }
+                
+                $sheet->setCellValue('A2', $filterInfo);
+                $sheet->mergeCells('A2:I2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => ['italic' => true, 'size' => 10],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+                
+                // Adjust existing styling to account for new rows
                 $highestRow = $sheet->getHighestRow();
                 
-                // Add borders to all cells
-                $sheet->getStyle('A1:I' . $highestRow)
+                // Header row is now row 4
+                $sheet->getStyle('A4:I4')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+                
+                // Add borders to all data cells (from row 4 onwards)
+                $sheet->getStyle('A4:I' . $highestRow)
                     ->getBorders()
                     ->getAllBorders()
                     ->setBorderStyle(Border::BORDER_THIN);
                 
                 // Center align STT and Stock columns
-                $sheet->getStyle('A2:A' . $highestRow)
+                $sheet->getStyle('A5:A' . $highestRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
-                $sheet->getStyle('G2:G' . $highestRow)
+                $sheet->getStyle('G5:G' . $highestRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 
                 // Right align price column
-                $sheet->getStyle('F2:F' . $highestRow)
+                $sheet->getStyle('F5:F' . $highestRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             },

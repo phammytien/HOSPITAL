@@ -60,13 +60,14 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái mới</label>
                     <select name="status" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="CREATED" {{ $order->status == 'CREATED' ? 'selected' : '' }}>Mới tạo</option>
                         <option value="PENDING" {{ $order->status == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
-                        <option value="APPROVED" {{ $order->status == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
-
-                        <option value="DELIVERED" {{ $order->status == 'DELIVERED' ? 'selected' : '' }}>Đã giao hàng</option>
-
+                        <option value="ORDERED" {{ $order->status == 'ORDERED' ? 'selected' : '' }}>Đã đặt hàng</option>
+                        <option value="DELIVERING" {{ $order->status == 'DELIVERING' ? 'selected' : '' }}>Đang giao</option>
+                        <option value="DELIVERED" {{ $order->status == 'DELIVERED' ? 'selected' : '' }}>Đã nhận hàng</option>
                         <option value="COMPLETED" {{ $order->status == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
                         <option value="CANCELLED" {{ $order->status == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
+                        <option value="REJECTED" {{ $order->status == 'REJECTED' ? 'selected' : '' }}>Đã từ chối</option>
                     </select>
                 </div>
                 <div>
@@ -162,23 +163,9 @@
                         </div>
                         <div class="pt-3 border-t border-gray-200">
                             <p class="text-sm text-gray-500 mb-1">Trạng thái hiện tại</p>
-                            @if($order->status == 'PENDING')
-                                <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">Chờ xử
-                                    lý</span>
-                            @elseif($order->status == 'APPROVED')
-                                <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold">Đã
-                                    duyệt</span>
-
-                            @elseif($order->status == 'DELIVERED')
-                                <span class="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold">Đã giao
-                                    hàng</span>
-
-                            @elseif($order->status == 'COMPLETED')
-                                <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">Hoàn
-                                    thành</span>
-                            @else
-                                <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Đã hủy</span>
-                            @endif
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ get_status_class($order->status) }}">
+                                {{ get_status_label($order->status) }}
+                            </span>
                         </div>
                     </div>
                 </div>

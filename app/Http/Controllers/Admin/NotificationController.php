@@ -74,9 +74,30 @@ class NotificationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            return back()->with('success', 'Tạo thông báo thành công!');
+            // Helpers for message construction
+            $types = [
+                'info' => 'Thông tin',
+                'success' => 'Thành công',
+                'warning' => 'Cảnh báo',
+                'error' => 'Khẩn cấp'
+            ];
+            $roles = [
+                'ALL' => 'tất cả người dùng',
+                'ADMIN' => 'quản trị viên',
+                'BUYER' => 'nhân viên mua hàng',
+                'DEPARTMENT' => 'khoa/phòng',
+                null => 'tất cả người dùng'
+            ];
+
+            $typeLabel = $types[$validated['type']] ?? 'Thông tin';
+            $roleLabel = $roles[$validated['target_role'] ?? 'ALL'] ?? 'người dùng';
+            $title = $validated['title'];
+
+            $msg = "Đã tạo thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
+
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
-            return back()->with('error', 'Có lỗi xảy ra khi tạo thông báo!');
+            return back()->with('error', 'Có lỗi xảy ra khi gửi thông báo!');
         }
     }
 
@@ -100,7 +121,27 @@ class NotificationController extends Controller
             'target_role' => $request->target_role,
         ]);
 
-        return redirect()->route('admin.notifications')->with('success', 'Cập nhật thông báo thành công!');
+        // Helpers for message construction
+        $types = [
+            'info' => 'Thông tin',
+            'success' => 'Thành công',
+            'warning' => 'Cảnh báo',
+            'error' => 'Khẩn cấp'
+        ];
+        $roles = [
+            'ALL' => 'tất cả người dùng',
+            'ADMIN' => 'quản trị viên',
+            'BUYER' => 'nhân viên mua hàng',
+            'DEPARTMENT' => 'khoa/phòng'
+        ];
+
+        $typeLabel = $types[$request->type] ?? 'Thông tin';
+        $roleLabel = $roles[$request->target_role] ?? 'người dùng';
+        $title = $request->title;
+
+        $msg = "Đã cập nhật thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
+
+        return redirect()->route('admin.notifications')->with('success', $msg);
     }
 
     /**
@@ -125,9 +166,32 @@ class NotificationController extends Controller
     {
         try {
             $notification = Notification::findOrFail($id);
+            // Capture data before delete for message
+            $title = $notification->title;
+            $type = $notification->type;
+            $role = $notification->target_role;
+
             $notification->delete();
 
-            return back()->with('success', 'Xóa thông báo thành công!');
+            $types = [
+                'info' => 'Thông tin',
+                'success' => 'Thành công',
+                'warning' => 'Cảnh báo',
+                'error' => 'Khẩn cấp'
+            ];
+            $roles = [
+                'ALL' => 'tất cả người dùng',
+                'ADMIN' => 'quản trị viên',
+                'BUYER' => 'nhân viên mua hàng',
+                'DEPARTMENT' => 'khoa/phòng',
+                null => 'tất cả người dùng'
+            ];
+
+            $roleLabel = $roles[$role] ?? 'người dùng';
+
+            $msg = "Đã xóa thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
+
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra!');
         }

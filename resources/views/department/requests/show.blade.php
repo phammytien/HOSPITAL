@@ -4,17 +4,161 @@
 @section('header_title', $request->request_code)
 @section('page-subtitle', 'Chi tiết yêu cầu mua hàng')
 
+@push('styles')
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        
+        #printable-section,
+        #printable-section * {
+            visibility: visible;
+        }
+        
+        #printable-section {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 30px;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        @page {
+            margin: 1.5cm;
+            size: A4;
+        }
+        
+        * {
+            box-shadow: none !important;
+        }
+    }
+    
+    .print-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .print-header h1 {
+        font-size: 22px;
+        font-weight: bold;
+        color: #000;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+    }
+    
+    .print-header-info {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        font-size: 13px;
+        color: #666;
+    }
+    
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 30px;
+    }
+    
+    .print-table thead th {
+        background-color: #f9fafb;
+        padding: 12px 10px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .print-table tbody td {
+        padding: 15px 10px;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 13px;
+        vertical-align: top;
+    }
+    
+    .print-summary {
+        margin: 30px 0;
+        padding: 20px;
+        background-color: #f9fafb;
+    }
+    
+    .print-summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+    }
+    
+    .print-summary-total {
+        display: flex;
+        justify-content: space-between;
+        padding: 15px 0;
+        margin-top: 10px;
+        border-top: 2px solid #d1d5db;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    
+    .print-summary-total .amount {
+        color: #2563eb;
+        font-size: 22px;
+    }
+    
+    .print-signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+        padding-top: 30px;
+    }
+    
+    .print-signature-box {
+        text-align: center;
+        flex: 1;
+    }
+    
+    .print-signature-box .title {
+        font-weight: bold;
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+    
+    .print-signature-box .subtitle {
+        font-size: 10px;
+        color: #666;
+        font-style: italic;
+        margin-bottom: 60px;
+    }
+    
+    .print-footer {
+        margin-top: 40px;
+        padding-top: 15px;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        font-size: 10px;
+        color: #9ca3af;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="space-y-6">
     <!-- Header Actions -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between no-print">
         <a href="{{ route('department.requests.index') }}" class="text-gray-600 hover:text-gray-900">
             <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
         </a>
         
         <div class="flex items-center space-x-3">
             @if(!$request->is_submitted)
-            {{-- DRAFT STATUS --}}
             <form action="{{ route('department.requests.submit', $request->id) }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" 
@@ -29,7 +173,6 @@
             </a>
             
             @elseif($request->is_submitted && !$request->status)
-            {{-- SUBMITTED / PENDING STATUS --}}
             <form action="{{ route('department.requests.withdraw', $request->id) }}" method="POST" class="inline" onsubmit="return confirm('Bạn muốn rút yêu cầu này về nháp để chỉnh sửa?');">
                 @csrf
                 <button type="submit" class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition shadow-sm hover:shadow-md">
@@ -38,7 +181,6 @@
             </form>
 
             @elseif($request->status == 'REJECTED')
-             {{-- REJECTED STATUS --}}
             <a href="{{ route('department.requests.edit', $request->id) }}" 
                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-sm hover:shadow-md">
                 <i class="fas fa-redo mr-2"></i> Yêu cầu làm lại
@@ -52,7 +194,7 @@
     </div>
     
     <!-- Status Banner -->
-    <div class="bg-white rounded-xl p-6 border-l-4 shadow-sm
+    <div class="bg-white rounded-xl p-6 border-l-4 shadow-sm no-print
         @if(!$request->is_submitted) border-gray-400 bg-gray-50
         @elseif($request->is_submitted && !$request->status) border-blue-400 bg-blue-50
         @elseif($request->status == 'APPROVED') border-green-400 bg-green-50
@@ -102,59 +244,73 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
-            <!-- Chi tiết sản phẩm -->
-            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div class="p-6 border-b border-gray-200 bg-gray-50">
-                    <h3 class="text-lg font-bold text-gray-900">Chi tiết sản phẩm</h3>
-                </div>
-                
-                <div class="divide-y divide-gray-200">
-                    @foreach($request->items as $item)
-                    <div class="p-6">
-                        <div class="flex gap-4">
-                            @php
-                                $imageUrl = getProductImage($item->product->id);
-                            @endphp
-                            @if($imageUrl)
-                                <img src="{{ $imageUrl }}" alt="{{ $item->product->product_name ?? 'N/A' }}" class="w-24 h-24 rounded-lg object-cover border border-gray-200">
-                            @else
-                                <div class="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
-                                    <i class="fas fa-box text-gray-400 text-2xl"></i>
-                                </div>
-                            @endif
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-900 mb-1">{{ $item->product->product_name ?? 'N/A' }}</h4>
-                                <p class="text-sm text-gray-500 mb-3">{{ $item->product->category->category_name ?? 'N/A' }}</p>
-                                
-                                <div class="grid grid-cols-3 gap-4 text-sm">
-                                    <div>
-                                        <p class="text-gray-500 mb-1">Số lượng</p>
-                                        <p class="font-semibold text-gray-900">{{ number_format($item->quantity, 2) }} {{ $item->product->unit ?? '' }}</p>
+            <!-- PRINTABLE SECTION -->
+            <div id="printable-section" class="bg-white rounded-xl border border-gray-200 overflow-hidden p-6">
+            
+                <!-- Product Table -->
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Hình ảnh</th>
+                            <th>Chi tiết sản phẩm</th>
+                            <th style="width: 100px; text-align: center;">Số lượng</th>
+                            <th style="width: 120px; text-align: right;">Đơn giá</th>
+                            <th style="width: 120px; text-align: right;">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($request->items as $item)
+                        <tr>
+                            <td style="text-align: center;">
+                                @php
+                                    $imageUrl = getProductImage($item->product->id);
+                                @endphp
+                                @if($imageUrl)
+                                    <img src="{{ $imageUrl }}" alt="{{ $item->product->product_name ?? 'N/A' }}" style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #e5e7eb;">
+                                @else
+                                    <div style="width: 60px; height: 60px; background-color: #f3f4f6; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e5e7eb;">
+                                        <i class="fas fa-box" style="color: #9ca3af; font-size: 20px;"></i>
                                     </div>
-                                    <div>
-                                        <p class="text-gray-500 mb-1">Đơn giá</p>
-                                        <p class="font-semibold text-gray-900">{{ number_format($item->expected_price, 0, ',', '.') }} đ</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-gray-500 mb-1">Thành tiền</p>
-                                        <p class="font-bold text-blue-600">{{ number_format($item->quantity * $item->expected_price, 0, ',', '.') }} đ</p>
-                                    </div>
-                                </div>
-                                
-                                @if($item->reason)
-                                <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-                                    <p class="text-sm text-gray-700"><strong>Lý do:</strong> {{ $item->reason }}</p>
-                                </div>
                                 @endif
-                            </div>
-                        </div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: #111827; margin-bottom: 4px;">{{ $item->product->product_name ?? 'N/A' }}</div>
+                                <div style="font-size: 12px; color: #6b7280;">Loại: {{ $item->product->category->category_name ?? 'N/A' }}</div>
+                                <div style="font-size: 11px; color: #9ca3af;">Mã thuốc: {{ $item->product->product_code ?? 'N/A' }}</div>
+                            </td>
+                            <td style="text-align: center; font-weight: 600;">
+                                {{ number_format($item->quantity, 2) }} {{ $item->product->unit ?? 'Hộp' }}
+                            </td>
+                            <td style="text-align: right; font-weight: 500;">
+                                {{ number_format($item->expected_price, 0, ',', '.') }} đ
+                            </td>
+                            <td style="text-align: right; font-weight: 700; color: #2563eb;">
+                                {{ number_format($item->quantity * $item->expected_price, 0, ',', '.') }} đ
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                
+                <!-- Summary Section -->
+                <div class="print-summary">
+                    <div class="print-summary-row">
+                        <span style="color: #6b7280;">Tạm tính:</span>
+                        <span style="font-weight: 600;">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
                     </div>
-                    @endforeach
+                    <div class="print-summary-row">
+                        <span style="color: #6b7280;">Thuế (0%):</span>
+                        <span style="font-weight: 600;">0 đ</span>
+                    </div>
+                    <div class="print-summary-total">
+                        <span>Tổng cộng:</span>
+                        <span class="amount">{{ number_format($totalAmount, 0, ',', '.') }} VNĐ</span>
+                    </div>
                 </div>
             </div>
             
-            <!-- Lịch sử & Workflow -->
-            <div class="bg-white rounded-xl border border-gray-200">
+            <!-- Workflow History (No Print) -->
+            <div class="bg-white rounded-xl border border-gray-200 no-print">
                 <div class="p-6 border-b border-gray-200 bg-gray-50">
                     <h3 class="text-lg font-bold text-gray-900">Lịch sử mua hàng & So sánh</h3>
                 </div>
@@ -192,9 +348,9 @@
                 </div>
             </div>
             
-            <!-- Giải trình người yêu cầu -->
+            <!-- Note (No Print) -->
             @if($request->note)
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <div class="bg-white rounded-xl border border-gray-200 p-6 no-print">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Giải trình người yêu cầu</h3>
                 <div class="p-4 bg-gray-50 rounded-lg">
                     <p class="text-gray-700">{{ $request->note }}</p>
@@ -203,9 +359,9 @@
             @endif
         </div>
         
-        <!-- Sidebar -->
-        <div class="space-y-6">
-            <!-- Ngân sách -->
+        <!-- Sidebar (No Print) -->
+        <div class="space-y-6 no-print">
+            <!-- Budget -->
             <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Ngân sách ({{ $request->period }})</h3>
                 
@@ -221,12 +377,10 @@
                         <span class="text-gray-900 font-semibold">Tổng cộng</span>
                         <span class="text-2xl font-bold text-blue-600">{{ number_format($totalAmount, 0, ',', '.') }} VNĐ</span>
                     </div>
-                    
-
                 </div>
             </div>
             
-            <!-- Thông tin khoa -->
+            <!-- Department Info -->
             <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Thông tin khoa</h3>
                 
@@ -249,8 +403,6 @@
                     </div>
                 </div>
             </div>
-            
-
         </div>
     </div>
 </div>

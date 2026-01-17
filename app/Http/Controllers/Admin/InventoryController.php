@@ -9,6 +9,8 @@ use App\Models\Department;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\InventoryExport;
 
 class InventoryController extends Controller
 {
@@ -39,9 +41,9 @@ class InventoryController extends Controller
         // Search by product name or code
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('products.product_name', 'like', '%' . $search . '%')
-                  ->orWhere('products.product_code', 'like', '%' . $search . '%');
+                    ->orWhere('products.product_code', 'like', '%' . $search . '%');
             });
         }
 
@@ -50,7 +52,7 @@ class InventoryController extends Controller
         $inventory->appends($request->except('page'));
 
         // Add product images
-        $inventory->each(function($item) {
+        $inventory->each(function ($item) {
             if ($item->product) {
                 $item->product->image_url = getProductImage($item->product_id);
             }
@@ -75,6 +77,16 @@ class InventoryController extends Controller
         ));
     }
 
+    public function export(Request $request)
+    {
+        return Excel::download(new InventoryExport(
+            $request->input('department_id'),
+            $request->input('warehouse_id'),
+            $request->input('category_id'),
+            $request->input('search')
+        ), 'Bao_cao_ton_kho_' . date('Y_m_d_His') . '.xlsx');
+    }
+
     private function calculateStats(Request $request)
     {
         $query = Inventory::with(['warehouse', 'product'])
@@ -97,7 +109,7 @@ class InventoryController extends Controller
         $totalWarehouses = Warehouse::where('is_delete', false)->count();
         $totalProducts = $query->count();
         $lowStockCount = (clone $query)->where('inventory.quantity', '<', 10)->count();
-        
+
         // Calculate total value
         $totalValue = (clone $query)
             ->select(DB::raw('SUM(inventory.quantity * products.unit_price) as total'))

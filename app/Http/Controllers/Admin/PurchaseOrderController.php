@@ -36,11 +36,23 @@ class PurchaseOrderController extends Controller
             });
         }
 
-        // Date range filter
-        if ($request->has('date_from') && $request->date_from != '') {
+        // Date filter (Month/Year)
+        if ($request->filled('filter_month') && $request->filled('filter_year')) {
+            $query->whereYear('order_date', $request->filter_year)
+                ->whereMonth('order_date', $request->filter_month);
+        } elseif ($request->filled('filter_month')) {
+            $query->whereMonth('order_date', $request->filter_month);
+        } elseif ($request->filled('filter_year')) {
+            $query->whereYear('order_date', $request->filter_year);
+        } elseif ($request->filled('month')) {
+            $date = \Carbon\Carbon::parse($request->month);
+            $query->whereYear('order_date', $date->year)
+                ->whereMonth('order_date', $date->month);
+        } elseif ($request->filled('date_from')) {
             $query->whereDate('order_date', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to != '') {
+
+        if ($request->filled('date_to')) {
             $query->whereDate('order_date', '<=', $request->date_to);
         }
 
@@ -86,24 +98,55 @@ class PurchaseOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
-            'status' => 'required|in:PENDING,APPROVED,DELIVERED,COMPLETED,CANCELLED',
+            'status' => 'required|in:CREATED,PENDING,ORDERED,DELIVERING,DELIVERED,COMPLETED,CANCELLED,REJECTED',
             'note' => 'nullable|string'
         ]);
 
         try {
-            $order = PurchaseOrder::where('is_delete', false)->findOrFail($id);
+            DB::beginTransaction();
 
-            $order->update([
+            $order = PurchaseOrder::where('is_delete', false)->findOrFail($id);
+            $now = now();
+
+            // Prepare update data
+            $updateData = [
                 'status' => $validated['status'],
                 'admin_note' => $validated['note'] ?? $order->admin_note
-            ]);
+            ];
+
+            // Record timestamps based on status
+            if ($validated['status'] == 'ORDERED' && !$order->ordered_at) {
+                $updateData['ordered_at'] = $now;
+            } elseif ($validated['status'] == 'DELIVERING' && !$order->shipping_at) {
+                $updateData['shipping_at'] = $now;
+            } elseif ($validated['status'] == 'DELIVERED' && !$order->delivered_at) {
+                $updateData['delivered_at'] = $now;
+            } elseif ($validated['status'] == 'COMPLETED' && !$order->completed_at) {
+                $updateData['completed_at'] = $now;
+            }
+
+            $order->update($updateData);
+
+            // Sync all items to the same status
+            $order->items()->update(['status' => $validated['status']]);
+
+            // If COMPLETED, also sync the Purchase Request status
+            if ($validated['status'] == 'COMPLETED') {
+                $purchaseRequest = $order->purchaseRequest;
+                if ($purchaseRequest) {
+                    $purchaseRequest->update(['status' => 'COMPLETED']);
+                }
+            }
+
+            DB::commit();
 
             return redirect()
                 ->route('admin.orders.show', $id)
-                ->with('success', 'Cập nhật trạng thái đơn hàng thành công!');
+                ->with('success', 'Cập nhật trạng thái đơn hàng và sản phẩm thành công!');
 
         } catch (\Exception $e) {
-            return back()->with('error', 'Có lỗi xảy ra khi cập nhật trạng thái!');
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 }

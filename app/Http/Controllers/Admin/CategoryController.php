@@ -13,24 +13,44 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
+        // Define product filter logic
+        $productFilter = function ($q) use ($request) {
+            $q->where('is_delete', false);
+            if ($request->has('status') && $request->status != 'all') {
+                $status = $request->status;
+                if ($status == 'available') {
+                    $q->where('stock_quantity', '>', 10);
+                } elseif ($status == 'out') {
+                    $q->where('stock_quantity', '<=', 0);
+                } elseif ($status == 'low') {
+                    $q->where('stock_quantity', '>', 0)->where('stock_quantity', '<=', 10);
+                }
+            }
+        };
+
         $query = ProductCategory::where('is_delete', false)
-            ->withCount(['products' => function($query) {
-                $query->where('is_delete', false);
-            }]);
+            ->withCount(['products' => $productFilter]);
 
         if ($request->has('category_id')) {
             $query->where('id', $request->category_id);
         }
 
+        // Filter categories to only show those having matching products
+        if ($request->has('status') && $request->status != 'all') {
+            $query->whereHas('products', $productFilter);
+        }
+
         $categories = $query->orderBy('created_at', 'desc')->paginate(6);
-        
+
         // Get all categories for the sidebar (unfiltered)
         $allCategories = ProductCategory::where('is_delete', false)
-            ->withCount(['products' => function($q) {
-                $q->where('is_delete', false);
-            }])
+            ->withCount([
+                'products' => function ($q) {
+                    $q->where('is_delete', false);
+                }
+            ])
             ->get();
-        
+
         // Get all products for stats (keeping as is)
         $allProducts = Product::with('category')
             ->where('is_delete', false)
@@ -46,7 +66,7 @@ class CategoryController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
-        
+
         return view('admin.categories', compact('categories', 'allProducts', 'allCategories', 'filteredProducts'));
     }
 
@@ -110,12 +130,12 @@ class CategoryController extends Controller
     {
         try {
             $category = ProductCategory::findOrFail($id);
-            
+
             // Check if category has products
             $productCount = Product::where('category_id', $id)
                 ->where('is_delete', false)
                 ->count();
-            
+
             if ($productCount > 0) {
                 return response()->json([
                     'success' => false,
@@ -154,11 +174,11 @@ class CategoryController extends Controller
         } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
             $failures = $e->failures();
             $errors = [];
-            
+
             foreach ($failures as $failure) {
                 $errors[] = 'Dòng ' . $failure->row() . ': ' . implode(', ', $failure->errors());
             }
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Có lỗi trong file Excel',
@@ -175,17 +195,30 @@ class CategoryController extends Controller
     public function getProducts($id)
     {
         try {
-            $products = Product::where('category_id', $id)
+            $query = Product::where('category_id', $id)
                 ->where('is_delete', false)
                 ->with(['category', 'supplier', 'primaryImage'])
-                ->orderBy('created_at', 'desc')
-                ->get();
-            
+                ->orderBy('created_at', 'desc');
+
+            // Apply Status Filter
+            if (request()->has('status') && request()->status != 'all') {
+                $status = request()->status;
+                if ($status == 'available') {
+                    $query->where('stock_quantity', '>', 10);
+                } elseif ($status == 'out') {
+                    $query->where('stock_quantity', '<=', 0);
+                } elseif ($status == 'low') {
+                    $query->where('stock_quantity', '>', 0)->where('stock_quantity', '<=', 10);
+                }
+            }
+
+            $products = $query->get();
+
             // Add image URLs to products
-            $products->each(function($product) {
+            $products->each(function ($product) {
                 $product->image_url = getProductImage($product->id);
             });
-            
+
             return response()->json([
                 'success' => true,
                 'products' => $products

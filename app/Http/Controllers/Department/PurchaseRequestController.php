@@ -79,12 +79,12 @@ class PurchaseRequestController extends Controller
             ->where('is_delete', false)
             ->with(['items.product', 'requester']);
 
-        // Default to History statuses (completed or rejected requests)
+        // Default to History statuses (completed, rejected, cancelled - NOT submitted)
         if ($request->has('status') && $request->status != '') {
             $query->where('status', $request->status);
         } else {
-            // Show ALL submitted requests in history to provide full visibility
-            $query->where('is_submitted', true);
+            // Chỉ hiển thị đã hoàn thành, từ chối, hủy - KHÔNG hiển thị đã gửi (đã gửi nằm ở Yêu cầu mua hàng)
+            $query->whereIn('status', ['COMPLETED', 'PAID', 'REJECTED', 'CANCELLED']);
         }
 
         // Search
@@ -301,11 +301,11 @@ class PurchaseRequestController extends Controller
             ->where('department_id', $user->department_id)
             ->where('is_delete', false)
             ->with([
-                    'items.product.category',
-                    'requester',
-                    'department',
-                    'workflows.actionBy'
-                ])
+                'items.product.category',
+                'requester',
+                'department',
+                'workflows.actionBy'
+            ])
             ->firstOrFail();
 
         // Tính tổng tiền
@@ -681,6 +681,7 @@ class PurchaseRequestController extends Controller
     }
     /**
      * Batch add items to draft request
+     * Find existing draft or create new one, then add items
      */
     public function addItemsBatch(Request $request)
     {
@@ -693,41 +694,78 @@ class PurchaseRequestController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Create NEW Draft Request
             $user = Auth::user();
             $currentPeriod = date('Y') . '_Q' . ceil(date('n') / 3); // Format: 2026_Q1
 
-            $requestCode = $this->generateRequestCode($user->department_id, $currentPeriod);
+            // 1. Find or Create Draft Request
+            $draftRequest = PurchaseRequest::where('department_id', $user->department_id)
+                ->where('is_submitted', false)
+                ->where('is_delete', false)
+                ->where('period', $currentPeriod)
+                ->first();
 
-            $draftRequest = PurchaseRequest::create([
-                'request_code' => $requestCode,
-                'department_id' => $user->department_id,
-                'period' => $currentPeriod,
-                'requested_by' => $user->id,
-                'status' => null,
-                'is_submitted' => false,
-                'note' => 'Tự động tạo từ danh mục sản phẩm'
-            ]);
+            if (!$draftRequest) {
+                // Create new draft request
+                $requestCode = $this->generateRequestCode($user->department_id, $currentPeriod);
 
-            // 2. Add Items
+                $draftRequest = PurchaseRequest::create([
+                    'request_code' => $requestCode,
+                    'department_id' => $user->department_id,
+                    'period' => $currentPeriod,
+                    'requested_by' => $user->id,
+                    'status' => null,
+                    'is_submitted' => false,
+                    'note' => 'Tự động tạo từ danh mục sản phẩm'
+                ]);
+            }
+
+            // 2. Add Items (check for duplicates)
+            $addedCount = 0;
+            $updatedCount = 0;
+
             foreach ($request->items as $item) {
                 $product = \App\Models\Product::find($item['product_id']);
 
-                PurchaseRequestItem::create([
-                    'purchase_request_id' => $draftRequest->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'expected_price' => $product->unit_price,
-                    'is_submitted' => false
-                ]);
+                // Check if item already exists in this draft
+                $existingItem = PurchaseRequestItem::where('purchase_request_id', $draftRequest->id)
+                    ->where('product_id', $item['product_id'])
+                    ->where('is_delete', false)
+                    ->first();
+
+                if ($existingItem) {
+                    // Update quantity instead of creating duplicate
+                    $existingItem->quantity += $item['quantity'];
+                    $existingItem->save();
+                    $updatedCount++;
+                } else {
+                    // Create new item
+                    PurchaseRequestItem::create([
+                        'purchase_request_id' => $draftRequest->id,
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'expected_price' => $product->unit_price,
+                        'is_submitted' => false
+                    ]);
+                    $addedCount++;
+                }
             }
 
             DB::commit();
 
+            // Build success message
+            $message = '';
+            if ($addedCount > 0 && $updatedCount > 0) {
+                $message = "Đã thêm {$addedCount} sản phẩm mới và cập nhật {$updatedCount} sản phẩm đã có!";
+            } elseif ($addedCount > 0) {
+                $message = "Đã thêm {$addedCount} sản phẩm vào đơn nháp!";
+            } else {
+                $message = "Đã cập nhật số lượng cho {$updatedCount} sản phẩm!";
+            }
+
             // Return success with redirect URL to EDIT page
             return response()->json([
                 'success' => true,
-                'message' => 'Đã tạo yêu cầu mua hàng thành công!',
+                'message' => $message,
                 'redirect_url' => route('department.requests.edit', $draftRequest->id)
             ]);
 

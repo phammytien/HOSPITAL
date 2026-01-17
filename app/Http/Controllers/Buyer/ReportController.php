@@ -24,19 +24,14 @@ class ReportController extends Controller
         // Get filter parameters
         $departmentId = $request->get('department_id');
         $status = $request->get('status');
-        
-        // Default to the most recent period if none provided
-        $selectedPeriod = $request->get('period');
-        if (!$request->has('period') && $periods->isNotEmpty()) {
-            $selectedPeriod = $periods->first();
-        }
+        $selectedPeriod = $request->get('period'); // Only use if explicitly provided
 
         // Build query for purchase orders
         $query = PurchaseOrder::with(['department', 'purchaseRequest'])
             ->where('is_delete', false)
             ->whereIn('status', ['COMPLETED', 'CANCELLED']);
         
-        // Filter by period (Join with purchase_requests)
+        // Filter by period (Join with purchase_requests) - only if provided
         if ($selectedPeriod) {
             $query->whereHas('purchaseRequest', function($q) use ($selectedPeriod) {
                 $q->where('period', $selectedPeriod);
@@ -60,23 +55,6 @@ class ReportController extends Controller
 
         // Get Available Statuses (Restricted)
         $statuses = ['COMPLETED', 'CANCELLED'];
-
-        // Determine year and months for statistics calculation
-        if ($selectedPeriod && preg_match('/^(\d{4})_Q(\d)$/', $selectedPeriod, $matches)) {
-            $year = $matches[1];
-            $quarter = $matches[2];
-        } else {
-            $year = date('Y');
-            $quarter = ceil(date('n') / 3);
-        }
-
-        $quarterMonths = [
-            1 => [1, 2, 3],
-            2 => [4, 5, 6],
-            3 => [7, 8, 9],
-            4 => [10, 11, 12]
-        ];
-        $months = $quarterMonths[$quarter];
         
         // Calculate statistics based on filtered data from PurchaseOrder
         $stats = $this->calculateOrderStatistics($selectedPeriod, $departmentId);
@@ -85,8 +63,6 @@ class ReportController extends Controller
             'requests',
             'departments',
             'stats',
-            'year',
-            'quarter',
             'departmentId',
             'status',
             'statuses',
@@ -251,93 +227,89 @@ class ReportController extends Controller
     
     public function exportQuarterlyReport(Request $request)
     {
-        $year = $request->get('year', date('Y'));
-        $quarter = $request->get('quarter', 1);
-        $departmentId = $request->get('department_id');
-        
-        // Calculate quarter months
-        $quarterMonths = [
-            1 => [1, 2, 3],
-            2 => [4, 5, 6],
-            3 => [7, 8, 9],
-            4 => [10, 11, 12]
-        ];
-        
-        $months = $quarterMonths[$quarter];
-        $quarterName = "Quý {$quarter} năm {$year}";
-        
-        // Get data grouped by department
-        $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->whereYear('created_at', $year)
-            ->whereIn(DB::raw('MONTH(created_at)'), $months)
-            ->where('is_delete', false)
-            ->where('status', 'APPROVED'); // Only approved
-        
-        // Apply filters
-        if ($departmentId) {
-            $query->where('department_id', $departmentId);
-        }
-        
-        $requests = $query->orderBy('department_id')->orderBy('created_at', 'desc')->get();
-        
-        // Group by department
-        $requestsByDepartment = $requests->groupBy('department_id');
-        
-        $filename = "Bao_cao_Q{$quarter}_{$year}_" . date('YmdHis') . ".xlsx";
-        
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\QuarterlyReportExport($requestsByDepartment, $quarterName), $filename);
-    }
-    
-    public function exportPDF(Request $request)
-    {
-        $year = $request->get('year', date('Y'));
-        $quarter = $request->get('quarter', 1);
+        $period = $request->get('period');
         $departmentId = $request->get('department_id');
         $status = $request->get('status');
         
-        // Calculate quarter months
-        $quarterMonths = [
-            1 => [1, 2, 3],
-            2 => [4, 5, 6],
-            3 => [7, 8, 9],
-            4 => [10, 11, 12]
-        ];
+        // Build query for purchase orders (matching the index page)
+        $query = PurchaseOrder::with(['department', 'purchaseRequest.items.product'])
+            ->where('is_delete', false)
+            ->whereIn('status', ['COMPLETED', 'CANCELLED']);
         
-        $months = $quarterMonths[$quarter];
+        // Apply period filter
+        if ($period) {
+            $query->whereHas('purchaseRequest', function($q) use ($period) {
+                $q->where('period', $period);
+            });
+        }
         
-        // Build query for purchase requests
-        $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->whereYear('created_at', $year)
-            ->whereIn(DB::raw('MONTH(created_at)'), $months)
-            ->where('is_delete', false);
-        
-        // Apply filters
+        // Apply department filter
         if ($departmentId) {
             $query->where('department_id', $departmentId);
         }
         
+        // Apply status filter
         if ($status) {
             $query->where('status', $status);
         }
         
-        $requests = $query->orderBy('department_id')->orderBy('created_at', 'desc')->get();
+        $orders = $query->orderBy('department_id')->orderBy('order_date', 'desc')->get();
         
         // Group by department
-        $requestsByDepartment = $requests->groupBy('department_id');
+        $ordersByDepartment = $orders->groupBy('department_id');
         
-        // Get statistics
-        $stats = $this->calculateStatistics($year, $months);
+        $periodName = $period ?: 'Tat_ca';
+        $filename = "Bao_cao_{$periodName}_" . date('YmdHis') . ".xlsx";
+        
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\QuarterlyReportExport($ordersByDepartment, $periodName), $filename);
+    }
+    
+    public function exportPDF(Request $request)
+    {
+        $period = $request->get('period');
+        $departmentId = $request->get('department_id');
+        $status = $request->get('status');
+        
+        // Build query for purchase orders (matching the index page)
+        $query = PurchaseOrder::with(['department', 'purchaseRequest.items.product'])
+            ->where('is_delete', false)
+            ->whereIn('status', ['COMPLETED', 'CANCELLED']);
+        
+        // Apply period filter
+        if ($period) {
+            $query->whereHas('purchaseRequest', function($q) use ($period) {
+                $q->where('period', $period);
+            });
+        }
+        
+        // Apply department filter
+        if ($departmentId) {
+            $query->where('department_id', $departmentId);
+        }
+        
+        // Apply status filter
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        $orders = $query->orderBy('department_id')->orderBy('order_date', 'desc')->get();
+        
+        // Group by department
+        $ordersByDepartment = $orders->groupBy('department_id');
+        
+        // Get statistics based on filtered data
+        $stats = $this->calculateOrderStatistics($period, $departmentId);
         
         // Generate PDF
         $pdf = \PDF::loadView('buyer.reports.pdf_report', [
-            'requestsByDepartment' => $requestsByDepartment,
+            'requestsByDepartment' => $ordersByDepartment,
             'stats' => $stats,
-            'year' => $year,
-            'quarter' => $quarter,
-            'quarterName' => "Quý {$quarter} năm {$year}"
+            'period' => $period,
+            'periodName' => $period ?: 'Tất cả'
         ]);
         
-        $filename = "Bao_cao_Q{$quarter}_{$year}_" . date('YmdHis') . ".pdf";
+        $periodName = $period ?: 'Tat_ca';
+        $filename = "Bao_cao_{$periodName}_" . date('YmdHis') . ".pdf";
         
         return $pdf->download($filename);
     }

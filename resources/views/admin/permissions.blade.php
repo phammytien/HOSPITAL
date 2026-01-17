@@ -99,7 +99,7 @@
                             </button>
                             
                             <!-- Collapsible Content -->
-                            <div id="section-{{ $role }}" class="role-section">
+                            <div id="section-{{ $role }}" class="role-section hidden">
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
@@ -421,10 +421,25 @@
 
     // Toggle role section (collapsible)
     function toggleRoleSection(role) {
+        const allRoles = ['ADMIN', 'BUYER', 'DEPARTMENT'];
         const section = document.getElementById(`section-${role}`);
         const chevron = document.getElementById(`chevron-${role}`);
         
-        if (section.classList.contains('hidden')) {
+        // Check if we are expanding
+        const isExpanding = section.classList.contains('hidden');
+
+        // Close all sections first
+        allRoles.forEach(r => {
+            if (r !== role) {
+                const s = document.getElementById(`section-${r}`);
+                const c = document.getElementById(`chevron-${r}`);
+                if (s) s.classList.add('hidden');
+                if (c) c.classList.remove('rotate-180');
+            }
+        });
+
+        // Toggle current section
+        if (isExpanding) {
             section.classList.remove('hidden');
             chevron.classList.add('rotate-180');
         } else {

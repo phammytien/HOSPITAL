@@ -17,46 +17,64 @@ class PurchaseHistoryController extends Controller
     public function index(Request $request)
     {
         $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->where('is_delete', false)
+            ->where('purchase_requests.is_delete', false)
             ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
 
-        // Filter by department
-        if ($request->has('department_id') && $request->department_id != '') {
+        // Apply filters (department, searching, etc.)
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
 
-        // Date range filter
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->filled('month_from')) {
+            $query->whereDate('created_at', '>=', $request->month_from . '-01');
         }
 
-        // Search
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('month_to')) {
+            $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $query->whereDate('created_at', '<=', $dateTo);
+        }
+
+        if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('request_code', 'like', '%' . $request->search . '%')
                     ->orWhere('note', 'like', '%' . $request->search . '%');
             });
         }
 
-        $history = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Clone query for stats BEFORE pagination
+        $statsQuery = clone $query;
 
-        // Calculate statistics
-        $totalSpent = PurchaseRequest::where('purchase_requests.is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
-            ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
+        $totalSpent = $statsQuery->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_request_items.is_delete', false)
-            ->sum(DB::raw('quantity * expected_price'));
+            ->sum(DB::raw('purchase_request_items.quantity * purchase_request_items.expected_price'));
 
-        $totalRequests = PurchaseRequest::where('is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
-            ->count();
+        $totalRequests = (clone $query)->count();
 
+        // Calculate Pending separately (filtered by same criteria but different status)
+        $pendingQuery = PurchaseRequest::where('purchase_requests.is_delete', false)
+            ->whereIn('status', ['SUBMITTED', 'UNDER_REVIEW']);
+
+        if ($request->filled('department_id')) {
+            $pendingQuery->where('department_id', $request->department_id);
+        }
+        if ($request->filled('month_from')) {
+            $pendingQuery->whereDate('created_at', '>=', $request->month_from . '-01');
+        }
+        if ($request->filled('month_to')) {
+            $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $pendingQuery->whereDate('created_at', '<=', $dateTo);
+        }
+
+        $pendingCount = $pendingQuery->count();
+
+        $history = $query->orderByRaw('YEAR(created_at) DESC')
+            ->orderByRaw('QUARTER(created_at) DESC')
+            ->orderBy('department_id', 'ASC')
+            ->orderBy('created_at', 'DESC')
+            ->paginate(10);
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
 
-        return view('admin.history.index', compact('history', 'totalSpent', 'totalRequests', 'departments'));
+        return view('admin.history.index', compact('history', 'totalSpent', 'totalRequests', 'pendingCount', 'departments'));
     }
 
 
@@ -72,8 +90,8 @@ class PurchaseHistoryController extends Controller
             'requester',
             'workflows.actionBy'
         ])
-        ->where('is_delete', false)
-        ->findOrFail($id);
+            ->where('is_delete', false)
+            ->findOrFail($id);
 
         $totalAmount = $request->items->sum(function ($item) {
             return $item->quantity * $item->expected_price;
@@ -83,62 +101,20 @@ class PurchaseHistoryController extends Controller
     }
 
     /**
-     * Export history to CSV
+     * Export history to Excel
      */
     public function export(Request $request)
     {
-        $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->where('is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
+        $filename = 'Lich_su_mua_hang_' . date('Y_m_d_His') . '.xlsx';
 
-        // Apply same filters as index
-        if ($request->has('department_id') && $request->department_id != '') {
-            $query->where('department_id', $request->department_id);
-        }
-
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $history = $query->orderBy('created_at', 'desc')->get();
-
-        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.csv';
-        
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($history) {
-            $file = fopen('php://output', 'w');
-            
-            // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            // Header row
-            fputcsv($file, ['Mã yêu cầu', 'Ngày tạo', 'Khoa/Phòng', 'Người yêu cầu', 'Tổng tiền', 'Trạng thái']);
-
-            foreach ($history as $request) {
-                $total = $request->items->sum(function($item) {
-                    return $item->quantity * $item->expected_price;
-                });
-
-                fputcsv($file, [
-                    $request->request_code,
-                    $request->created_at->format('d/m/Y H:i'),
-                    $request->department->department_name ?? 'N/A',
-                    $request->requester->full_name ?? 'N/A',
-                    number_format($total, 0, ',', '.') . ' VNĐ',
-                    $request->status,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\PurchaseHistoryExport(
+                $request->department_id,
+                $request->search,
+                $request->month_from,
+                $request->month_to
+            ),
+            $filename
+        );
     }
 }

@@ -352,6 +352,7 @@
             const modalSubtitle = document.getElementById('modalSubtitle');
             const submitBtn = document.getElementById('submitBtnHeader');
             const changeImageBtn = document.getElementById('changeImageBtn');
+            const deleteImageBtn = document.getElementById('deleteImageBtn');
             const lastUpdatedInfo = document.getElementById('lastUpdatedInfo');
 
             // Sections
@@ -379,6 +380,8 @@
                 submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Lưu sản phẩm';
                 submitBtn.classList.remove('hidden');
                 form.dataset.id = '';
+                
+                if(deleteImageBtn) deleteImageBtn.classList.remove('hidden');
 
                 // Visibility
                 if(changeImageBtn) changeImageBtn.classList.add('hidden');
@@ -430,6 +433,7 @@
                             submitBtn.classList.remove('hidden');
 
                             if(changeImageBtn) changeImageBtn.classList.remove('hidden');
+                            if(deleteImageBtn) deleteImageBtn.classList.remove('hidden');
                             if(lastUpdatedInfo) lastUpdatedInfo.classList.remove('hidden');
 
                             if(inventoryStatus) inventoryStatus.classList.remove('hidden');
@@ -445,6 +449,7 @@
                             submitBtn.classList.add('hidden');
 
                             if(changeImageBtn) changeImageBtn.classList.add('hidden');
+                            if(deleteImageBtn) deleteImageBtn.classList.add('hidden');
                             if(lastUpdatedInfo) lastUpdatedInfo.classList.remove('hidden');
 
                             if(inventoryStatus) inventoryStatus.classList.remove('hidden');
@@ -704,7 +709,7 @@
                                 <div id="imagePreviewContainer" class="hidden">
                                     <img id="imagePreview" src="" alt="Preview"
                                         class="w-full h-40 object-cover rounded-lg mb-2">
-                                    <button type="button" onclick="removeImage()"
+                                    <button type="button" id="deleteImageBtn" onclick="removeImage()"
                                         class="text-sm text-red-600 hover:text-red-800 font-medium w-full">
                                         <i class="fas fa-trash mr-1"></i>Xóa ảnh
                                     </button>

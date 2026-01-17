@@ -8,8 +8,8 @@
 @section('content')
     <div class="space-y-6">
         {{-- Statistics Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <div class="bg-white rounded-xl p-6 border border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 h-full">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Tổng đơn hàng</p>
@@ -21,7 +21,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 h-full">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Chờ xử lý</p>
@@ -35,7 +35,7 @@
 
 
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 h-full">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Hoàn thành</p>
@@ -47,7 +47,7 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-6 border border-gray-200 h-full">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-500 mb-1">Đã hủy</p>
@@ -62,7 +62,8 @@
 
         {{-- Filters --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <form method="GET" action="{{ route('admin.orders') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <form method="GET" action="{{ route('admin.orders') }}" id="filterForm"
+                class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Mã đơn, nhà cung cấp..."
@@ -95,19 +96,74 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Từ tháng/năm đến hiện tại</label>
+                    <div class="relative">
+                        <input type="text" name="month" id="monthPicker" value="{{ request('month') }}"
+                            placeholder="tháng/năm"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white cursor-pointer">
+                        <i class="fas fa-calendar-alt absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                    </div>
                 </div>
 
                 <div class="flex items-end">
-                    <button type="submit"
-                        class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-search mr-2"></i> Lọc
-                    </button>
+                    <a href="{{ route('admin.orders') }}"
+                        class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm text-center flex items-center justify-center font-medium">
+                        <i class="fas fa-times mr-2"></i> Xóa lọc
+                    </a>
                 </div>
             </form>
         </div>
+
+        @push('scripts')
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const filterForm = document.getElementById('filterForm');
+
+                    // Initialize Flatpickr Month Select
+                    flatpickr("#monthPicker", {
+                        locale: "vn",
+                        plugins: [
+                            new monthSelectPlugin({
+                                shorthand: true,
+                                dateFormat: "Y-m",
+                                altFormat: "m/Y",
+                                theme: "light"
+                            })
+                        ],
+                        disableMobile: "true",
+                        onChange: function (selectedDates, dateStr, instance) {
+                            filterForm.submit();
+                        }
+                    });
+
+                    const inputs = filterForm.querySelectorAll('input:not(#monthPicker), select');
+
+                    let searchTimeout;
+                    inputs.forEach(input => {
+                        input.addEventListener('change', function () {
+                            if (this.name !== 'search') {
+                                filterForm.submit();
+                            }
+                        });
+
+                        if (input.name === 'search') {
+                            input.addEventListener('input', function () {
+                                clearTimeout(searchTimeout);
+                                searchTimeout = setTimeout(() => {
+                                    filterForm.submit();
+                                }, 500);
+                            });
+                        }
+                    });
+                });
+            </script>
+        @endpush
 
         {{-- Orders Table --}}
         <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -133,11 +189,12 @@
                                     <p class="text-gray-900">{{ $order->department->department_name ?? 'N/A' }}</p>
                                 </td>
                                 <!-- <td class="px-6 py-4">
-                                    <p class="text-gray-900">{{ $order->supplier_name ?? 'N/A' }}</p>
-                                </td> -->
+                                                            <p class="text-gray-900">{{ $order->supplier_name ?? 'N/A' }}</p>
+                                                        </td> -->
                                 <td class="px-6 py-4">
                                     <p class="text-gray-600">
-                                        {{ $order->order_date ? $order->order_date->format('d/m/Y') : 'N/A' }}</p>
+                                        {{ $order->order_date ? $order->order_date->format('d/m/Y') : 'N/A' }}
+                                    </p>
                                 </td>
                                 <td class="px-6 py-4">
                                     <span

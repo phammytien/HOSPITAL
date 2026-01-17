@@ -13,25 +13,40 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap gap-2">
-            <a href="{{ route('department.dept_orders.index', ['status' => 'all']) }}"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status', 'all') == 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                Tất cả
-            </a>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('department.dept_orders.index', ['status' => 'all']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status', 'all') == 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                    Tất cả
+                </a>
 
-            <a href="{{ route('department.dept_orders.index', ['status' => 'processing']) }}"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'processing' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
-                Đang xử lý
-            </a>
+                <a href="{{ route('department.dept_orders.index', ['status' => 'CREATED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'CREATED' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
+                    Chờ xác nhận
+                </a>
 
-            <a href="{{ route('department.dept_orders.index', ['status' => 'action_required']) }}"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'action_required' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
-                Chờ xác nhận
-            </a>
+                <a href="{{ route('department.dept_orders.index', ['status' => 'PAID']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'PAID' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
+                    Đã thanh toán
+                </a>
 
+                <a href="{{ route('department.dept_orders.index', ['status' => 'COMPLETED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'COMPLETED' ? 'bg-green-600 text-white shadow-md' : 'bg-green-50 text-green-600 hover:bg-green-100' }}">
+                    Hoàn thành
+                </a>
+
+                <a href="{{ route('department.dept_orders.index', ['status' => 'CANCELLED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'CANCELLED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
+                    Đã hủy
+                </a>
+            </div>
+
+            <!-- History Icon Button -->
             <a href="{{ route('department.dept_orders.index', ['status' => 'history']) }}"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'history' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                Lịch sử
+                class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 {{ request('status') == 'history' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
+                title="Lịch sử">
+                <i class="fas fa-history"></i>
+                <span class="hidden sm:inline">Lịch sử</span>
             </a>
         </div>
 
@@ -92,6 +107,5 @@
                 </div>
             @endif
         </div>
-    </div>
     </div>
 @endsection

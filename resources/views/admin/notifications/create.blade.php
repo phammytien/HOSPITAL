@@ -59,14 +59,14 @@
                         </div>
                     </label>
 
-                    <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
-                        <input type="radio" name="type" value="success" class="mr-3">
+                    <label class="relative flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-500 transition">
+                        <input type="radio" name="type" value="important" class="mr-3">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
-                                <i class="fas fa-check-circle text-green-600"></i>
-                                <span class="font-medium">Thành công</span>
+                                <i class="fas fa-star text-purple-600"></i>
+                                <span class="font-medium">Quan trọng</span>
                             </div>
-                            <p class="text-xs text-gray-500">Hoàn thành</p>
+                            <p class="text-xs text-gray-500">Ưu tiên cao</p>
                         </div>
                     </label>
 

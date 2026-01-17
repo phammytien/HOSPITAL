@@ -130,7 +130,7 @@
                                                         <div class="text-xs text-gray-500">{{ $user->phone_number ?? '-' }}</div>
                                                     </td>
                                                     <td class="px-6 py-4 text-sm text-gray-700">
-                                                        {{ $user->department ? $user->department->name : '-' }}
+                                                        {{ $user->department ? $user->department->department_name : '-' }}
                                                     </td>
                                                     <td class="px-6 py-4 text-center">
                                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">

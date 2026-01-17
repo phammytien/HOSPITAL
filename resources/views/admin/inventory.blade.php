@@ -12,12 +12,9 @@
         </div>
 
         <div class="flex space-x-3">
-            <button class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                <i class="fas fa-file-export mr-2"></i>Xuất báo cáo
-            </button>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm">
-                <i class="fas fa-plus mr-2"></i>Nhập kho mới
-            </button>
+            <a href="{{ route('admin.inventory.export', request()->all()) }}" class="border border-green-600 bg-white hover:bg-green-50 text-green-700 px-4 py-2 rounded-lg font-medium">
+                <i class="fas fa-file-excel mr-2"></i>Xuất Excel
+            </a>
         </div>
     </div>
 
@@ -107,10 +104,10 @@
                 </div>
 
                 <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2">
-                        <i class="fas fa-sliders-h"></i>
-                        Áp dụng lọc
-                    </button>
+                    <a href="{{ route('admin.inventory') }}" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2">
+                        <i class="fas fa-times"></i>
+                        Xóa lọc
+                    </a>
                 </div>
             </div>
         </div>
@@ -128,7 +125,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Danh mục</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tồn kho</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trạng thái</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Thao tác</th>
+                        <!-- <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Thao tác</th> -->
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
@@ -191,11 +188,11 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
+                        <!-- <td class="px-6 py-4 text-center">
                             <button class="text-gray-400 hover:text-gray-600 transition">
                                 <i class="fas fa-ellipsis-v"></i>
                             </button>
-                        </td>
+                        </td> -->
                     </tr>
                     @empty
                     <tr>

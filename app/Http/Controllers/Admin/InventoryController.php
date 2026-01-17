@@ -9,6 +9,8 @@ use App\Models\Department;
 use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\InventoryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryController extends Controller
 {
@@ -36,17 +38,20 @@ class InventoryController extends Controller
             $query->where('products.category_id', $request->input('category_id'));
         }
 
-        // Search by product name or code
+
+        // Search by product name, product code, warehouse name, or warehouse code
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
                 $q->where('products.product_name', 'like', '%' . $search . '%')
-                  ->orWhere('products.product_code', 'like', '%' . $search . '%');
+                  ->orWhere('products.product_code', 'like', '%' . $search . '%')
+                  ->orWhere('warehouses.warehouse_name', 'like', '%' . $search . '%')
+                  ->orWhere('warehouses.warehouse_code', 'like', '%' . $search . '%');
             });
         }
 
         // Pagination
-        $inventory = $query->orderBy('inventory.updated_at', 'desc')->paginate(20);
+        $inventory = $query->orderBy('inventory.updated_at', 'desc')->paginate(5);
         $inventory->appends($request->except('page'));
 
         // Add product images
@@ -109,5 +114,11 @@ class InventoryController extends Controller
             'low_stock_count' => $lowStockCount,
             'total_value' => $totalValue,
         ];
+    }
+
+    public function export(Request $request)
+    {
+        $fileName = 'ton-kho-' . date('Y-m-d-His') . '.xlsx';
+        return Excel::download(new InventoryExport($request->all()), $fileName);
     }
 }

@@ -291,10 +291,11 @@ class ProductController extends Controller
     {
         $categoryId = $request->input('category_id');
         $search = $request->input('search');
+        $supplierId = $request->input('supplier_id');
 
         $fileName = 'danh-sach-san-pham-' . date('Y-m-d-His') . '.xlsx';
 
-        return Excel::download(new ProductsExport($categoryId, $search), $fileName);
+        return Excel::download(new ProductsExport($categoryId, $search, $supplierId), $fileName);
     }
 
     public function getImage($id)

@@ -47,16 +47,16 @@
 
         {{-- Filters --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <form method="GET" action="{{ route('admin.feedback') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form method="GET" action="{{ route('admin.feedback') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Nội dung phản hồi..."
+                    <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Nội dung phản hồi..."
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
-                    <select name="status"
+                    <select name="status" id="statusFilter"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tất cả</option>
                         <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
@@ -66,9 +66,9 @@
                 </div>
 
                 <div class="flex items-end">
-                    <button type="submit"
-                        class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-search mr-2"></i> Lọc
+                    <button type="button" onclick="clearFilters()"
+                        class="w-full px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-times mr-2"></i> Xóa lọc
                     </button>
                 </div>
             </form>
@@ -145,4 +145,32 @@
             @endif
         </div>
     </div>
+
+@push('scripts')
+<script>
+// Clear all filters
+function clearFilters() {
+    window.location.href = '{{ route('admin.feedback') }}';
+}
+
+// Auto-submit form on status change
+document.getElementById('statusFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+// Search with debounce - only submit if there's content
+let searchTimeout;
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    const searchValue = this.value.trim();
+    
+    searchTimeout = setTimeout(() => {
+        // Only submit if search has content OR if we're clearing a previous search
+        if (searchValue.length > 0 || '{{ request('search') }}' !== '') {
+            document.getElementById('filterForm').submit();
+        }
+    }, 500);
+});
+</script>
+@endpush
 @endsection

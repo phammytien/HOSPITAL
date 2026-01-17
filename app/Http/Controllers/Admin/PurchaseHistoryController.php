@@ -35,11 +35,19 @@ class PurchaseHistoryController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        // Search
+
+        // Search - expanded to include department and requester
         if ($request->has('search') && $request->search != '') {
-            $query->where(function ($q) use ($request) {
-                $q->where('request_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('note', 'like', '%' . $request->search . '%');
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('purchase_requests.request_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('purchase_requests.note', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('department', function($dq) use ($searchTerm) {
+                        $dq->where('department_name', 'like', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('requester', function($rq) use ($searchTerm) {
+                        $rq->where('full_name', 'like', '%' . $searchTerm . '%');
+                    });
             });
         }
 

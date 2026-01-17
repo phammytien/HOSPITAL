@@ -199,12 +199,14 @@
                         <div>
                             <label class="block text-sm font-bold text-gray-800 mb-2">Tên khoa/phòng <span class="text-red-500">*</span></label>
                             <input type="text" name="department_name" id="department_name" class="block w-full rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all sm:text-sm py-2.5 px-4" placeholder="Nhập tên khoa phòng..." required>
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="department_name"></p>
                             <p class="mt-2 text-xs text-gray-500 flex items-center"><i class="fas fa-info-circle mr-1.5 text-blue-500"></i> Mã khoa sẽ được tạo tự động từ tên khoa</p>
                         </div>
                         
                         <div>
                             <label class="block text-sm font-bold text-gray-800 mb-2">Mô tả chức năng</label>
                             <textarea name="description" id="description" rows="3" class="block w-full rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all sm:text-sm py-2.5 px-4" placeholder="Mô tả nhiệm vụ, chức năng của khoa phòng..."></textarea>
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="description"></p>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-6">
@@ -216,11 +218,13 @@
                                     </div>
                                     <input type="number" name="budget_amount" id="budget_amount" class="block w-full rounded-lg border-gray-200 bg-gray-50 focus:bg-white pl-8 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all sm:text-sm py-2.5" placeholder="0" required>
                                 </div>
+                                <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="budget_amount"></p>
                             </div>
                             
                             <div class="col-span-1">
                                 <label class="block text-sm font-bold text-gray-800 mb-2">Kỳ ngân sách</label>
-                                <input type="text" name="budget_period" id="budget_period" placeholder="VD: 2026" class="block w-full rounded-lg border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all sm:text-sm py-2.5 px-4">
+                                <input type="text" name="budget_period" id="budget_period" value="{{ date('Y') }}" readonly class="block w-full rounded-lg border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed focus:border-gray-200 focus:ring-0 transition-all sm:text-sm py-2.5 px-4">
+                                <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="budget_period"></p>
                             </div>
                         </div>
                         
@@ -237,10 +241,12 @@
                                 <div class="col-span-1">
                                     <label class="block text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-1.5">Họ và tên</label>
                                     <input type="text" name="head_name" id="head_name" class="block w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:text-sm py-2.5 px-3" placeholder="Nguyễn Văn A">
+                                    <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="head_name"></p>
                                 </div>
                                 <div class="col-span-1">
                                     <label class="block text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-1.5">Email liên hệ</label>
                                     <input type="email" name="head_email" id="head_email" class="block w-full rounded-lg border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:text-sm py-2.5 px-3" placeholder="email@hospital.com">
+                                    <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="head_email"></p>
                                 </div>
                                 <div class="col-span-2">
                                      <div class="bg-blue-100/50 rounded-lg p-3 flex items-start gap-3 border border-blue-100">
@@ -459,6 +465,8 @@ function openDepartmentModal(mode = 'add', id = null) {
         headInfoSection.classList.remove('hidden');
         document.getElementById('head_name').required = true;
         document.getElementById('head_email').required = true;
+        // Set default budget period to current year
+        document.getElementById('budget_period').value = new Date().getFullYear();
     } else {
         headInfoSection.classList.add('hidden');
         document.getElementById('head_name').required = false;
@@ -538,7 +546,36 @@ document.getElementById('departmentForm').addEventListener('submit', function(e)
         },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            // Handle validation errors (422) or other errors
+            if (res.status === 422) {
+                // Clear previous errors
+                document.querySelectorAll('.error-feedback').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('input, textarea').forEach(el => el.classList.remove('border-red-500'));
+                
+                // Show new errors
+                Object.keys(data.errors).forEach(field => {
+                    const errorEl = document.querySelector(`.error-feedback[data-field="${field}"]`);
+                    const inputEl = document.querySelector(`[name="${field}"]`);
+                    
+                    if (errorEl) {
+                        errorEl.textContent = data.errors[field][0];
+                        errorEl.classList.remove('hidden');
+                    }
+                    if (inputEl) {
+                        inputEl.classList.add('border-red-500');
+                    }
+                });
+                
+                // Throw error to skip success block
+                throw new Error('Validation failed');
+            }
+            throw new Error(data.message || 'Có lỗi xảy ra');
+        }
+        return data;
+    })
     .then(data => {
         if (data.success) {
             Swal.fire({
@@ -560,14 +597,16 @@ document.getElementById('departmentForm').addEventListener('submit', function(e)
         }
     })
     .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+
+        if (err.message === 'Validation failed') return;
         console.error(err);
         Swal.fire({
             icon: 'error',
             title: 'Lỗi hệ thống',
             text: 'Không thể kết nối đến máy chủ.',
         });
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
     });
 });
 

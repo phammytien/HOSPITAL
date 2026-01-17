@@ -60,6 +60,15 @@ class DepartmentController extends Controller
             'budget_period' => 'nullable',
             'head_name' => 'required',
             'head_email' => 'required|email|unique:users,email',
+        ], [
+            'department_name.required' => 'Tên khoa phòng là bắt buộc.',
+            'budget_amount.required' => 'Ngân sách là bắt buộc.',
+            'budget_amount.numeric' => 'Ngân sách phải là số.',
+            'budget_amount.min' => 'Ngân sách không được âm.',
+            'head_name.required' => 'Tên trưởng khoa là bắt buộc.',
+            'head_email.required' => 'Email trưởng khoa là bắt buộc.',
+            'head_email.email' => 'Email không đúng định dạng.',
+            'head_email.unique' => 'Email này đã tồn tại trong hệ thống.',
         ]);
 
         // Auto-generate department_code from department_name
@@ -222,6 +231,11 @@ class DepartmentController extends Controller
             'description' => 'nullable',
             'budget_amount' => 'required|numeric|min:0',
             'budget_period' => 'nullable',
+        ], [
+            'department_name.required' => 'Tên khoa phòng là bắt buộc.',
+            'budget_amount.required' => 'Ngân sách là bắt buộc.',
+            'budget_amount.numeric' => 'Ngân sách phải là số.',
+            'budget_amount.min' => 'Ngân sách không được âm.',
         ]);
 
         $department = Department::findOrFail($id);

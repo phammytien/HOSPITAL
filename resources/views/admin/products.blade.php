@@ -352,6 +352,7 @@
             const modalSubtitle = document.getElementById('modalSubtitle');
             const submitBtn = document.getElementById('submitBtnHeader');
             const changeImageBtn = document.getElementById('changeImageBtn');
+            const deleteImageBtn = document.getElementById('deleteImageBtn');
             const lastUpdatedInfo = document.getElementById('lastUpdatedInfo');
 
             // Sections
@@ -382,6 +383,7 @@
 
                 // Visibility
                 if(changeImageBtn) changeImageBtn.classList.add('hidden');
+                if(deleteImageBtn) deleteImageBtn.classList.remove('hidden'); // Show delete button if image selected
                 if(lastUpdatedInfo) lastUpdatedInfo.classList.add('hidden');
 
                 // Hide only sections that require existing data
@@ -414,12 +416,6 @@
                             document.getElementById('supplier_id').value = data.supplier_id;
                         }
 
-                        // Supplier Info check if exists in response
-                        // Assuming backend returns these fields, if not they stay empty.
-                        // We should ensure backend sends them, but for UI task we focus on population logic.
-                        // NOTE: User didn't ask to update backend Controller yet, so these might be empty.
-                        // We just ensure logic is ready.
-
                         form.dataset.id = id;
                         loadExistingImage(id);
 
@@ -430,6 +426,7 @@
                             submitBtn.classList.remove('hidden');
 
                             if(changeImageBtn) changeImageBtn.classList.remove('hidden');
+                            if(deleteImageBtn) deleteImageBtn.classList.remove('hidden');
                             if(lastUpdatedInfo) lastUpdatedInfo.classList.remove('hidden');
 
                             if(inventoryStatus) inventoryStatus.classList.remove('hidden');
@@ -445,6 +442,7 @@
                             submitBtn.classList.add('hidden');
 
                             if(changeImageBtn) changeImageBtn.classList.add('hidden');
+                            if(deleteImageBtn) deleteImageBtn.classList.add('hidden'); // Hide delete button in view mode
                             if(lastUpdatedInfo) lastUpdatedInfo.classList.remove('hidden');
 
                             if(inventoryStatus) inventoryStatus.classList.remove('hidden');
@@ -704,7 +702,7 @@
                                 <div id="imagePreviewContainer" class="hidden">
                                     <img id="imagePreview" src="" alt="Preview"
                                         class="w-full h-40 object-cover rounded-lg mb-2">
-                                    <button type="button" onclick="removeImage()"
+                                    <button type="button" id="deleteImageBtn" onclick="removeImage()"
                                         class="text-sm text-red-600 hover:text-red-800 font-medium w-full">
                                         <i class="fas fa-trash mr-1"></i>Xóa ảnh
                                     </button>
@@ -800,7 +798,7 @@
                                             </datalist>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Số lượng tồn kho</label>
+                                            <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Số lượng nhập vào</label>
                                             <input type="number" name="stock_quantity" id="stock_quantity" placeholder="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
                                                 required>

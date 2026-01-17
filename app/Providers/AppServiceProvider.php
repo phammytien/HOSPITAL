@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Carbon\Carbon::setLocale('vi');
+
         \Illuminate\Support\Facades\Event::listen(
             \Illuminate\Auth\Events\Login::class,
             \App\Listeners\LogSuccessfulLogin::class
@@ -33,9 +35,12 @@ class AppServiceProvider extends ServiceProvider
                 $role = strtoupper($user->role);
 
                 $roleLower = strtolower($role);
-                $baseQuery = \App\Models\Notification::where(function ($q) use ($role, $roleLower) {
+                $userId = $user->id;
+
+                $baseQuery = \App\Models\Notification::where(function ($q) use ($role, $roleLower, $userId) {
                     $q->whereIn('target_role', [$role, $roleLower, 'ALL', 'all'])
-                        ->orWhereNull('target_role');
+                        ->orWhereNull('target_role')
+                        ->orWhere('created_by', $userId);
                 });
 
                 $unreadCount = (clone $baseQuery)->where('is_read', false)->count();

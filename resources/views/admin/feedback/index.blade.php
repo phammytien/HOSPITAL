@@ -49,9 +49,16 @@
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <form method="GET" action="{{ route('admin.feedback') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
-                    <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Nội dung phản hồi..."
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Khoa/Phòng</label>
+                    <select name="department_id" id="departmentFilter"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Tất cả khoa/phòng</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->department_name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div>
@@ -153,23 +160,14 @@ function clearFilters() {
     window.location.href = '{{ route('admin.feedback') }}';
 }
 
-// Auto-submit form on status change
-document.getElementById('statusFilter')?.addEventListener('change', function() {
+// Auto-submit form on department change
+document.getElementById('departmentFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 
-// Search with debounce - only submit if there's content
-let searchTimeout;
-document.getElementById('searchInput')?.addEventListener('input', function(e) {
-    clearTimeout(searchTimeout);
-    const searchValue = this.value.trim();
-    
-    searchTimeout = setTimeout(() => {
-        // Only submit if search has content OR if we're clearing a previous search
-        if (searchValue.length > 0 || '{{ request('search') }}' !== '') {
-            document.getElementById('filterForm').submit();
-        }
-    }, 500);
+// Auto-submit form on status change
+document.getElementById('statusFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
 });
 </script>
 @endpush

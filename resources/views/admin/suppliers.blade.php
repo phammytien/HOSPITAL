@@ -551,7 +551,7 @@ function renderProducts(supplierId, products) {
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Số điện thoại</label>
-                            <input type="text" name="phone_number" id="phone_number" placeholder="0123456789"
+                            <input type="text" name="phone_number" id="phone_number" placeholder="0123456789" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="phone_number"></p>
                         </div>

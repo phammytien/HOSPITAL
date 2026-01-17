@@ -498,6 +498,12 @@
         if (method === 'PUT') {
             formData.append('_method', 'PUT');
         }
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtnHeader');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+
         fetch(url, {
             method: 'POST',
             headers: {
@@ -506,7 +512,34 @@
             },
             body: formData
         })
-            .then(res => res.json())
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) {
+                    if (res.status === 422) {
+                        // Clear previous errors
+                        document.querySelectorAll('.error-feedback').forEach(el => el.classList.add('hidden'));
+                        document.querySelectorAll('input, select, textarea').forEach(el => el.classList.remove('border-red-500'));
+                        
+                        // Show new errors
+                        Object.keys(data.errors).forEach(field => {
+                            const errorEl = document.querySelector(`.error-feedback[data-field="${field}"]`);
+                            const inputEl = document.querySelector(`[name="${field}"]`);
+                            
+                            if (errorEl) {
+                                errorEl.textContent = data.errors[field][0];
+                                errorEl.classList.remove('hidden');
+                            }
+                            if (inputEl) {
+                                inputEl.classList.add('border-red-500');
+                            }
+                        });
+                        
+                        throw new Error('Validation failed');
+                    }
+                    throw new Error(data.message || 'Có lỗi xảy ra');
+                }
+                return data;
+            })
             .then(data => {
                 if (data.success) {
                     Swal.fire({
@@ -517,15 +550,23 @@
                         timer: 1500
                     }).then(() => location.reload());
                 } else {
-                    // Handle Validation Errors (if any)
                     Swal.fire({
                         icon: 'error',
                         title: 'Lỗi!',
                         text: data.message || 'Có lỗi xảy ra, vui lòng kiểm tra lại.',
                     });
+                    // Reset button if not success but no 422 (logic logic failed)
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
                 }
             })
             .catch(err => {
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Lưu thay đổi'; // Restore icon structure if needed, or originalText but originalText lacks HTML
+
+                if (err.message === 'Validation failed') return;
+
                 console.error(err);
                 Swal.fire({
                     icon: 'error',
@@ -776,6 +817,7 @@
                                             <input type="text" name="product_code" id="product_code" placeholder="TPCN001"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
                                                 readonly required>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="product_code"></p>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Đơn
@@ -795,13 +837,16 @@
                                                 <option value="Túi">
                                                 <option value="Viên">
                                                 <option value="Vỉ">
+                                                <option value="Vỉ">
                                             </datalist>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="unit"></p>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Số lượng nhập vào</label>
                                             <input type="number" name="stock_quantity" id="stock_quantity" placeholder="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
                                                 required>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="stock_quantity"></p>
                                         </div>
                                     </div>
                                     <!-- Row 2: Product Name (full width) -->
@@ -821,11 +866,13 @@
                                             <select name="category_id" id="category_id"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                                 required>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="product_name"></p>
                                                 <option value="" disabled selected>-- Chọn danh mục --</option>
                                                 @foreach($categories ?? [] as $category)
                                                     <option value="{{ $category->id }}">{{ $category->category_name }}</option>
                                                 @endforeach
                                             </select>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="category_id"></p>
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Đơn
@@ -836,6 +883,7 @@
                                                     required>
                                                 <span class="absolute right-3 top-2.5 text-sm text-gray-400">VNĐ</span>
                                             </div>
+                                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="unit_price"></p>
                                         </div>
                                     </div>
                                     <!-- Row 4: Retail Price Removed -->

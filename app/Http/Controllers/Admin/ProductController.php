@@ -70,6 +70,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'unit' => 'required',
             'unit_price' => 'required|numeric|min:0',
+            'stock_quantity' => 'required|numeric|min:0',
             'description' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ], [
@@ -80,6 +81,9 @@ class ProductController extends Controller
             'unit.required' => 'Vui lòng chọn đơn vị tính.',
             'unit_price.required' => 'Vui lòng nhập đơn giá nhập.',
             'unit_price.min' => 'Đơn giá nhập không hợp lệ.',
+            'stock_quantity.required' => 'Vui lòng nhập số lượng nhập.',
+            'stock_quantity.numeric' => 'Số lượng phải là số.',
+            'stock_quantity.min' => 'Số lượng không được âm.',
             'image.image' => 'Tệp tải lên phải là hình ảnh.',
             'image.max' => 'Kích thước ảnh không được vượt quá 2MB.'
         ]);
@@ -121,6 +125,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:product_categories,id',
             'unit' => 'required',
             'unit_price' => 'required|numeric|min:0',
+            'stock_quantity' => 'required|numeric|min:0',
             'description' => 'nullable',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ], [
@@ -131,6 +136,9 @@ class ProductController extends Controller
             'unit.required' => 'Vui lòng chọn đơn vị tính.',
             'unit_price.required' => 'Vui lòng nhập đơn giá nhập.',
             'unit_price.min' => 'Đơn giá nhập không hợp lệ.',
+            'stock_quantity.required' => 'Vui lòng nhập số lượng nhập.',
+            'stock_quantity.numeric' => 'Số lượng phải là số.',
+            'stock_quantity.min' => 'Số lượng không được âm.',
             'image.image' => 'Tệp tải lên phải là hình ảnh.',
             'image.max' => 'Kích thước ảnh không được vượt quá 2MB.'
         ]);

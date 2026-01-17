@@ -358,7 +358,18 @@ function toggleProducts(supplierId) {
         chevron.classList.remove('rotate-90');
         expandedSuppliers.delete(supplierId);
     } else {
-        // Expand
+        // Collapse all other suppliers first
+        expandedSuppliers.forEach(otherId => {
+            if (otherId !== supplierId) {
+                const otherRow = document.getElementById(`products-${otherId}`);
+                const otherChevron = document.getElementById(`chevron-${otherId}`);
+                otherRow.classList.add('hidden');
+                otherChevron.classList.remove('rotate-90');
+            }
+        });
+        expandedSuppliers.clear(); // Clear set
+        
+        // Expand current supplier
         productsRow.classList.remove('hidden');
         chevron.classList.add('rotate-90');
         expandedSuppliers.add(supplierId);

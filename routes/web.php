@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'destroy'])->name('suppliers.destroy');
 
         // Inventory Management
+        Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
 
         // Placeholder routes for sidebar links
@@ -113,7 +114,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
-        
+
         // Automatic Backup Settings
         Route::get('/settings/backup/auto-settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupSettings'])->name('settings.backup.auto-settings');
         Route::post('/settings/backup/auto-settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateBackupSettings'])->name('settings.backup.auto-settings.update');

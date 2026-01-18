@@ -75,8 +75,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Purchase History
         Route::get('/history', [App\Http\Controllers\Admin\PurchaseHistoryController::class, 'index'])->name('history');
-        Route::get('/history/{id}', [App\Http\Controllers\Admin\PurchaseHistoryController::class, 'show'])->name('history.show');
         Route::get('/history/export', [App\Http\Controllers\Admin\PurchaseHistoryController::class, 'export'])->name('history.export');
+        Route::get('/history/{id}', [App\Http\Controllers\Admin\PurchaseHistoryController::class, 'show'])->name('history.show');
 
         // Notifications
         Route::get('/notifications', [App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications');

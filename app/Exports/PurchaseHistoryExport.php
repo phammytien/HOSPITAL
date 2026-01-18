@@ -53,18 +53,18 @@ class PurchaseHistoryExport implements FromCollection, WithHeadings, WithStyles,
 
         // Date range filter (Month/Year)
         if ($this->monthFrom) {
-            $query->whereDate('created_at', '>=', $this->monthFrom . '-01');
+            $query->whereDate('purchase_requests.created_at', '>=', $this->monthFrom . '-01');
         }
 
         if ($this->monthTo) {
             $dateTo = \Carbon\Carbon::parse($this->monthTo)->endOfMonth();
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('purchase_requests.created_at', '<=', $dateTo);
         }
 
-        $history = $query->orderByRaw('YEAR(created_at) DESC')
-            ->orderByRaw('QUARTER(created_at) DESC')
+        $history = $query->orderByRaw('YEAR(purchase_requests.created_at) DESC')
+            ->orderByRaw('QUARTER(purchase_requests.created_at) DESC')
             ->orderBy('department_id', 'ASC')
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('purchase_requests.created_at', 'DESC')
             ->get();
 
         return $history->map(function ($request, $index) {

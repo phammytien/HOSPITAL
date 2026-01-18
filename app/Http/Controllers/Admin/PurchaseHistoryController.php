@@ -18,26 +18,26 @@ class PurchaseHistoryController extends Controller
     {
         $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
             ->where('purchase_requests.is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
+            ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED', 'PAID']);
 
         // Apply filters (department, searching, etc.)
         if ($request->filled('department_id')) {
-            $query->where('department_id', $request->department_id);
+            $query->where('purchase_requests.department_id', $request->department_id);
         }
 
         if ($request->filled('month_from')) {
-            $query->whereDate('created_at', '>=', $request->month_from . '-01');
+            $query->whereDate('purchase_requests.created_at', '>=', $request->month_from . '-01');
         }
 
         if ($request->filled('month_to')) {
             $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('purchase_requests.created_at', '<=', $dateTo);
         }
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('request_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('note', 'like', '%' . $request->search . '%');
+                $q->where('purchase_requests.request_code', 'like', '%' . $request->search . '%')
+                    ->orWhere('purchase_requests.note', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -58,19 +58,19 @@ class PurchaseHistoryController extends Controller
             $pendingQuery->where('department_id', $request->department_id);
         }
         if ($request->filled('month_from')) {
-            $pendingQuery->whereDate('created_at', '>=', $request->month_from . '-01');
+            $pendingQuery->whereDate('purchase_requests.created_at', '>=', $request->month_from . '-01');
         }
         if ($request->filled('month_to')) {
             $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
-            $pendingQuery->whereDate('created_at', '<=', $dateTo);
+            $pendingQuery->whereDate('purchase_requests.created_at', '<=', $dateTo);
         }
 
         $pendingCount = $pendingQuery->count();
 
-        $history = $query->orderByRaw('YEAR(created_at) DESC')
-            ->orderByRaw('QUARTER(created_at) DESC')
-            ->orderBy('department_id', 'ASC')
-            ->orderBy('created_at', 'DESC')
+        $history = $query->orderByRaw('YEAR(purchase_requests.created_at) DESC')
+            ->orderByRaw('QUARTER(purchase_requests.created_at) DESC')
+            ->orderBy('purchase_requests.department_id', 'ASC')
+            ->orderBy('purchase_requests.created_at', 'DESC')
             ->paginate(10);
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
 

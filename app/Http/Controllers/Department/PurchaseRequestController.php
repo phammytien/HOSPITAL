@@ -350,16 +350,16 @@ class PurchaseRequestController extends Controller
         $department = $user->department;
         $budgetTotal = $department->budget_amount ?? 500000000;
 
-        $usedBudget = PurchaseRequest::where('department_id', $user->department_id)
-            ->whereIn('status', ['APPROVED', 'COMPLETED'])
+        $usedBudget = PurchaseRequest::where('purchase_requests.department_id', $user->department_id)
+            ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED'])
             ->where('purchase_requests.is_delete', false)
             ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_request_items.is_delete', false)
             ->sum(DB::raw('quantity * expected_price'));
 
-        $pendingBudget = PurchaseRequest::where('department_id', $user->department_id)
+        $pendingBudget = PurchaseRequest::where('purchase_requests.department_id', $user->department_id)
             ->where('purchase_requests.is_submitted', true)
-            ->whereNull('status')
+            ->whereNull('purchase_requests.status')
             ->where('purchase_requests.is_delete', false)
             ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_request_items.is_delete', false)
@@ -409,15 +409,15 @@ class PurchaseRequestController extends Controller
             $department = $user->department;
             $budgetTotal = $department->budget_amount ?? 500000000;
 
-            $usedBudget = PurchaseRequest::where('department_id', $user->department_id)
-                ->whereIn('status', ['APPROVED', 'COMPLETED'])
+            $usedBudget = PurchaseRequest::where('purchase_requests.department_id', $user->department_id)
+                ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED'])
                 ->where('purchase_requests.is_delete', false)
                 ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
                 ->sum(DB::raw('quantity * expected_price'));
 
-            $pendingBudget = PurchaseRequest::where('department_id', $user->department_id)
+            $pendingBudget = PurchaseRequest::where('purchase_requests.department_id', $user->department_id)
                 ->where('purchase_requests.is_submitted', true)
-                ->whereNull('status')
+                ->whereNull('purchase_requests.status')
                 ->where('purchase_requests.is_delete', false)
                 ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
                 ->sum(DB::raw('quantity * expected_price'));

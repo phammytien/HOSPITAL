@@ -10,14 +10,14 @@
         <div class="flex items-center justify-end mb-6">
             <!-- Export Buttons -->
             <div class="flex gap-2">
-                <a href="{{ route('buyer.reports.export', array_filter(['year' => $year, 'quarter' => $quarter, 'department_id' => $departmentId, 'status' => $status])) }}" 
+                <a href="{{ route('buyer.reports.export', array_filter(['period' => $selectedPeriod, 'department_id' => $departmentId, 'status' => $status])) }}" 
                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     Xuất Excel
                 </a>
-                <a href="{{ route('buyer.reports.export-pdf', array_filter(['year' => $year, 'quarter' => $quarter, 'department_id' => $departmentId, 'status' => $status])) }}" 
+                <a href="{{ route('buyer.reports.export-pdf', array_filter(['period' => $selectedPeriod, 'department_id' => $departmentId, 'status' => $status])) }}" 
                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
@@ -158,60 +158,100 @@
         </div>
     </div>
 
+
     <!-- Requests Table -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Mã đơn hàng</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">STT</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Mã yêu cầu</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Khoa/Phòng</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kỳ/Quý</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider text-right">Tổng tiền</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Số lượng</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Đơn giá</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Thành tiền</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ngày đặt</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Trạng thái</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Hành động</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    @forelse($requests as $order)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-medium text-blue-600">{{ $order->order_code }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-900">{{ $order->purchaseRequest->request_code ?? 'N/A' }}</span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="text-sm text-gray-900">{{ $order->department->department_name ?? 'N/A' }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm text-gray-700 font-medium">{{ $order->purchaseRequest->period ?? 'N/A' }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <span class="text-sm font-bold text-gray-900">{{ number_format($order->total_amount, 0, ',', '.') }} ₫</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm text-gray-600">{{ $order->order_date ? $order->order_date->format('d/m/Y') : 'N/A' }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($order->status) }}">
-                                    {{ get_status_label($order->status) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <div class="flex gap-2">
-                                    <button onclick="viewOrderDetails({{ $order->id }})" 
-                                       class="text-blue-600 hover:text-blue-800 font-medium">
-                                        Xem chi tiết
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                    @php 
+                        $sttCounter = 1;
+                        // Group all items by request_code
+                        $groupedByRequest = collect();
+                        foreach($requests as $order) {
+                            if($order->purchaseRequest && $order->purchaseRequest->items && $order->purchaseRequest->items->count() > 0) {
+                                $requestCode = $order->purchaseRequest->request_code ?? 'N/A';
+                                if (!$groupedByRequest->has($requestCode)) {
+                                    $groupedByRequest[$requestCode] = [
+                                        'request' => $order->purchaseRequest,
+                                        'department' => $order->department,
+                                        'order_date' => $order->order_date,
+                                        'status' => $order->status,
+                                        'items' => collect()
+                                    ];
+                                }
+                                // Add all items from this order to the group
+                                foreach($order->purchaseRequest->items as $item) {
+                                    $groupedByRequest[$requestCode]['items']->push($item);
+                                }
+                            }
+                        }
+                    @endphp
+                    
+                    @forelse($groupedByRequest as $requestCode => $group)
+                        @foreach($group['items'] as $itemIndex => $item)
+                            @php
+                                $unitPrice = $item->product->unit_price ?? 0;
+                                $quantity = $item->quantity ?? 0;
+                                $subtotal = $unitPrice * $quantity;
+                            @endphp
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $sttCounter++ }}</td>
+                                @if($itemIndex === 0)
+                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
+                                        <span class="text-sm font-medium text-blue-600">{{ $requestCode }}</span>
+                                    </td>
+                                @endif
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $item->product->product_name ?? 'N/A' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $item->product->product_code ?? '' }}</div>
+                                </td>
+                                @if($itemIndex === 0)
+                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
+                                        <span class="text-sm text-gray-900">{{ $group['department']->department_name ?? 'N/A' }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
+                                        <span class="text-sm text-gray-700 font-medium">{{ $group['request']->period ?? 'N/A' }}</span>
+                                    </td>
+                                @endif
+                                <td class="px-6 py-4 text-center whitespace-nowrap">
+                                    <span class="text-sm font-semibold text-gray-900">{{ $quantity }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                    <span class="text-sm text-gray-900">{{ number_format($unitPrice, 0, ',', '.') }} ₫</span>
+                                </td>
+                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                    <span class="text-sm font-bold text-gray-900">{{ number_format($subtotal, 0, ',', '.') }} ₫</span>
+                                </td>
+                                @if($itemIndex === 0)
+                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
+                                        <span class="text-sm text-gray-600">{{ $group['order_date'] ? $group['order_date']->format('d/m/Y') : 'N/A' }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($group['status']) }}">
+                                            {{ get_status_label($group['status']) }}
+                                        </span>
+                                    </td>
+                                @endif
+                            </tr>
+                        @endforeach
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
+                            <td colspan="10" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>

@@ -465,6 +465,128 @@ class SystemSettingsController extends Controller
     }
 
     /**
+     * Get automatic backup settings
+     */
+    public function getBackupSettings()
+    {
+        try {
+            $autoBackupEnabled = DB::table('system_settings')
+                ->where('key', 'auto_backup_enabled')
+                ->first();
+            
+            $autoBackupInterval = DB::table('system_settings')
+                ->where('key', 'auto_backup_interval')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'auto_backup_enabled' => $autoBackupEnabled ? (int)$autoBackupEnabled->value : 0,
+                'auto_backup_interval' => $autoBackupInterval ? (int)$autoBackupInterval->value : 30
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Update automatic backup settings
+     */
+    public function updateBackupSettings(Request $request)
+    {
+        $request->validate([
+            'enabled' => 'required|boolean',
+            'interval' => 'required|integer|min:10'
+        ]);
+
+        try {
+            DB::table('system_settings')->updateOrInsert(
+                ['key' => 'auto_backup_enabled'],
+                [
+                    'value' => $request->enabled ? '1' : '0',
+                    'description' => 'Trạng thái backup tự động',
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]
+            );
+
+            DB::table('system_settings')->updateOrInsert(
+                ['key' => 'auto_backup_interval'],
+                [
+                    'value' => (string)$request->interval,
+                    'description' => 'Khoảng thời gian backup tự động (giây)',
+                    'updated_at' => now(),
+                    'created_at' => now()
+                ]
+            );
+
+            $statusText = $request->enabled ? 'bật' : 'tắt';
+            return response()->json([
+                'success' => true,
+                'message' => "Đã {$statusText} backup tự động! Khoảng thời gian: {$request->interval} giây"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get backup status
+     */
+    public function getBackupStatus()
+    {
+        try {
+            $lastBackupTime = DB::table('system_settings')
+                ->where('key', 'last_backup_time')
+                ->first();
+            
+            $lastBackupStatus = DB::table('system_settings')
+                ->where('key', 'last_backup_status')
+                ->first();
+
+            return response()->json([
+                'success' => true,
+                'last_backup_time' => $lastBackupTime ? $lastBackupTime->value : null,
+                'last_backup_status' => $lastBackupStatus ? $lastBackupStatus->value : 'unknown',
+                'last_backup_message' => $lastBackupStatus ? $lastBackupStatus->description : ''
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Upload and import backup file
+     */
+    public function uploadBackup(Request $request)
+    {
+        $request->validate([
+            'backup_file' => 'required|file|mimes:sql|max:102400' // Max 100MB
+        ]);
+
+        try {
+            $file = $request->file('backup_file');
+            $filename = 'uploaded_' . date('Ymd_His') . '_' . $file->getClientOriginalName();
+            $backupPath = storage_path('app/backups');
+            
+            // Create backups directory if it doesn't exist
+            if (!File::exists($backupPath)) {
+                File::makeDirectory($backupPath, 0755, true);
+            }
+
+            // Move uploaded file to backups directory
+            $file->move($backupPath, $filename);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Upload file backup thành công!',
+                'filename' => $filename
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Format bytes to human readable format
      */
     private function formatBytes($bytes, $precision = 2)

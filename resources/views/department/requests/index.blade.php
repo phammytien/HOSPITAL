@@ -143,10 +143,10 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-3">
-                                        <a href="{{ route('department.requests.show', $request->id) }}"
-                                            class="text-gray-400 hover:text-blue-600" title="Xem chi tiết">
+                                        <button onclick="viewRequestDetails({{ $request->id }})"
+                                            class="text-gray-400 hover:text-blue-600 transition" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
-                                        </a>
+                                        </button>
                                         @if(!$request->is_submitted)
                                             <a href="{{ route('department.requests.edit', $request->id) }}"
                                                 class="text-gray-400 hover:text-green-600" title="Chỉnh sửa">
@@ -195,4 +195,108 @@
             @endif
         </div>
     </div>
+
+    <!-- Modal for Request Details -->
+    <div id="requestModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+                <h3 class="text-xl font-bold text-white">Chi tiết yêu cầu</h3>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 transition">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="modalContent" class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+                <div class="flex items-center justify-center py-12">
+                    <i class="fas fa-spinner fa-spin text-blue-600 text-4xl"></i>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <button onclick="closeModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    Đóng
+                </button>
+                <a id="viewFullPageLink" href="#" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Xem trang đầy đủ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        function viewRequestDetails(requestId) {
+            const modal = document.getElementById('requestModal');
+            const modalContent = document.getElementById('modalContent');
+            const viewFullPageLink = document.getElementById('viewFullPageLink');
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            
+            // Update full page link
+            viewFullPageLink.href = `/department/requests/${requestId}`;
+            
+            // Show loading
+            modalContent.innerHTML = `
+                <div class="flex items-center justify-center py-12">
+                    <i class="fas fa-spinner fa-spin text-blue-600 text-4xl"></i>
+                </div>
+            `;
+            
+            // Fetch request details
+            fetch(`/department/requests/${requestId}`)
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the HTML and extract the content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extract the printable section
+                    const content = doc.querySelector('#printable-section');
+                    
+                    if (content) {
+                        modalContent.innerHTML = content.outerHTML;
+                    } else {
+                        modalContent.innerHTML = `
+                            <div class="text-center py-12">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+                                <p class="text-gray-600">Không thể tải thông tin yêu cầu</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalContent.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-gray-600">Đã xảy ra lỗi khi tải dữ liệu</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('requestModal');
+            modal.classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('requestModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+    @endpush
 @endsection

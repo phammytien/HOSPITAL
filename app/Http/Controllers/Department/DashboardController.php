@@ -19,42 +19,62 @@ class DashboardController extends Controller
         $user = Auth::user();
         $departmentId = $user->department_id;
 
-        // Thống kê các yêu cầu
+        // Thống kê các yêu cầu (chỉ dựa vào status, không dùng is_submitted)
         $stats = [
+            // Đang chờ duyệt = SUBMITTED
             'pending' => PurchaseRequest::where('department_id', $departmentId)
-                ->where('is_submitted', true)
-                ->where(function ($q) {
-                    $q->whereNull('status')->orWhere('status', 'SUBMITTED')->orWhere('status', 'PENDING');
-                })
+                ->where('status', 'SUBMITTED')
                 ->where('is_delete', false)
                 ->count(),
 
+            // Đã được duyệt = APPROVED
             'approved' => PurchaseRequest::where('department_id', $departmentId)
                 ->where('status', 'APPROVED')
                 ->where('is_delete', false)
                 ->count(),
 
+            // Đã hoàn thành = COMPLETED hoặc PAID
+            'completed' => PurchaseRequest::where('department_id', $departmentId)
+                ->whereIn('status', ['COMPLETED', 'PAID'])
+                ->where('is_delete', false)
+                ->count(),
+
+            // Bị từ chối
             'rejected' => PurchaseRequest::where('department_id', $departmentId)
                 ->where('status', 'REJECTED')
                 ->where('is_delete', false)
                 ->count(),
 
+            // Nháp
             'draft' => PurchaseRequest::where('department_id', $departmentId)
-                ->where('status', 'DRAFT')
+                ->whereIn('status', ['DRAFT', null])
                 ->where('is_delete', false)
                 ->count(),
         ];
 
-        // Tính tổng số vật tư đã nhận (từ các đơn đã approved)
+        // Tính tổng số vật tư đã nhận (từ các đơn COMPLETED/PAID)
         $totalItems = PurchaseRequestItem::whereHas('purchaseRequest', function ($query) use ($departmentId) {
             $query->where('department_id', $departmentId)
-                ->where('status', 'APPROVED')
+                ->whereIn('status', ['COMPLETED', 'PAID'])
                 ->where('is_delete', false);
         })->sum('quantity');
 
-        // Lấy danh sách yêu cầu gần đây
+        // Lấy danh sách vật tư đã nhận để hiển thị trong popup
+        $receivedItems = PurchaseRequestItem::with(['product', 'purchaseRequest'])
+            ->whereHas('purchaseRequest', function ($query) use ($departmentId) {
+                $query->where('department_id', $departmentId)
+                    ->whereIn('status', ['COMPLETED', 'PAID'])
+                    ->where('is_delete', false);
+            })
+            ->where('is_delete', false)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        // Lấy danh sách yêu cầu gần đây (không hiển thị nháp - chỉ hiển thị đã gửi trở lên)
         $recentRequests = PurchaseRequest::where('department_id', $departmentId)
             ->where('is_delete', false)
+            ->where('is_submitted', true) // Chỉ lấy các yêu cầu đã gửi
             ->with(['items.product', 'requester'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -91,6 +111,7 @@ class DashboardController extends Controller
         return view('dashboard.department', compact(
             'stats',
             'totalItems',
+            'receivedItems',
             'recentRequests',
             'department',
             'usedBudget',

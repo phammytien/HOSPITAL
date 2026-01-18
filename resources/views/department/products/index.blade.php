@@ -61,6 +61,10 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         @foreach($products as $product)
                             <div id="card-{{ $product->id }}" 
+                                 data-name="{{ $product->product_name }}"
+                                 data-price="{{ $product->unit_price }}"
+                                 data-unit="{{ $product->unit }}"
+                                 data-image="{{ getProductImage($product->id) }}"
                                  class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full group overflow-hidden relative">
                                 
                                 <!-- Checkbox (Top Right) -->
@@ -177,7 +181,7 @@
                 <button id="createRequestBtn" onclick="createRequest()" 
                         class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all transform active:scale-95 flex items-center gap-2">
                     <i class="fas fa-paper-plane"></i>
-                    Tạo yêu cầu với sản phẩm đã chọn
+                    <span id="btnText">{{ $cartCount > 0 ? 'Thêm vào đơn nháp hiện tại' : 'Tạo đơn với sản phẩm đã chọn' }}</span>
                 </button>
             </div>
         </div>
@@ -257,6 +261,7 @@
                             <div class="pt-4 border-t border-gray-100">
                                 <form onsubmit="addToDraftModal(event)" class="flex gap-4 items-end">
                                     <input type="hidden" id="modalProductId">
+                                    <input type="hidden" id="modalRawPrice">
                                     <div class="w-32">
                                         <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Số lượng
                                             mua</label>
@@ -372,6 +377,7 @@
             .then(res => res.json())
             .then(data => {
                 document.getElementById('modalProductId').value = data.id;
+                document.getElementById('modalRawPrice').value = data.unit_price; // Store raw price
                 document.getElementById('modalTitle').textContent = data.product_name;
                 document.getElementById('modalCode').textContent = data.product_code;
                 document.getElementById('modalUnit').textContent = data.unit;
@@ -400,8 +406,8 @@
         document.getElementById('productModal').classList.add('hidden');
     }
 
-    // Batch Action: Create Request
-    async function createRequest() {
+    // Batch Action: Add to Cart (LocalStorage)
+    function createRequest() {
         if (selectedItems.size === 0) return;
 
         const btn = document.getElementById('createRequestBtn');
@@ -409,64 +415,94 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
 
-        const items = Array.from(selectedItems.entries()).map(([productId, quantity]) => ({
-            product_id: productId,
-            quantity: quantity
-        }));
-
+        // Get existing cart from LS (to merge)
+        const CART_KEY = 'department_request_cart';
+        let existingCart = [];
         try {
-            const res = await fetch('{{ route("department.requests.add_items_batch") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ items: items })
-            });
+            const stored = localStorage.getItem(CART_KEY);
+            if (stored) existingCart = JSON.parse(stored);
+        } catch(e) {}
 
-            const data = await res.json();
-
-            if (data.success) {
-                // Redirect immediately
-                window.location.href = data.redirect_url;
+        // Merge items
+        selectedItems.forEach((quantity, productId) => {
+            const card = document.getElementById(`card-${productId}`);
+            
+            // Use reliable data attributes
+            const name = card.dataset.name;
+            const price = parseFloat(card.dataset.price);
+            const unit = card.dataset.unit;
+            const image = card.dataset.image;
+            
+            const exists = existingCart.find(p => p.id === productId);
+            if (exists) {
+                exists.quantity += quantity;
+                // Update image if missing?
+                if (!exists.image) exists.image = image;
             } else {
-                alert(data.message || 'Có lỗi xảy ra');
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                existingCart.push({
+                    id: productId,
+                    name: name,
+                    price: price, // Now guaranteed to be correct number
+                    unit: unit,
+                    quantity: quantity,
+                    image: image
+                });
             }
-        } catch (err) {
-            console.error(err);
-            alert('Lỗi kết nối');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
+        });
+
+        localStorage.setItem(CART_KEY, JSON.stringify(existingCart));
+
+        // Redirect with flag
+        window.location.href = "{{ route('department.requests.create') }}?from_catalog=1";
     }
-    
-    // Legacy Modal Add (Single Item) - kept for compatibility if needed from Modal
-    async function addToDraftModal(e) {
+
+    // Modal Add Action (LocalStorage)
+    function addToDraftModal(e) {
         e.preventDefault();
-        // For now, this just adds one item. 
-        // We could change this to select the item and highlight it on UI, but redirecting works too for consistency.
-        // Let's keep the legacy behavior but redirect to ID using the batch endpoint for consistency?
-        // Actually, simple "Add to Draft" is fine here, but user asked for "Create Request Immediately".
-        // Let's make the modal "Add" button also do the batch create flow for single item.
         
-        const productId = document.getElementById('modalProductId').value;
-        const quantity = document.getElementById('modalQuantity').value;
+        const productId = parseInt(document.getElementById('modalProductId').value);
+        const quantity = parseInt(document.getElementById('modalQuantity').value);
+        const name = document.getElementById('modalTitle').textContent;
+        const price = parseFloat(document.getElementById('modalRawPrice').value);
+        const unit = document.getElementById('modalUnit').textContent;
         
-        const items = [{ product_id: productId, quantity: quantity }];
-        
+        // Image source is tricky in modal -> we can grab from img src or store it too.
+        // Let's grab it from the modalImage src if visible, or placeholder?
+        // Actually, let's just make openProductModal store it in a hidden input too.
+        // Or simpler: grab from `modalImage.src`
+        const imgEl = document.getElementById('modalImage');
+        let image = '';
+        if (!imgEl.classList.contains('hidden')) {
+            image = imgEl.src;
+        }
+
+        // Get existing cart
+        const CART_KEY = 'department_request_cart';
+        let existingCart = [];
         try {
-            const res = await fetch('{{ route("department.requests.add_items_batch") }}', {
-                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                body: JSON.stringify({ items: items })
+            const stored = localStorage.getItem(CART_KEY);
+            if (stored) existingCart = JSON.parse(stored);
+        } catch(e) {}
+
+        const exists = existingCart.find(p => p.id === productId);
+        if (exists) {
+            exists.quantity += quantity;
+            if (!exists.image) exists.image = image;
+        } else {
+            existingCart.push({
+                id: productId,
+                name: name,
+                price: price,
+                unit: unit,
+                quantity: quantity,
+                image: image
             });
-            const data = await res.json();
-            if (data.success) {
-                window.location.href = data.redirect_url;
-            } else { alert(data.message); }
-        } catch (err) { console.error(err); alert('Lỗi kết nối'); }
+        }
+
+        localStorage.setItem(CART_KEY, JSON.stringify(existingCart));
+
+        // Redirect
+        window.location.href = "{{ route('department.requests.create') }}?from_catalog=1";
     }
 </script>
 @endpush

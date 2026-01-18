@@ -68,7 +68,7 @@
                         {{ $order->department->department_name ?? 'N/A' }}
                     </td>
                     <td class="px-6 py-4 text-sm text-gray-500">
-                        {{ \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') }}
+                        Quý {{ \Carbon\Carbon::parse($order->order_date)->quarter }}/{{ \Carbon\Carbon::parse($order->order_date)->year }}
                     </td>
                     <td class="px-6 py-4 text-sm font-bold text-gray-800 text-right">
                         {{ number_format($order->total_amount, 0, ',', '.') }} ₫
@@ -227,7 +227,7 @@
                             <dl class="space-y-3 text-sm">
                                 <div>
                                     <dt class="text-gray-500 text-xs uppercase">Ngày đặt hàng</dt>
-                                    <dd class="font-medium text-gray-900">{{ \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') }}</dd>
+                                    <dd class="font-medium text-gray-900">Quý {{ \Carbon\Carbon::parse($order->order_date)->quarter }}/{{ \Carbon\Carbon::parse($order->order_date)->year }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-gray-500 text-xs uppercase">Khoa/Phòng</dt>

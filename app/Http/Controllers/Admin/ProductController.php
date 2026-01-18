@@ -301,7 +301,7 @@ class ProductController extends Controller
         $search = $request->input('search');
         $supplierId = $request->input('supplier_id');
 
-        $fileName = 'danh-sach-san-pham-' . date('Y-m-d-His') . '.xlsx';
+        $fileName = 'Danh_sach_san_pham_' . date('Y_m_d_His') . '.xlsx';
 
         return Excel::download(new ProductsExport($categoryId, $search, $supplierId), $fileName);
     }

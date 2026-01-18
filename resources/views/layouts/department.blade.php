@@ -100,6 +100,22 @@
                             <i class="fas fa-th-large w-5 text-sm"></i>
                             <span class="font-medium text-sm">Tổng quan</span>
                         </a>
+
+                        <a href="{{ route('department.notifications.index') }}"
+                            class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.notifications.*') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-bell w-5 text-sm"></i>
+                            <span class="font-medium text-sm">Thông báo</span>
+                            @php
+                                $unreadNotifyCount = \App\Models\Notification::where(function($q) {
+                                    $q->where('target_role', 'DEPARTMENT')
+                                      ->orWhere('target_role', 'ALL')
+                                      ->orWhereNull('target_role');
+                                })->where('is_read', false)->count();
+                            @endphp
+                            @if($unreadNotifyCount > 0)
+                                <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-semibold">{{ $unreadNotifyCount }}</span>
+                            @endif
+                        </a>
                     </div>
 
                     <!-- MUA SẮM & ĐƠN HÀNG Section -->
@@ -210,7 +226,7 @@
                                     class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 transform origin-top-right transition-all">
                                     <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-white">
                                         <h3 class="font-bold text-gray-800 text-base">Thông báo</h3>
-                                        <button class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
+                                        <button onclick="markAllNotificationsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
                                     </div>
                                     
                                     <div class="max-h-[400px] overflow-y-auto">
@@ -230,9 +246,16 @@
                                                         'warning' => 'fa-exclamation-triangle',
                                                         default => 'fa-info'
                                                     };
+                                                    // Determine redirect URL based on notification content
+                                                    $redirectUrl = '';
+                                                    if (str_contains(strtolower($notify->title ?? ''), 'đơn hàng') || str_contains(strtolower($notify->message ?? ''), 'đơn hàng')) {
+                                                        $redirectUrl = route('department.dept_orders.index');
+                                                    } elseif (isset($data['request_id']) && $data['request_id']) {
+                                                        $redirectUrl = '/department/requests/' . $data['request_id'];
+                                                    }
                                                 @endphp
-                                                <div onclick="showRequestDetail('{{ $data['request_id'] ?? '' }}')" 
-                                                     class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->read_at ? 'opacity-70' : '' }}">
+                                                <div onclick="showNotifyModal({{ $notify->id }}, '{{ addslashes($notify->title) }}', '{{ addslashes($notify->message) }}', '{{ $notify->type }}', '{{ $notify->created_at->diffForHumans() }}', '{{ $redirectUrl }}')" 
+                                                     class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
                                                      
                                                      <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
                                                          <i class="fas {{ $icon }}"></i>
@@ -246,7 +269,7 @@
                                                          <p class="text-[10px] text-gray-400 font-medium">{{ $notify->created_at->diffForHumans() }}</p>
                                                      </div>
                                                      
-                                                     @if(!$notify->read_at)
+                                                     @if(!$notify->is_read)
                                                         <div class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"></div>
                                                      @endif
                                                 </div>
@@ -262,7 +285,7 @@
                                     </div>
                                     
                                      <div class="p-3 bg-gray-50 border-t border-gray-100 text-center">
-                                        <a href="#" class="text-sm text-gray-600 font-bold hover:text-blue-600 transition">Xem tất cả thông báo</a>
+                                        <a href="{{ route('department.notifications.index') }}" class="text-sm text-gray-600 font-bold hover:text-blue-600 transition">Xem tất cả thông báo</a>
                                     </div>
                                 </div>
                             </div>
@@ -348,12 +371,45 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="bg-blue-600 py-4 border-t border-blue-700">
-            <div class="max-w-7xl mx-auto px-6 text-center text-xs text-white">
-                <p>&copy; 2025 Bệnh Viện Đa Khoa Tâm Trí Cao Lãnh</p>
+    <!-- Notification Detail Modal -->
+    <div id="notifyDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                <h3 id="notifyModalTitle" class="text-lg font-bold text-gray-900"></h3>
+                <button onclick="closeNotifyModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
-        </footer>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-6 overflow-y-auto max-h-[calc(80vh-160px)]">
+                <div class="mb-4">
+                    <span id="notifyModalBadge" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                </div>
+                <p id="notifyModalMessage" class="text-gray-700 leading-relaxed"></p>
+                <p id="notifyModalTime" class="text-xs text-gray-400 mt-4"></p>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-between gap-3 bg-gray-50">
+                <button id="notifyModalAction" onclick="goToNotifyAction()" class="hidden px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-external-link-alt mr-2"></i>
+                    <span id="notifyModalActionText">Xem chi tiết</span>
+                </button>
+                <button onclick="closeNotifyModal()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition ml-auto">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-blue-600 py-4 border-t border-blue-700">
+        <div class="max-w-7xl mx-auto px-6 text-center text-xs text-white">
+            <p>&copy; 2025 Bệnh Viện Đa Khoa Tâm Trí Cao Lãnh</p>
+        </div>
+    </footer>
     </div>
 
     <!-- Scripts -->
@@ -395,6 +451,86 @@
 
         function showRequestDetail(id) {
              if(id) window.location.href = '/department/requests/' + id;
+        }
+
+        let currentNotifyId = null;
+        let currentNotifyRedirectUrl = null;
+
+        function showNotifyModal(id, title, message, type, time, redirectUrl) {
+            currentNotifyId = id;
+            currentNotifyRedirectUrl = redirectUrl;
+
+            // Set modal content
+            document.getElementById('notifyModalTitle').textContent = title;
+            document.getElementById('notifyModalMessage').innerHTML = message;
+            document.getElementById('notifyModalTime').textContent = time;
+
+            // Set badge
+            const badgeEl = document.getElementById('notifyModalBadge');
+            const badgeConfig = {
+                'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
+                'error': { text: 'KHẨN CẤP', class: 'bg-red-100 text-red-700' },
+                'warning': { text: 'CẢNH BÁO', class: 'bg-orange-100 text-orange-700' },
+                'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
+            };
+            const config = badgeConfig[type] || badgeConfig['info'];
+            badgeEl.textContent = config.text;
+            badgeEl.className = `px-3 py-1 rounded-full text-xs font-semibold ${config.class}`;
+
+            // Show/hide action button
+            const actionBtn = document.getElementById('notifyModalAction');
+            const actionText = document.getElementById('notifyModalActionText');
+            if (redirectUrl) {
+                actionBtn.classList.remove('hidden');
+                if (redirectUrl.includes('orders')) {
+                    actionText.textContent = 'Xác nhận đơn hàng';
+                } else if (redirectUrl.includes('requests')) {
+                    actionText.textContent = 'Xem yêu cầu';
+                } else {
+                    actionText.textContent = 'Xem chi tiết';
+                }
+            } else {
+                actionBtn.classList.add('hidden');
+            }
+
+            // Show modal & hide dropdown
+            document.getElementById('notificationMenu').classList.add('hidden');
+            document.getElementById('notifyDetailModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Mark as read
+            fetch(`/department/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+
+        function closeNotifyModal() {
+            document.getElementById('notifyDetailModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            // Reload to update read status
+            window.location.reload();
+        }
+
+        function goToNotifyAction() {
+            if (currentNotifyRedirectUrl) {
+                window.location.href = currentNotifyRedirectUrl;
+            }
+        }
+
+        function markAllNotificationsRead() {
+            fetch('{{ route("department.notifications.read-all") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            }).then(() => {
+                window.location.reload();
+            });
         }
     </script>
 

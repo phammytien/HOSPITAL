@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/suppliers/{id}', [App\Http\Controllers\Admin\SupplierController::class, 'destroy'])->name('suppliers.destroy');
 
         // Inventory Management
+        Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
         Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
 
@@ -114,6 +115,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/backup/download/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'downloadBackup'])->name('settings.backup.download');
         Route::post('/settings/backup/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBackup'])->name('settings.backup.restore');
         Route::delete('/settings/backup/delete/{filename}', [App\Http\Controllers\Admin\SystemSettingsController::class, 'deleteBackup'])->name('settings.backup.delete');
+
+        // Automatic Backup Settings
+        Route::get('/settings/backup/auto-settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupSettings'])->name('settings.backup.auto-settings');
+        Route::post('/settings/backup/auto-settings', [App\Http\Controllers\Admin\SystemSettingsController::class, 'updateBackupSettings'])->name('settings.backup.auto-settings.update');
+        Route::get('/settings/backup/status', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getBackupStatus'])->name('settings.backup.status');
+        Route::post('/settings/backup/upload', [App\Http\Controllers\Admin\SystemSettingsController::class, 'uploadBackup'])->name('settings.backup.upload');
 
         // Maintenance Mode Management
         Route::get('/settings/maintenance', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getMaintenanceSettings'])->name('settings.maintenance');
@@ -244,6 +251,10 @@ Route::middleware(['auth'])->group(function () {
             // Route::post('/profile/update', [DepartmentProfileController::class, 'update'])->name('profile.update');
             // Route::post('/profile/password', [DepartmentProfileController::class, 'changePassword'])->name('profile.password');
 
+            // Notifications
+            Route::get('/notifications', [\App\Http\Controllers\Department\NotificationController::class, 'index'])->name('notifications.index');
+            Route::post('/notifications/{id}/read', [\App\Http\Controllers\Department\NotificationController::class, 'markAsRead'])->name('notifications.read');
+            Route::post('/notifications/read-all', [\App\Http\Controllers\Department\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 
             // Purchase Requests
             Route::post('requests/add-item', [\App\Http\Controllers\Department\PurchaseRequestController::class, 'addToDraft'])->name('requests.add_item');

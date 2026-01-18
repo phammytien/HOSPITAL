@@ -44,10 +44,11 @@ class QuarterlyReportExport implements FromCollection, WithHeadings, WithStyles,
             
             $deptTotal = 0;
 
-            foreach ($requests as $request) {
-                if ($request->status !== 'APPROVED') continue;
+            foreach ($requests as $order) {
+                // Process purchase order items
+                if (!$order->purchaseRequest || !$order->purchaseRequest->items) continue;
 
-                foreach ($request->items as $item) {
+                foreach ($order->purchaseRequest->items as $item) {
                     $unitPrice = $item->product->unit_price ?? 0;
                     $quantity = $item->quantity ?? 0;
                     $subtotal = $unitPrice * $quantity;
@@ -55,12 +56,12 @@ class QuarterlyReportExport implements FromCollection, WithHeadings, WithStyles,
 
                     $rows->push([
                         $sttCounter++,
-                        $request->request_code,
+                        $order->purchaseRequest->request_code ?? 'N/A',
                         $item->product->product_name ?? 'N/A',
                         $quantity,
                         $unitPrice,
                         $subtotal,
-                        $request->created_at->format('d/m/Y'),
+                        $order->order_date ? $order->order_date->format('d/m/Y') : 'N/A',
                         $item->reason ?? ''
                     ]);
                 }

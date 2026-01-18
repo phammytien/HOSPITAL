@@ -28,11 +28,13 @@ class PurchaseHistoryController extends Controller
         }
 
         // Date range filter
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->has('month_from') && $request->month_from != '') {
+            $startDate = \Carbon\Carbon::parse($request->month_from)->startOfMonth();
+            $query->whereDate('created_at', '>=', $startDate);
         }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->has('month_to') && $request->month_to != '') {
+            $endDate = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
 
@@ -106,11 +108,13 @@ class PurchaseHistoryController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->has('month_from') && $request->month_from != '') {
+            $startDate = \Carbon\Carbon::parse($request->month_from)->startOfMonth();
+            $query->whereDate('created_at', '>=', $startDate);
         }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->has('month_to') && $request->month_to != '') {
+            $endDate = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
         if ($request->has('search') && $request->search != '') {

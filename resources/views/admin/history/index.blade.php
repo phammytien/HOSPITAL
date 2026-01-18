@@ -89,25 +89,23 @@
                 </select>
             </div>
 
-            {{-- Date From --}}
+            {{-- Month From --}}
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian</label>
-                <input type="date" name="date_from" id="dateFromFilter" value="{{ request('date_from') }}" 
-                       placeholder="mm/dd/yyyy"
+                <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian (Từ tháng)</label>
+                <input type="month" name="month_from" id="monthFromFilter" value="{{ request('month_from') }}" 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
-            {{-- Date To --}}
+            {{-- Month To --}}
             <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
-                <input type="date" name="date_to" id="dateToFilter" value="{{ request('date_to') }}" 
-                       placeholder="mm/dd/yyyy"
+                <label class="block text-sm font-medium text-gray-700 mb-2">(Đến tháng)</label>
+                <input type="month" name="month_to" id="monthToFilter" value="{{ request('month_to') }}" 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             {{-- Export and Clear Buttons --}}
             <div class="md:col-span-3 flex justify-end gap-2">
-                <a href="{{ route('admin.history.export', ['search' => request('search'), 'department_id' => request('department_id'), 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}" 
+                <a href="{{ route('admin.history.export', ['search' => request('search'), 'department_id' => request('department_id'), 'month_from' => request('month_from'), 'month_to' => request('month_to')]) }}" 
                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition" title="Xuất Excel">
                     <i class="fas fa-download"></i>
                 </a>
@@ -209,11 +207,11 @@ document.getElementById('departmentFilter')?.addEventListener('change', function
     document.getElementById('filterForm').submit();
 });
 
-document.getElementById('dateFromFilter')?.addEventListener('change', function() {
+document.getElementById('monthFromFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 
-document.getElementById('dateToFilter')?.addEventListener('change', function() {
+document.getElementById('monthToFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 

@@ -92,12 +92,12 @@ class PurchaseHistoryExport implements FromCollection, WithHeadings, WithEvents,
                     }
                 }
                 
-                if (!empty($this->filters['date_from'])) {
-                    $filterInfo[] = 'Từ ngày: ' . date('d/m/Y', strtotime($this->filters['date_from']));
+                if (!empty($this->filters['month_from'])) {
+                    $filterInfo[] = 'Từ tháng: ' . date('m/Y', strtotime($this->filters['month_from']));
                 }
                 
-                if (!empty($this->filters['date_to'])) {
-                    $filterInfo[] = 'Đến ngày: ' . date('d/m/Y', strtotime($this->filters['date_to']));
+                if (!empty($this->filters['month_to'])) {
+                    $filterInfo[] = 'Đến tháng: ' . date('m/Y', strtotime($this->filters['month_to']));
                 }
                 
                 if (!empty($this->filters['search'])) {

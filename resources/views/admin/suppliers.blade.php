@@ -279,7 +279,36 @@ document.getElementById('supplierForm').addEventListener('submit', function(e) {
         },
         body: formData
     })
-    .then(res => res.json())
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) {
+            // Handle validation errors (422) or other errors
+            if (res.status === 422) {
+                // Clear previous errors
+                document.querySelectorAll('.error-feedback').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('input, textarea').forEach(el => el.classList.remove('border-red-500'));
+                
+                // Show new errors
+                Object.keys(data.errors).forEach(field => {
+                    const errorEl = document.querySelector(`.error-feedback[data-field="${field}"]`);
+                    const inputEl = document.querySelector(`[name="${field}"]`);
+                    
+                    if (errorEl) {
+                        errorEl.textContent = data.errors[field][0];
+                        errorEl.classList.remove('hidden');
+                    }
+                    if (inputEl) {
+                        inputEl.classList.add('border-red-500');
+                    }
+                });
+                
+                // Throw error to skip success block
+                throw new Error('Validation failed');
+            }
+            throw new Error(data.message || 'Có lỗi xảy ra');
+        }
+        return data;
+    })
     .then(data => {
         if (data.success) {
             Swal.fire({
@@ -298,6 +327,7 @@ document.getElementById('supplierForm').addEventListener('submit', function(e) {
         }
     })
     .catch(err => {
+        if (err.message === 'Validation failed') return;
         console.error(err);
         Swal.fire({
             icon: 'error',
@@ -358,7 +388,18 @@ function toggleProducts(supplierId) {
         chevron.classList.remove('rotate-90');
         expandedSuppliers.delete(supplierId);
     } else {
-        // Expand
+        // Collapse all other suppliers first
+        expandedSuppliers.forEach(otherId => {
+            if (otherId !== supplierId) {
+                const otherRow = document.getElementById(`products-${otherId}`);
+                const otherChevron = document.getElementById(`chevron-${otherId}`);
+                otherRow.classList.add('hidden');
+                otherChevron.classList.remove('rotate-90');
+            }
+        });
+        expandedSuppliers.clear(); // Clear set
+        
+        // Expand current supplier
         productsRow.classList.remove('hidden');
         chevron.classList.add('rotate-90');
         expandedSuppliers.add(supplierId);
@@ -483,12 +524,14 @@ function renderProducts(supplierId, products) {
                             <input type="text" name="supplier_code" id="supplier_code" readonly
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 font-medium"
                                 required>
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="supplier_code"></p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Tên nhà cung cấp</label>
                             <input type="text" name="supplier_name" id="supplier_name" placeholder="Nhập tên nhà cung cấp..."
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 required>
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="supplier_name"></p>
                         </div>
                     </div>
                 </div>
@@ -504,21 +547,25 @@ function renderProducts(supplierId, products) {
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Người liên hệ</label>
                             <input type="text" name="contact_person" id="contact_person" placeholder="Nguyễn Văn A"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="contact_person"></p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Số điện thoại</label>
-                            <input type="text" name="phone_number" id="phone_number" placeholder="0123456789"
+                            <input type="text" name="phone_number" id="phone_number" placeholder="0123456789" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="phone_number"></p>
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Email</label>
                             <input type="email" name="email" id="email" placeholder="example@company.com"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="email"></p>
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide">Địa chỉ</label>
                             <textarea name="address" id="address" rows="2" placeholder="Nhập địa chỉ đầy đủ..."
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                            <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="address"></p>
                         </div>
                     </div>
                 </div>
@@ -531,6 +578,7 @@ function renderProducts(supplierId, products) {
                     </h4>
                     <textarea name="note" id="note" rows="3" placeholder="Thêm ghi chú về nhà cung cấp..."
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="note"></p>
                 </div>
 
                 <!-- Footer Info -->

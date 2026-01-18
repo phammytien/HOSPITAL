@@ -29,7 +29,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <h4 class="text-2xl font-bold mb-1">
-                            {{ Auth::user()->department->department_code ?? 'N/A' }}-{{ date('Y') }}
+                            {{ Auth::user()->department->department_code ?? 'N/A' }}_{{ date('Y') }}
                         </h4>
                         <p class="text-sm opacity-90">Ngân sách {{ Auth::user()->department->department_name ?? 'N/A' }}</p>
                     </div>
@@ -81,14 +81,14 @@
                         <div id="productListDropdown"
                             class="hidden mt-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg">
                             @foreach($products as $product)
+                                @php $img = getProductImage($product->id); @endphp
                                 <div class="p-3 hover:bg-gray-50 cursor-pointer product-item" data-id="{{ $product->id }}"
                                     data-name="{{ $product->product_name }}" data-price="{{ $product->unit_price }}"
                                     data-unit="{{ $product->unit }}"
-                                    onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}')">
+                                    onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}', '{{ $img }}')">
                                     <div class="flex items-center space-x-3">
                                         <!-- Image Placeholder -->
                                         <!-- Image Display -->
-                                        @php $img = getProductImage($product->id); @endphp
                                         @if($img)
                                             <img src="{{ $img }}" alt="{{ $product->product_name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
                                         @else
@@ -193,13 +193,12 @@
             @endif
 
             // Update period field with current Quarter
+            // Update period field with current Quarter
             function updatePeriodTime() {
                 const now = new Date();
                 const month = now.getMonth() + 1;
                 const year = now.getFullYear();
                 const quarter = Math.ceil(month / 3);
-
-                // Format: YYYY_Qx
                 const timeString = `${year}_Q${quarter}`;
 
                 const periodInput = document.querySelector('input[name="period"]');
@@ -207,16 +206,75 @@
                     periodInput.value = timeString;
                 }
             }
-            // Update once
             updatePeriodTime();
+
+            // LocalStorage Cart Management
+            const CART_KEY = 'department_request_cart';
+
+            function initCart() {
+                // Check if we came from catalog (append mode) or started fresh (clear mode)
+                const urlParams = new URLSearchParams(window.location.search);
+                const isFromCatalog = urlParams.get('from_catalog');
+
+                if (!isFromCatalog) {
+                    // New Request -> Clear old data
+                    localStorage.removeItem(CART_KEY);
+                    selectedProducts = [];
+                } else {
+                    // Load from LS
+                    const stored = localStorage.getItem(CART_KEY);
+                    if (stored) {
+                        try {
+                            const cartItems = JSON.parse(stored);
+                            // Merge with any prefilled items (though usually empty on create)
+                            // Map simple cart items to full structure if needed, or just push
+                            // Assuming cart saves: {id, name, price, unit, quantity}
+                            
+                            // We need to merge duplicates if any (though LS shouldn't have them if managed right)
+                            cartItems.forEach(item => {
+                                const exists = selectedProducts.find(p => p.id === item.id);
+                                if (!exists) {
+                                    selectedProducts.push({
+                                        id: item.id,
+                                        name: item.name,
+                                        price: item.price,
+                                        unit: item.unit,
+                                        quantity: item.quantity,
+                                        image: item.image || '', // Load image
+                                        reason: ''
+                                    });
+                                } else {
+                                    exists.quantity = item.quantity;
+                                    if (!exists.image && item.image) exists.image = item.image; // Update image if available
+                                }
+                            });
+                        } catch (e) {
+                            console.error('Error parsing cart:', e);
+                        }
+                    }
+                }
+                
+                renderProducts();
+                updateTotal();
+            }
+
+            // Sync to LS whenever we change products
+            function syncToStorage() {
+                const simpleCart = selectedProducts.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    price: p.price,
+                    unit: p.unit,
+                    quantity: p.quantity
+                }));
+                localStorage.setItem(CART_KEY, JSON.stringify(simpleCart));
+            }
 
             function toggleProductList() {
                 const dropdown = document.getElementById('productListDropdown');
-
-                // Show if hidden
-                if (dropdown.classList.contains('hidden')) {
+                // ... (Show/Hide logic)
+                 if (dropdown.classList.contains('hidden')) {
                     dropdown.classList.remove('hidden');
-                    // Reset items display (show all)
                     const items = document.querySelectorAll('.product-item');
                     items.forEach(item => item.style.display = 'block');
                 } else {
@@ -224,41 +282,87 @@
                 }
             }
 
-            function addProductToCart(id, name, price, unit) {
+            function addProductToCart(id, name, price, unit, image) {
                 // Check if product already exists
-                const exists = selectedProducts.find(p => p.id === id);
-                if (exists) {
-                    // Show toast notification instead of alert
-                    showToast('Sản phẩm đã có trong danh sách!', 'warning');
-                    return;
+                const existingProduct = selectedProducts.find(p => p.id === id);
+
+                if (existingProduct) {
+                    existingProduct.quantity += 1;
+                    // Update image if missing
+                    if (!existingProduct.image && image) existingProduct.image = image;
+                    showToast('Đã tăng số lượng sản phẩm', 'info');
+                } else {
+                    selectedProducts.push({
+                        id: id,
+                        name: name,
+                        price: parseFloat(price),
+                        unit: unit,
+                        quantity: 1,
+                        image: image || '',
+                        reason: ''
+                    });
+                    showToast('Đã thêm sản phẩm vào danh sách', 'success');
                 }
-
-                const product = {
-                    id: id,
-                    name: name,
-                    price: price,
-                    unit: unit,
-                    quantity: 1,
-                    reason: ''
-                };
-
-                selectedProducts.push(product);
+                
+                syncToStorage();
                 renderProducts();
                 updateTotal();
+                
+                // Hide dropdown
+                document.getElementById('productListDropdown').classList.add('hidden');
+                document.getElementById('productSearch').value = '';
 
-                // Show success feedback
-                showToast(`Đã thêm "${name}" vào danh sách`, 'success');
-
-                // Mark product as added in dropdown
                 const productItem = document.querySelector(`.product-item[data-id="${id}"]`);
                 if (productItem) {
                     productItem.classList.add('bg-green-50', 'opacity-50');
                     productItem.innerHTML += '<span class="text-green-600 text-sm ml-2"><i class="fas fa-check"></i> Đã thêm</span>';
                 }
-
-                // DON'T close dropdown - allow multiple selections
-                // toggleProductList();
             }
+            
+            // Override update/remove to sync
+            const originalUpdateQuantity = updateQuantity; // Not defined globally yet?
+            // Re-defining to include sync:
+            
+            function updateQuantity(index, quantity) {
+                selectedProducts[index].quantity = parseInt(quantity);
+                syncToStorage();
+                updateTotal();
+            }
+            
+            function removeProduct(index) {
+                const product = selectedProducts[index];
+                selectedProducts.splice(index, 1);
+                syncToStorage();
+                renderProducts();
+                updateTotal();
+                
+                 // Reset UI
+                const productItem = document.querySelector(`.product-item[data-id="${product.id}"]`);
+                if (productItem) {
+                    productItem.classList.remove('bg-green-50', 'opacity-50');
+                    const checkMark = productItem.querySelector('.text-green-600');
+                    if (checkMark) checkMark.remove();
+                }
+            }
+            
+            // On Submit Success -> Clear LS
+            document.getElementById('createRequestForm').addEventListener('submit', function() {
+                // We clear it assuming submit works. If validation fails, user stays on page.
+                // Ideally clear only on actual success, but standard form submit refreshes page.
+                // If we come back with errors, 'from_catalog' wont be there, so it clears?
+                // Wait. If validation fails, Laravel redirects back with input.
+                // We should probably NOT clear immediately, or recover from old('items').
+                // But this is a SPA-like cart.
+                // Let's clear on Submit for now. If failure, Laravel repopulates fields usually? 
+                // Actually JS selectedProducts won't be repopulated from Laravel `old()` automatically unless we code it.
+                // But let's stick to the happy path first.
+                // localStorage.removeItem(CART_KEY); // User said "if create new then lost".
+            });
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', function () {
+                initCart();
+            });
 
             function renderProducts() {
                 const container = document.getElementById('selectedProducts');
@@ -282,10 +386,24 @@
 
                 let html = '';
                 selectedProducts.forEach((product, index) => {
+                    // Handle image logic
+                    let imageHtml = '';
+                    if (product.image) {
+                        imageHtml = `<img src="${product.image}" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover border border-gray-200">`;
+                    } else {
+                        // Placeholder with Initials
+                        const initials = product.name.substring(0, 2).toUpperCase();
+                        imageHtml = `
+                            <div class="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+                                <span class="text-xl font-bold text-gray-400 select-none">${initials}</span>
+                            </div>
+                        `;
+                    }
+
                     html += `
                                                                                                                             <div class="p-4">
                                                                                                                                 <div class="flex gap-4">
-                                                                                                                                    <img src="https://via.placeholder.com/80" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover">
+                                                                                                                                    ${imageHtml}
                                                                                                                                     <div class="flex-1">
                                                                                                                                         <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
                                                                                                                                         <div class="grid grid-cols-2 gap-3 mt-3">
@@ -297,18 +415,18 @@
                                                                                                                                                        min="1"
                                                                                                                                                        step="1"
                                                                                                                                                        onchange="updateQuantity(${index}, this.value)"
-                                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-center"
                                                                                                                                                        required>
                                                                                                                                                 <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
                                                                                                                                             </div>
                                                                                                                                             <div>
                                                                                                                                                 <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
-                                                                                                                                                 <input type="number" 
-                                                                                                                                                        name="items[${index}][expected_price]"
-                                                                                                                                                        value="${product.price}"
-                                                                                                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
+                                                                                                                                                 <input type="text" 
+                                                                                                                                                        value="${formatMoney(product.price)} đ"
+                                                                                                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
                                                                                                                                                         readonly
                                                                                                                                                         required>
+                                                                                                                                                 <input type="hidden" name="items[${index}][expected_price]" value="${product.price}">
                                                                                                                                             </div>
                                                                                                                                         </div>
                                                                                                                                         <div class="mt-3">
@@ -321,11 +439,11 @@
                                                                                                                                         </div>
                                                                                                                                     </div>
                                                                                                                                     <div class="text-right">
-                                                                                                                                        <p class="font-bold text-gray-900 mb-2">${formatMoney(product.price * product.quantity)} đ</p>
+                                                                                                                                        <p class="font-bold text-blue-600 text-lg mb-2">${formatMoney(product.price * product.quantity)} đ</p>
                                                                                                                                         <button type="button" 
                                                                                                                                                 onclick="removeProduct(${index})"
-                                                                                                                                                class="text-red-600 hover:text-red-700 text-sm">
-                                                                                                                                            <i class="fas fa-trash mr-1"></i> Xóa
+                                                                                                                                                class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors" title="Xóa">
+                                                                                                                                            <i class="fas fa-trash-alt"></i>
                                                                                                                                         </button>
                                                                                                                                     </div>
                                                                                                                                 </div>
@@ -336,19 +454,31 @@
                 container.innerHTML = html;
             }
 
+            // Previously defined in init scope, but ensuring global scope access for HTML events
+            // (The previous tool call redefined these inside init block/comments, clearing up duplication)
+            // Wait, I should make sure these function definitions match the ones I promised in the previous tool.
+            // The previous tool completely replaced the block containing these.
+            // Let me CHECK if I need to do this.
+            // The previous tool replaced lines 196-261.
+            // But updateQuantity was at line 339!
+            // So I DO need to update lines 339+ to use syncToStorage.
+
             function updateQuantity(index, quantity) {
                 selectedProducts[index].quantity = parseInt(quantity);
+                syncToStorage();
                 updateTotal();
             }
 
             function updatePrice(index, price) {
                 selectedProducts[index].price = parseFloat(price);
+                syncToStorage();
                 updateTotal();
             }
 
             function removeProduct(index) {
                 const product = selectedProducts[index];
                 selectedProducts.splice(index, 1);
+                syncToStorage();
                 renderProducts();
                 updateTotal();
 

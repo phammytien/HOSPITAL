@@ -130,7 +130,7 @@
                                                         <div class="text-xs text-gray-500">{{ $user->phone_number ?? '-' }}</div>
                                                     </td>
                                                     <td class="px-6 py-4 text-sm text-gray-700">
-                                                        {{ $user->department ? $user->department->name : '-' }}
+                                                        {{ $user->department ? $user->department->department_name : '-' }}
                                                     </td>
                                                     <td class="px-6 py-4 text-center">
                                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
@@ -419,12 +419,26 @@
         }
     }
 
-    // Toggle role section (collapsible)
+    // Toggle role section (collapsible) with auto-collapse
     function toggleRoleSection(role) {
         const section = document.getElementById(`section-${role}`);
         const chevron = document.getElementById(`chevron-${role}`);
+        const isCurrentlyHidden = section.classList.contains('hidden');
         
-        if (section.classList.contains('hidden')) {
+        // Close all other sections first
+        document.querySelectorAll('.role-section').forEach(otherSection => {
+            if (otherSection.id !== `section-${role}`) {
+                otherSection.classList.add('hidden');
+                const otherRole = otherSection.id.replace('section-', '');
+                const otherChevron = document.getElementById(`chevron-${otherRole}`);
+                if (otherChevron) {
+                    otherChevron.classList.remove('rotate-180');
+                }
+            }
+        });
+        
+        // Toggle current section
+        if (isCurrentlyHidden) {
             section.classList.remove('hidden');
             chevron.classList.add('rotate-180');
         } else {
@@ -432,6 +446,16 @@
             chevron.classList.remove('rotate-180');
         }
     }
+
+    // Hide all sections on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.role-section').forEach(section => {
+            section.classList.add('hidden');
+        });
+        document.querySelectorAll('[id^="chevron-"]').forEach(chevron => {
+            chevron.classList.remove('rotate-180');
+        });
+    });
 
     // Open lock/unlock modal
     let currentLockUserId = null;

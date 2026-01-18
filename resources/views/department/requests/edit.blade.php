@@ -67,11 +67,11 @@
                                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                                 </div>
                             </div>
-                            <button type="button" onclick="toggleProductList()"
+                            <a href="{{ route('department.products.index') }}"
                                 class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 flex items-center space-x-2 whitespace-nowrap transition shadow-sm hover:shadow-md">
-                                <i class="fas fa-plus"></i>
-                                <span>Thêm vào danh sách</span>
-                            </button>
+                                <i class="fas fa-th"></i>
+                                <span>Chọn từ danh mục</span>
+                            </a>
                         </div>
 
                         <!-- Product List Dropdown -->
@@ -378,7 +378,7 @@
 
                     if (selectedProducts.length > 0) {
                         btnSubmit.disabled = false;
-                        btnSubmitText.textContent = 'Cập nhật & Gửi duyệt';
+                        btnSubmitText.textContent = 'Xác nhận & Gửi duyệt';
                         btnDraft.disabled = false;
                     } else {
                         btnSubmit.disabled = true;

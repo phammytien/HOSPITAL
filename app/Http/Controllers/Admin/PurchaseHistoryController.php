@@ -8,6 +8,8 @@ use App\Models\PurchaseOrder;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\PurchaseHistoryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseHistoryController extends Controller
 {
@@ -26,18 +28,28 @@ class PurchaseHistoryController extends Controller
         }
 
         // Date range filter
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->has('month_from') && $request->month_from != '') {
+            $startDate = \Carbon\Carbon::parse($request->month_from)->startOfMonth();
+            $query->whereDate('created_at', '>=', $startDate);
         }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->has('month_to') && $request->month_to != '') {
+            $endDate = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $query->whereDate('created_at', '<=', $endDate);
         }
 
-        // Search
+
+        // Search - expanded to include department and requester
         if ($request->has('search') && $request->search != '') {
-            $query->where(function ($q) use ($request) {
-                $q->where('request_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('note', 'like', '%' . $request->search . '%');
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('purchase_requests.request_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('purchase_requests.note', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('department', function($dq) use ($searchTerm) {
+                        $dq->where('department_name', 'like', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('requester', function($rq) use ($searchTerm) {
+                        $rq->where('full_name', 'like', '%' . $searchTerm . '%');
+                    });
             });
         }
 
@@ -83,7 +95,7 @@ class PurchaseHistoryController extends Controller
     }
 
     /**
-     * Export history to CSV
+     * Export history to Excel
      */
     public function export(Request $request)
     {
@@ -96,49 +108,29 @@ class PurchaseHistoryController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->has('date_from') && $request->date_from != '') {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->has('month_from') && $request->month_from != '') {
+            $startDate = \Carbon\Carbon::parse($request->month_from)->startOfMonth();
+            $query->whereDate('created_at', '>=', $startDate);
         }
-        if ($request->has('date_to') && $request->date_to != '') {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->has('month_to') && $request->month_to != '') {
+            $endDate = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
+            $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        if ($request->has('search') && $request->search != '') {
+            $query->where(function ($q) use ($request) {
+                $q->where('request_code', 'like', '%' . $request->search . '%')
+                    ->orWhere('note', 'like', '%' . $request->search . '%');
+            });
         }
 
         $history = $query->orderBy('created_at', 'desc')->get();
 
-        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.csv';
+        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.xlsx';
         
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-
-        $callback = function() use ($history) {
-            $file = fopen('php://output', 'w');
-            
-            // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            
-            // Header row
-            fputcsv($file, ['Mã yêu cầu', 'Ngày tạo', 'Khoa/Phòng', 'Người yêu cầu', 'Tổng tiền', 'Trạng thái']);
-
-            foreach ($history as $request) {
-                $total = $request->items->sum(function($item) {
-                    return $item->quantity * $item->expected_price;
-                });
-
-                fputcsv($file, [
-                    $request->request_code,
-                    $request->created_at->format('d/m/Y H:i'),
-                    $request->department->department_name ?? 'N/A',
-                    $request->requester->full_name ?? 'N/A',
-                    number_format($total, 0, ',', '.') . ' VNĐ',
-                    $request->status,
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return Excel::download(
+            new PurchaseHistoryExport($history, $request->all()), 
+            $filename
+        );
     }
 }

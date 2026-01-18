@@ -62,20 +62,19 @@
 
         {{-- Filters --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <form method="GET" action="{{ route('admin.orders') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <form method="GET" action="{{ route('admin.orders') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tìm kiếm</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Mã đơn, nhà cung cấp..."
+                    <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Mã đơn, nhà cung cấp..."
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
-                    <select name="status"
+                    <select name="status" id="statusFilter"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tất cả</option>
                         <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
-
                         <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
                         <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
                     </select>
@@ -83,7 +82,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Khoa/Phòng</label>
-                    <select name="department_id"
+                    <select name="department_id" id="departmentFilter"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tất cả</option>
                         @foreach($departments as $dept)
@@ -95,15 +94,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}"
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tháng</label>
+                    <input type="month" name="month" id="monthFilter" value="{{ request('month') }}"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
 
                 <div class="flex items-end">
-                    <button type="submit"
-                        class="w-full px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-search mr-2"></i> Lọc
+                    <button type="button" onclick="clearFilters()"
+                        class="w-full px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-times mr-2"></i> Xóa lọc
                     </button>
                 </div>
             </form>
@@ -171,4 +170,35 @@
             @endif
         </div>
     </div>
+
+@push('scripts')
+<script>
+// Clear all filters
+function clearFilters() {
+    window.location.href = '{{ route('admin.orders') }}';
+}
+
+// Auto-submit form on filter change
+document.getElementById('statusFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('departmentFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('monthFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+// Search with debounce
+let searchTimeout;
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        document.getElementById('filterForm').submit();
+    }, 500);
+});
+</script>
+@endpush
 @endsection

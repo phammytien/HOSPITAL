@@ -14,7 +14,7 @@
         <div class="flex space-x-3">
             <input type="file" id="importExcelInput" class="hidden" accept=".xlsx, .xls">
             <button onclick="document.getElementById('importExcelInput').click()" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                <i class="fas fa-file-excel mr-2"></i>Nhập Excel
+                <i class="fas fa-file-excel mr-2 text-green-600"></i>Nhập Excel
             </button>
             <button onclick="openAddModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
                 <i class="fas fa-plus mr-2"></i>Thêm danh mục
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-gray-600">Tổng sản phẩm</span>
@@ -51,23 +51,12 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-gray-600">Sản phẩm mới</span>
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-plus-circle text-blue-500"></i>
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cart-plus text-green-500"></i>
                 </div>
             </div>
             <h3 class="text-3xl font-bold text-gray-800">{{ $allProducts->where('created_at', '>=', now()->subDays(30))->count() }}</h3>
             <p class="text-xs text-gray-500 mt-2">Trong 30 ngày qua</p>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <!-- <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-600">Cảnh báo tồn kho</span>
-                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-orange-500"></i>
-                </div>
-            </div> -->
-            <h3 class="text-3xl font-bold text-gray-800">{{ $allProducts->where('stock_quantity', '<', 10)->count() }}</h3>
-            <p class="text-xs text-red-600 mt-2">Cần nhập hàng ngay</p>
         </div>
     </div>
 
@@ -93,16 +82,27 @@
                         <p class="text-xs font-semibold text-gray-500 uppercase px-3 mb-2">DANH SÁCH DANH MỤC</p>
                     </div>
 
-                    @foreach($allCategories as $cat)
-                    <a href="{{ route('admin.products.index', ['category_id' => $cat->id]) }}" 
-                       class="flex items-center justify-between px-3 py-2 rounded-lg group transition-colors {{ request('category_id') == $cat->id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
-                        <div class="flex items-center">
-                            <i class="fas fa-folder w-5 {{ request('category_id') == $cat->id ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500' }}"></i>
-                            <span class="ml-2 truncate max-w-[120px]" title="{{ $cat->category_name }}">{{ $cat->category_name }}</span>
-                        </div>
-                        <span class="text-xs {{ request('category_id') == $cat->id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }} px-2 py-0.5 rounded-full">{{ $cat->products_count ?? 0 }}</span>
-                    </a>
-                    @endforeach
+                    <div id="categoryList">
+                        @foreach($allCategories as $index => $cat)
+                        <a href="{{ route('admin.products.index', ['category_id' => $cat->id]) }}" 
+                           class="category-item flex items-center justify-between px-3 py-2 rounded-lg group transition-colors {{ request('category_id') == $cat->id ? 'bg-blue-50 text-blue-600 font-bold' : 'text-gray-700 hover:bg-gray-50' }} {{ $index >= 6 ? 'hidden' : '' }}"
+                           data-index="{{ $index }}">
+                            <div class="flex items-center">
+                                <i class="fas fa-folder w-5 {{ request('category_id') == $cat->id ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500' }}"></i>
+                                <span class="ml-2 truncate max-w-[120px]" title="{{ $cat->category_name }}">{{ $cat->category_name }}</span>
+                            </div>
+                            <span class="text-xs {{ request('category_id') == $cat->id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600' }} px-2 py-0.5 rounded-full">{{ $cat->products_count ?? 0 }}</span>
+                        </a>
+                        @endforeach
+                    </div>
+
+                    @if($allCategories->count() > 6)
+                        <button onclick="toggleCategories()" id="toggleCategoriesBtn" 
+                                class="w-full mt-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-chevron-down mr-1"></i>
+                            <span id="toggleText">Xem tất cả ({{ $allCategories->count() - 6 }} danh mục)</span>
+                        </button>
+                    @endif
 
                     @if($allCategories->isEmpty())
                         <div class="px-3 py-4 text-center text-sm text-gray-500">
@@ -124,17 +124,24 @@
                             <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-3 ml-4">
-                        <select class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option>Trạng thái</option>
-                            <option>Còn hàng</option>
-                            <option>Hết hàng</option>
-                            <option>Sắp hết</option>
+                    <form method="GET" action="{{ route('admin.categories') }}" id="categoryFilterForm" class="flex items-center space-x-3 ml-4">
+                        <select name="category_filter" id="categoryFilter" onchange="this.form.submit()"
+                                class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Tất cả danh mục</option>
+                            @foreach($allCategories as $cat)
+                                <option value="{{ $cat->id }}" {{ request('category_filter') == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->category_name }}
+                                </option>
+                            @endforeach
                         </select>
-                        <button class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                            <i class="fas fa-filter text-gray-600"></i>
-                        </button>
-                    </div>
+                        @if(request('category_filter'))
+                            <a href="{{ route('admin.categories') }}" 
+                               class="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600"
+                               title="Xóa bộ lọc">
+                                <i class="fas fa-times"></i>
+                            </a>
+                        @endif
+                    </form>
                 </div>
             </div>
 
@@ -144,9 +151,6 @@
                     <thead class="bg-gray-50 border-b border-gray-200">
                         <tr>
                             <th class="px-6 py-3 text-center w-12"></th>
-                            <th class="px-6 py-3 text-left">
-                                <input type="checkbox" class="rounded border-gray-300">
-                            </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên danh mục</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mã danh mục</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mô tả</th>
@@ -160,9 +164,6 @@
                         <tr class="hover:bg-gray-50 transition cursor-pointer" onclick="toggleProducts({{ $category->id }})">
                             <td class="px-6 py-4 text-center">
                                 <i id="chevron-{{ $category->id }}" class="fas fa-chevron-right text-gray-400 transition-transform duration-200"></i>
-                            </td>
-                            <td class="px-6 py-4" onclick="event.stopPropagation()">
-                                <input type="checkbox" class="rounded border-gray-300">
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -197,7 +198,7 @@
                         </tr>
                         <!-- Expandable Products Row -->
                         <tr id="products-{{ $category->id }}" class="hidden bg-gray-50">
-                            <td colspan="7" class="px-6 py-4">
+                            <td colspan="6" class="px-6 py-4">
                                 <div class="flex items-center justify-center py-4" id="loading-{{ $category->id }}">
                                     <i class="fas fa-spinner fa-spin text-blue-600 mr-2"></i>
                                     <span class="text-sm text-gray-600">Đang tải sản phẩm...</span>
@@ -209,7 +210,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                 <i class="fas fa-folder-open text-6xl mb-4 text-gray-300"></i>
                                 <p class="text-lg font-medium">Chưa có danh mục nào</p>
                                 <p class="text-sm mt-2">Thêm danh mục đầu tiên để bắt đầu quản lý</p>
@@ -395,6 +396,21 @@ document.getElementById('add_category_name')?.addEventListener('input', function
     document.getElementById('add_category_code').value = code;
 });
 
+// Auto-generate Category Code for Edit Modal
+document.getElementById('edit_category_name')?.addEventListener('input', function(e) {
+    const name = e.target.value;
+    // Get initials: "Thiết bị y tế" -> "TBYT"
+    const code = name.normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                    .split(/\s+/) // Split by whitespace
+                    .map(word => word.charAt(0)) // Get first char of each word
+                    .join('')
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, ''); // Keep only alphanumeric
+    
+    document.getElementById('edit_category_code').value = code;
+});
+
 // Modal functions
 function openAddModal() {
     document.getElementById('addCategoryModal').classList.remove('hidden');
@@ -562,7 +578,18 @@ function toggleProducts(categoryId) {
         chevron.classList.remove('rotate-90');
         expandedCategories.delete(categoryId);
     } else {
-        // Expand
+        // Collapse all other categories first
+        expandedCategories.forEach(otherId => {
+            if (otherId !== categoryId) {
+                const otherRow = document.getElementById(`products-${otherId}`);
+                const otherChevron = document.getElementById(`chevron-${otherId}`);
+                otherRow.classList.add('hidden');
+                otherChevron.classList.remove('rotate-90');
+            }
+        });
+        expandedCategories.clear(); // Clear set
+        
+        // Expand current category
         productsRow.classList.remove('hidden');
         chevron.classList.add('rotate-90');
         expandedCategories.add(categoryId);
@@ -685,6 +712,39 @@ document.getElementById('importExcelInput')?.addEventListener('change', async fu
     // Reset input
     this.value = '';
 });
+
+// Toggle Categories Show More/Less
+let categoriesExpanded = false;
+
+function toggleCategories() {
+    const categoryItems = document.querySelectorAll('.category-item');
+    const toggleBtn = document.getElementById('toggleCategoriesBtn');
+    const toggleText = document.getElementById('toggleText');
+    const icon = toggleBtn.querySelector('i');
+    
+    categoriesExpanded = !categoriesExpanded;
+    
+    categoryItems.forEach((item, index) => {
+        if (index >= 6) {
+            if (categoriesExpanded) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        }
+    });
+    
+    if (categoriesExpanded) {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+        toggleText.textContent = 'Thu gọn';
+    } else {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+        const hiddenCount = categoryItems.length - 6;
+        toggleText.textContent = `Xem tất cả (${hiddenCount} danh mục)`;
+    }
+}
 </script>
 @endpush
 @endsection

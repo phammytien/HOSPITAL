@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseFeedback;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,11 +23,10 @@ class FeedbackController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Search
-        if ($request->has('search') && $request->search != '') {
-            $query->where(function ($q) use ($request) {
-                $q->where('feedback_content', 'like', '%' . $request->search . '%')
-                    ->orWhere('admin_response', 'like', '%' . $request->search . '%');
+        // Filter by department
+        if ($request->has('department_id') && $request->department_id != '') {
+            $query->whereHas('feedbackBy', function($q) use ($request) {
+                $q->where('department_id', $request->department_id);
             });
         }
 
@@ -38,7 +38,9 @@ class FeedbackController extends Controller
             'resolved' => PurchaseFeedback::where('is_delete', false)->where('status', 'RESOLVED')->count(),
         ];
 
-        return view('admin.feedback.index', compact('feedbacks', 'stats'));
+        $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
+
+        return view('admin.feedback.index', compact('feedbacks', 'stats', 'departments'));
     }
 
     /**

@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Báo cáo {{ $quarterName }}</title>
+    <title>Báo cáo {{ $periodName }}</title>
     <style>
         @page {
-            margin: 15px;
+            margin: 20px;
         }
         
         * {
@@ -16,84 +16,87 @@
         
         body {
             font-family: 'dejavu sans', sans-serif;
-            font-size: 10px;
-            line-height: 1.3;
+            font-size: 11px;
+            line-height: 1.4;
             color: #000;
+            padding: 20px;
         }
         
         .header {
             text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 10px;
-        }
-        
-        .header h1 {
-            color: #1e40af;
-            font-size: 16px;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            font-weight: bold;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
         }
         
         .header h2 {
-            color: #0ea5e9;
-            font-size: 13px;
-            margin-bottom: 3px;
+            color: #2563eb;
+            font-size: 12px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
             font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        
+        .header h1 {
+            color: #000;
+            font-size: 18px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
         
         .header p {
             color: #666;
-            font-size: 9px;
-            margin: 2px 0;
+            font-size: 10px;
+            margin: 3px 0;
         }
         
         .department-section {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
         }
         
         .department-header {
-            background-color: #2563eb;
-            color: white;
-            padding: 6px 8px;
-            margin-bottom: 8px;
-            font-weight: bold;
+            background-color: #f0f7ff;
+            border-left: 4px solid #2563eb;
+            padding: 8px 12px;
+            margin-bottom: 10px;
         }
         
         .department-header h3 {
-            font-size: 11px;
+            font-size: 12px;
             margin-bottom: 2px;
+            color: #1e40af;
+            font-weight: bold;
         }
         
         .department-header p {
             font-size: 9px;
+            color: #666;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         
         table thead th {
-            background-color: #dbeafe;
-            padding: 5px 3px;
+            background-color: #f3f4f6;
+            padding: 8px 6px;
             text-align: center;
-            font-size: 8px;
+            font-size: 9px;
             font-weight: bold;
-            color: #000;
-            border: 1px solid #000;
+            color: #374151;
+            border: 1px solid #d1d5db;
         }
         
         table tbody td {
-            padding: 4px 3px;
-            border: 1px solid #000;
-            font-size: 9px;
-        }
-        
-        table tbody tr:nth-child(even) {
-            background-color: #f8fafc;
+            padding: 6px 6px;
+            border: 1px solid #e5e7eb;
+            font-size: 10px;
+            vertical-align: middle;
         }
         
         .text-right {
@@ -109,18 +112,43 @@
         }
         
         .subtotal-row {
-            background-color: #e0e7ff !important;
+            background-color: #f3f4f6 !important;
             font-weight: bold;
         }
         
-        .grand-total-row {
-            background-color: #bfdbfe !important;
+        .subtotal-row td {
+            padding: 8px 6px;
+            border-top: 2px solid #9ca3af;
+        }
+        
+        .grand-total-section {
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .grand-total-box {
+            background-color: #1f2937;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .grand-total-label {
+            font-size: 11px;
+            font-weight: normal;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .grand-total-amount {
+            font-size: 24px;
             font-weight: bold;
-            font-size: 10px;
         }
         
         .signature-section {
-            margin-top: 25px;
+            margin-top: 40px;
             display: table;
             width: 100%;
         }
@@ -130,50 +158,54 @@
             width: 50%;
             text-align: center;
             vertical-align: top;
-        }
-        
-        .signature-box p {
-            margin: 2px 0;
-            font-size: 9px;
+            padding: 0 20px;
         }
         
         .signature-box .title {
             font-weight: bold;
             font-size: 10px;
             margin-bottom: 3px;
+            text-transform: uppercase;
         }
         
-        .signature-box .note {
+        .signature-box .subtitle {
             font-style: italic;
             font-size: 8px;
-            margin-top: 40px;
+            color: #666;
+            margin-bottom: 50px;
+        }
+        
+        .signature-box .name {
+            font-weight: bold;
+            font-size: 11px;
+            margin-top: 10px;
         }
         
         .footer {
-            margin-top: 15px;
-            padding-top: 8px;
-            border-top: 1px solid #ccc;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
             text-align: center;
-            color: #666;
-            font-size: 7px;
+            color: #9ca3af;
+            font-size: 8px;
         }
         
-        .col-stt { width: 4%; }
+        .col-stt { width: 5%; }
         .col-code { width: 12%; }
-        .col-product { width: 25%; }
-        .col-qty { width: 7%; }
+        .col-product { width: 30%; }
+        .col-qty { width: 8%; }
         .col-price { width: 13%; }
         .col-total { width: 13%; }
         .col-date { width: 10%; }
-        .col-note { width: 16%; }
+        .col-note { width: 9%; }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <h2>Bệnh viện Đa khoa Tâm Trí Cao Lãnh</h2>
-        <h1>Báo cáo Yêu cầu Mua hàng</h1>
-        <p>{{ $quarterName }}</p>
+        <h2>BỆNH VIỆN ĐA KHOA TÂM TRÍ CAO LÃNH</h2>
+        <h1>BÁO CÁO YÊU CẦU MUA HÀNG</h1>
+        <p>{{ $periodName }}</p>
         <p>Ngày xuất: {{ date('d/m/Y H:i:s') }}</p>
     </div>
 
@@ -184,16 +216,16 @@
 
     <!-- All departments in one page -->
     @if($requestsByDepartment->count() > 0)
-        @foreach($requestsByDepartment as $departmentId => $deptRequests)
+        @foreach($requestsByDepartment as $departmentId => $deptOrders)
             @php
-                $department = $deptRequests->first()->department;
+                $department = $deptOrders->first()->department;
                 $deptTotal = 0;
             @endphp
             
             <div class="department-section">
                 <div class="department-header">
                     <h3>{{ $department->department_name ?? 'Không xác định' }}</h3>
-                    <p>Số lượng yêu cầu: {{ $deptRequests->count() }}</p>
+                    <p>Số lượng yêu cầu: {{ $deptOrders->count() }}</p>
                 </div>
                 
                 <table>
@@ -206,16 +238,15 @@
                             <th class="col-price">Đơn giá<br/>(VNĐ)</th>
                             <th class="col-total">Thành tiền<br/>(VNĐ)</th>
                             <th class="col-date">Ngày tạo</th>
-                            <th class="col-note">Ghi chú</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($deptRequests as $request)
-                            @if($request->status === 'APPROVED')
+                        @foreach($deptOrders as $order)
+                            @if($order->purchaseRequest && $order->purchaseRequest->items)
                                 @php
-                                    $itemCount = $request->items->count();
+                                    $itemCount = $order->purchaseRequest->items->count();
                                 @endphp
-                                @foreach($request->items as $itemIndex => $item)
+                                @foreach($order->purchaseRequest->items as $itemIndex => $item)
                                     @php
                                         $unitPrice = $item->product->unit_price ?? 0;
                                         $quantity = $item->quantity ?? 0;
@@ -225,14 +256,13 @@
                                     <tr>
                                         <td class="text-center">{{ $sttCounter++ }}</td>
                                         @if($itemIndex === 0)
-                                            <td class="text-center font-bold" rowspan="{{ $itemCount }}">{{ $request->request_code }}</td>
+                                            <td class="text-center font-bold" rowspan="{{ $itemCount }}">{{ $order->purchaseRequest->request_code ?? 'N/A' }}</td>
                                         @endif
                                         <td>{{ $item->product->product_name ?? 'N/A' }}</td>
                                         <td class="text-center">{{ $quantity }}</td>
                                         <td class="text-right">{{ number_format($unitPrice, 0, ',', '.') }}</td>
                                         <td class="text-right">{{ number_format($subtotal, 0, ',', '.') }}</td>
-                                        <td class="text-center">{{ $request->created_at->format('d/m/Y') }}</td>
-                                        <td style="font-size: 8px;">{{ $item->reason ?? '-' }}</td>
+                                        <td class="text-center">{{ $order->order_date ? $order->order_date->format('d/m/Y') : 'N/A' }}</td>
                                     </tr>
                                 @endforeach
                             @endif
@@ -240,8 +270,9 @@
                         
                         <!-- Department subtotal -->
                         <tr class="subtotal-row">
-                            <td colspan="6" class="text-right" style="padding: 5px;">Tổng cộng:</td>
-                            <td colspan="2" class="text-right" style="padding: 5px;">{{ number_format($deptTotal, 0, ',', '.') }}</td>
+                            <td colspan="5" class="text-right">TỔNG CỘNG {{ strtoupper($department->department_name ?? '') }}:</td>
+                            <td class="text-right font-bold">{{ number_format($deptTotal, 0, ',', '.') }}</td>
+                            <td></td>
                         </tr>
                     </tbody>
                 </table>
@@ -253,24 +284,24 @@
         @endforeach
         
         <!-- Grand Total -->
-        <table>
-            <tbody>
-                <tr class="grand-total-row">
-                    <td colspan="6" class="text-right" style="padding: 6px;">TỔNG CỘNG:</td>
-                    <td colspan="2" class="text-right" style="padding: 6px;">{{ number_format($grandTotal, 0, ',', '.') }}</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="grand-total-section">
+            <div class="grand-total-box">
+                <div class="grand-total-label">TỔNG CỘNG TOÀN BỆNH VIỆN</div>
+                <div class="grand-total-amount">{{ number_format($grandTotal, 0, ',', '.') }} <span style="font-size: 14px;">VNĐ</span></div>
+            </div>
+        </div>
         
-        <!-- Signature Section with two signers -->
+        <!-- Signature Section -->
         <div class="signature-section">
             <div class="signature-box">
-                <p class="title">Người lập biểu</p>
-                <p class="note">(Ký, ghi rõ họ tên)</p>
+                <p class="title">NGƯỜI LẬP BIỂU</p>
+                <p class="subtitle">(Ký, ghi rõ họ tên)</p>
+                <p class="name">Nguyễn Văn A</p>
             </div>
             <div class="signature-box">
-                <p class="title">Kế toán trưởng</p>
-                <p class="note">(Ký, ghi rõ họ tên)</p>
+                <p class="title">KẾ TOÁN TRƯỞNG</p>
+                <p class="subtitle">(Ký, ghi rõ họ tên)</p>
+                <p class="name">Trần Thị B</p>
             </div>
         </div>
     @else
@@ -281,8 +312,8 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>Báo cáo được tạo tự động bởi Hệ thống Quản lý Mua sắm - Bệnh viện Đa khoa Tâm Trí Cao Lãnh</p>
-        <p>&copy; {{ date('Y') }} TMMC Healthcare. All rights reserved.</p>
+        <p>HỆ THỐNG QUẢN LÝ YÊU CẦU MUA HÀNG - V1.0.2</p>
+        <p>TRANG 1/1</p>
     </div>
 </body>
 </html>

@@ -38,7 +38,7 @@ class SupplierController extends Controller
         $request->validate([
             'supplier_code' => 'required|unique:suppliers,supplier_code',
             'supplier_name' => 'required',
-            'phone_number' => 'nullable|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
+            'phone_number' => 'nullable|digits:10',
             'email' => 'nullable|email',
             'contact_person' => 'nullable',
             'address' => 'nullable',
@@ -47,8 +47,7 @@ class SupplierController extends Controller
             'supplier_code.required' => 'Vui lòng nhập mã nhà cung cấp.',
             'supplier_code.unique' => 'Mã nhà cung cấp đã tồn tại.',
             'supplier_name.required' => 'Vui lòng nhập tên nhà cung cấp.',
-            'phone_number.regex' => 'Số điện thoại không hợp lệ.',
-            'phone_number.min' => 'Số điện thoại phải có ít nhất 10 số.',
+            'phone_number.digits' => 'Số điện thoại phải gồm đúng 10 số.',
             'email.email' => 'Email không hợp lệ.'
         ]);
 
@@ -68,7 +67,7 @@ class SupplierController extends Controller
         $request->validate([
             'supplier_code' => 'required|unique:suppliers,supplier_code,'.$id,
             'supplier_name' => 'required',
-            'phone_number' => 'nullable|regex:/^([0-9\s\-\+\(\)]*)$/|min:10',
+            'phone_number' => 'nullable|digits:10',
             'email' => 'nullable|email',
             'contact_person' => 'nullable',
             'address' => 'nullable',
@@ -77,8 +76,7 @@ class SupplierController extends Controller
             'supplier_code.required' => 'Vui lòng nhập mã nhà cung cấp.',
             'supplier_code.unique' => 'Mã nhà cung cấp đã tồn tại.',
             'supplier_name.required' => 'Vui lòng nhập tên nhà cung cấp.',
-            'phone_number.regex' => 'Số điện thoại không hợp lệ.',
-            'phone_number.min' => 'Số điện thoại phải có ít nhất 10 số.',
+            'phone_number.digits' => 'Số điện thoại phải gồm đúng 10 số.',
             'email.email' => 'Email không hợp lệ.'
         ]);
 

@@ -196,9 +196,14 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-lock text-gray-400 mr-2"></i>Mật khẩu hiện tại
                         </label>
-                        <input type="password" name="current_password" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('current_password') border-red-500 @enderror"
-                            placeholder="Nhập mật khẩu hiện tại">
+                        <div class="relative">
+                            <input type="password" name="current_password" id="current_password" required
+                                class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12 @error('current_password') border-red-500 @enderror"
+                                placeholder="Nhập mật khẩu hiện tại">
+                            <button type="button" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 focus:outline-none transition-colors" onclick="togglePasswordVisibility('current_password', this)">
+                                <i class="fas fa-eye-slash text-xl"></i>
+                            </button>
+                        </div>
                         @error('current_password')
                             <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
                             </p>
@@ -208,9 +213,14 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-key text-gray-400 mr-2"></i>Mật khẩu mới
                         </label>
-                        <input type="password" name="new_password" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('new_password') border-red-500 @enderror"
-                            placeholder="Nhập mật khẩu mới">
+                        <div class="relative">
+                            <input type="password" name="new_password" id="new_password" required
+                                class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12 @error('new_password') border-red-500 @enderror"
+                                placeholder="Nhập mật khẩu mới">
+                            <button type="button" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 focus:outline-none transition-colors" onclick="togglePasswordVisibility('new_password', this)">
+                                <i class="fas fa-eye-slash text-xl"></i>
+                            </button>
+                        </div>
                         @error('new_password')
                             <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}
                             </p>
@@ -223,9 +233,14 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">
                             <i class="fas fa-check-circle text-gray-400 mr-2"></i>Xác nhận mật khẩu mới
                         </label>
-                        <input type="password" name="new_password_confirmation" required
-                            class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                            placeholder="Nhập lại mật khẩu mới">
+                        <div class="relative">
+                            <input type="password" name="new_password_confirmation" id="new_password_confirmation" required
+                                class="w-full px-5 py-4 text-base rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-12"
+                                placeholder="Nhập lại mật khẩu mới">
+                            <button type="button" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-600 focus:outline-none transition-colors" onclick="togglePasswordVisibility('new_password_confirmation', this)">
+                                <i class="fas fa-eye-slash text-xl"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end gap-3">
@@ -239,4 +254,22 @@
             </form>
         </div>
     </div>
+    <script>
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                btn.classList.add('text-blue-600');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                btn.classList.remove('text-blue-600');
+            }
+        }
+    </script>
 @endsection

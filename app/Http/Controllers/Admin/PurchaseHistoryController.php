@@ -8,6 +8,8 @@ use App\Models\PurchaseOrder;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Exports\PurchaseHistoryExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PurchaseHistoryController extends Controller
 {
@@ -17,64 +19,54 @@ class PurchaseHistoryController extends Controller
     public function index(Request $request)
     {
         $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->where('purchase_requests.is_delete', false)
-            ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED', 'PAID']);
+            ->where('is_delete', false)
+            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
 
-        // Apply filters (department, searching, etc.)
-        if ($request->filled('department_id')) {
-            $query->where('purchase_requests.department_id', $request->department_id);
+        // Filter by department
+        if ($request->has('department_id') && $request->department_id != '') {
+            $query->where('department_id', $request->department_id);
         }
 
-        if ($request->filled('month_from')) {
-            $query->whereDate('purchase_requests.created_at', '>=', $request->month_from . '-01');
+        // Date range filter
+        if ($request->has('date_from') && $request->date_from != '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to != '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        if ($request->filled('month_to')) {
-            $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
-            $query->whereDate('purchase_requests.created_at', '<=', $dateTo);
-        }
 
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('purchase_requests.request_code', 'like', '%' . $request->search . '%')
-                    ->orWhere('purchase_requests.note', 'like', '%' . $request->search . '%');
+        // Search - expanded to include department and requester
+        if ($request->has('search') && $request->search != '') {
+            $searchTerm = $request->search;
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('purchase_requests.request_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('purchase_requests.note', 'like', '%' . $searchTerm . '%')
+                    ->orWhereHas('department', function($dq) use ($searchTerm) {
+                        $dq->where('department_name', 'like', '%' . $searchTerm . '%');
+                    })
+                    ->orWhereHas('requester', function($rq) use ($searchTerm) {
+                        $rq->where('full_name', 'like', '%' . $searchTerm . '%');
+                    });
             });
         }
 
-        // Clone query for stats BEFORE pagination
-        $statsQuery = clone $query;
+        $history = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        $totalSpent = $statsQuery->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
+        // Calculate statistics
+        $totalSpent = PurchaseRequest::where('purchase_requests.is_delete', false)
+            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
+            ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_request_items.is_delete', false)
-            ->sum(DB::raw('purchase_request_items.quantity * purchase_request_items.expected_price'));
+            ->sum(DB::raw('quantity * expected_price'));
 
-        $totalRequests = (clone $query)->count();
+        $totalRequests = PurchaseRequest::where('is_delete', false)
+            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
+            ->count();
 
-        // Calculate Pending separately (filtered by same criteria but different status)
-        $pendingQuery = PurchaseRequest::where('purchase_requests.is_delete', false)
-            ->whereIn('status', ['SUBMITTED', 'UNDER_REVIEW']);
-
-        if ($request->filled('department_id')) {
-            $pendingQuery->where('department_id', $request->department_id);
-        }
-        if ($request->filled('month_from')) {
-            $pendingQuery->whereDate('purchase_requests.created_at', '>=', $request->month_from . '-01');
-        }
-        if ($request->filled('month_to')) {
-            $dateTo = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
-            $pendingQuery->whereDate('purchase_requests.created_at', '<=', $dateTo);
-        }
-
-        $pendingCount = $pendingQuery->count();
-
-        $history = $query->orderByRaw('YEAR(purchase_requests.created_at) DESC')
-            ->orderByRaw('QUARTER(purchase_requests.created_at) DESC')
-            ->orderBy('purchase_requests.department_id', 'ASC')
-            ->orderBy('purchase_requests.created_at', 'DESC')
-            ->paginate(10);
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
 
-        return view('admin.history.index', compact('history', 'totalSpent', 'totalRequests', 'pendingCount', 'departments'));
+        return view('admin.history.index', compact('history', 'totalSpent', 'totalRequests', 'departments'));
     }
 
 
@@ -90,8 +82,8 @@ class PurchaseHistoryController extends Controller
             'requester',
             'workflows.actionBy'
         ])
-            ->where('is_delete', false)
-            ->findOrFail($id);
+        ->where('is_delete', false)
+        ->findOrFail($id);
 
         $totalAmount = $request->items->sum(function ($item) {
             return $item->quantity * $item->expected_price;
@@ -105,15 +97,35 @@ class PurchaseHistoryController extends Controller
      */
     public function export(Request $request)
     {
-        $filename = 'Lich_su_mua_hang_' . date('Y_m_d_His') . '.xlsx';
+        $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
+            ->where('is_delete', false)
+            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\PurchaseHistoryExport(
-                $request->department_id,
-                $request->search,
-                $request->month_from,
-                $request->month_to
-            ),
+        // Apply same filters as index
+        if ($request->has('department_id') && $request->department_id != '') {
+            $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->has('date_from') && $request->date_from != '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to != '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->has('search') && $request->search != '') {
+            $query->where(function ($q) use ($request) {
+                $q->where('request_code', 'like', '%' . $request->search . '%')
+                    ->orWhere('note', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $history = $query->orderBy('created_at', 'desc')->get();
+
+        $filename = 'lich_su_mua_hang_' . date('Y-m-d_His') . '.xlsx';
+        
+        return Excel::download(
+            new PurchaseHistoryExport($history, $request->all()), 
             $filename
         );
     }

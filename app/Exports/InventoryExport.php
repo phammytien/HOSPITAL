@@ -3,31 +3,26 @@
 namespace App\Exports;
 
 use App\Models\Inventory;
+use App\Models\Department;
+use App\Models\Warehouse;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 
-class InventoryExport implements FromCollection, WithHeadings, WithStyles, ShouldAutoSize, WithColumnFormatting, WithEvents
+class InventoryExport implements FromCollection, WithHeadings, WithMapping, WithTitle, WithEvents
 {
-    protected $departmentId;
-    protected $warehouseId;
-    protected $categoryId;
-    protected $search;
+    protected $filters;
 
-    public function __construct($departmentId = null, $warehouseId = null, $categoryId = null, $search = null)
+    public function __construct(array $filters = [])
     {
-        $this->departmentId = $departmentId;
-        $this->warehouseId = $warehouseId;
-        $this->categoryId = $categoryId;
-        $this->search = $search;
+        $this->filters = $filters;
     }
 
     public function collection()
@@ -39,137 +34,215 @@ class InventoryExport implements FromCollection, WithHeadings, WithStyles, Shoul
             ->where('products.is_delete', false)
             ->select('inventory.*');
 
-        // Filter by department
-        if ($this->departmentId) {
-            $query->where('warehouses.department_id', $this->departmentId);
+        if (!empty($this->filters['department_id'])) {
+            $query->where('warehouses.department_id', $this->filters['department_id']);
         }
 
-        // Filter by warehouse
-        if ($this->warehouseId) {
-            $query->where('inventory.warehouse_id', $this->warehouseId);
+        if (!empty($this->filters['warehouse_id'])) {
+            $query->where('inventory.warehouse_id', $this->filters['warehouse_id']);
         }
 
-        // Filter by category
-        if ($this->categoryId) {
-            $query->where('products.category_id', $this->categoryId);
-        }
-
-        // Search by product name or code
-        if ($this->search) {
-            $search = $this->search;
+        if (!empty($this->filters['search'])) {
+            $search = $this->filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('products.product_name', 'like', '%' . $search . '%')
-                    ->orWhere('products.product_code', 'like', '%' . $search . '%');
+                $q->where('products.product_name', 'like', "%{$search}%")
+                  ->orWhere('products.product_code', 'like', "%{$search}%");
             });
         }
 
-        $inventory = $query->orderBy('warehouses.warehouse_name', 'asc')
-            ->orderBy('products.product_name', 'asc')
-            ->get();
-
-        return $inventory->map(function ($item, $index) {
-            return [
-                $index + 1,
-                $item->warehouse->warehouse_name ?? '',
-                $item->product->product_code ?? '',
-                $item->product->product_name ?? '',
-                $item->product->category->category_name ?? 'N/A',
-                $item->product->unit ?? '',
-                $item->quantity, // Raw number
-                $item->warehouse->department->department_name ?? 'N/A',
-                $item->updated_at ? $item->updated_at->format('d/m/Y H:i') : '',
-            ];
-        });
+        return $query->orderBy('inventory.updated_at', 'desc')->get();
     }
 
     public function headings(): array
     {
         return [
-            ['BÁO CÁO SẢN PHẨM TỒN KHO'],
-            ['Bệnh viện Đa Khoa Tâm Trí Cao Lãnh'],
-            ['Ngày xuất: ' . date('d/m/Y H:i:s')],
-            [''], // Spacer
-            [
-                'STT',
-                'Tên kho',
-                'Mã sản phẩm',
-                'Tên sản phẩm',
-                'Danh mục',
-                'Đơn vị tính',
-                'Số lượng tồn',
-                'Phòng ban',
-                'Ngày cập nhật',
-            ]
+            'STT',
+            'Mã kho',
+            'Tên kho',
+            'Phòng ban',
+            'Mã sản phẩm',
+            'Tên sản phẩm',
+            'Danh mục',
+            'Số lượng tồn',
+            'Đơn vị',
+            'Đơn giá',
+            'Thành tiền',
+            'Trạng thái',
+            'Cập nhật lúc',
         ];
     }
 
-    public function columnFormats(): array
+    public function map($inventory): array
     {
+        static $index = 0;
+        $index++;
+
+        $quantity   = $inventory->quantity;
+        $unitPrice  = $inventory->product->unit_price ?? 0;
+        $totalValue = $quantity * $unitPrice;
+
+        if ($quantity < 10) {
+            $status = 'Sắp hết hàng';
+        } elseif ($quantity < 50) {
+            $status = 'Còn ít hàng';
+        } else {
+            $status = 'Đủ hàng';
+        }
+
         return [
-            'G' => '#,##0', // Quantity
+            $index,
+            $inventory->warehouse->warehouse_code ?? '',
+            $inventory->warehouse->warehouse_name ?? '',
+            $inventory->warehouse->department->department_name ?? '',
+            $inventory->product->product_code ?? '',
+            $inventory->product->product_name ?? '',
+            $inventory->product->category->category_name ?? '',
+            $quantity,
+            $inventory->product->unit ?? '',
+            number_format($unitPrice, 0, ',', '.'),
+            number_format($totalValue, 0, ',', '.'),
+            $status,
+            $inventory->updated_at->format('d/m/Y H:i'),
         ];
     }
 
-    public function styles(Worksheet $sheet)
+    public function title(): string
     {
-        return [
-            // Title Style (Row 1)
-            1 => [
-                'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '000000']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Hospital Name Style (Row 2)
-            2 => [
-                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '333333']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Date Style (Row 3)
-            3 => [
-                'font' => ['italic' => true, 'size' => 10],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Header Row Style (Row 5)
-            5 => [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']], // Blue to match standard theme
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            ],
-        ];
+        return 'Báo cáo tồn kho';
     }
 
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet;
-                $highestRow = $sheet->getHighestRow();
-                $lastColumn = 'I'; // Total 9 columns (A-I)
-    
-                // Merge Header Rows
-                $sheet->mergeCells('A1:' . $lastColumn . '1'); // Title
-                $sheet->mergeCells('A2:' . $lastColumn . '2'); // Hospital Name
-                $sheet->mergeCells('A3:' . $lastColumn . '3'); // Date
-    
-                // Adjust Row Heights
-                $sheet->getRowDimension(1)->setRowHeight(30); // Title
-                $sheet->getRowDimension(2)->setRowHeight(20); // Hospital Name
-                $sheet->getRowDimension(5)->setRowHeight(25); // Header Table
-    
-                // Add borders to the table part (starting from row 5)
-                if ($highestRow >= 5) {
-                    $sheet->getStyle('A5:' . $lastColumn . $highestRow)
-                        ->getBorders()
-                        ->getAllBorders()
-                        ->setBorderStyle(Border::BORDER_THIN);
+                $sheet = $event->sheet->getDelegate();
+
+                // Chèn 3 dòng đầu
+                $sheet->insertNewRowBefore(1, 3);
+
+                // ===== DÒNG 1: NGÀY XUẤT =====
+                $filterInfo = [];
+
+                if (!empty($this->filters['department_id'])) {
+                    $department = Department::find($this->filters['department_id']);
+                    if ($department) {
+                        $filterInfo[] = 'Phòng ban: ' . $department->department_name;
+                    }
                 }
 
-                // Center align STT (A), Category (E), Unit (F), Stock (G) - Starting from Data Row (6)
-                if ($highestRow >= 6) {
-                    $sheet->getStyle('A6:A' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('E6:F' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('G6:G' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                    $sheet->getStyle('I6:I' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                if (!empty($this->filters['warehouse_id'])) {
+                    $warehouse = Warehouse::find($this->filters['warehouse_id']);
+                    if ($warehouse) {
+                        $filterInfo[] = 'Kho: ' . $warehouse->warehouse_name;
+                    }
                 }
+
+                if (!empty($this->filters['search'])) {
+                    $filterInfo[] = 'Tìm kiếm: "' . $this->filters['search'] . '"';
+                }
+
+                $exportInfo = 'Ngày xuất: ' . date('d/m/Y H:i:s');
+                if ($filterInfo) {
+                    $exportInfo .= ' | ' . implode(' | ', $filterInfo);
+                }
+
+                $sheet->setCellValue('A1', $exportInfo);
+                $sheet->mergeCells('A1:M1');
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => ['size' => 9],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+
+                // ===== DÒNG 2: SUBTITLE (IN NGHIÊNG) =====
+                $sheet->setCellValue('A2', 'Báo cáo theo điều kiện lọc');
+                $sheet->mergeCells('A2:M2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => ['italic' => true, 'size' => 11],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // ===== DÒNG 3: TIÊU ĐỀ =====
+                $sheet->setCellValue('A3', 'BÁO CÁO TỒN KHO');
+                $sheet->mergeCells('A3:M3');
+                $sheet->getStyle('A3')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 16],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // Chiều cao dòng
+                $sheet->getRowDimension(1)->setRowHeight(18);
+                $sheet->getRowDimension(2)->setRowHeight(20);
+                $sheet->getRowDimension(3)->setRowHeight(30);
+                $sheet->getRowDimension(4)->setRowHeight(25);
+
+                $lastRow = $sheet->getHighestRow();
+
+                // Auto size
+                foreach (range('A', 'M') as $col) {
+                    $sheet->getColumnDimension($col)->setAutoSize(true);
+                }
+
+                // ===== HEADER (ROW 4) =====
+                $sheet->getStyle('A4:M4')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '4472C4'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'FFFFFF'],
+                        ],
+                    ],
+                ]);
+
+                // Wrap text
+                $sheet->getStyle("C5:C{$lastRow}")->getAlignment()->setWrapText(true);
+                $sheet->getStyle("F5:F{$lastRow}")->getAlignment()->setWrapText(true);
+
+                // Căn lề
+                $sheet->getStyle("A5:A{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("H5:I{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("L5:L{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle("J5:K{$lastRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+                // Border toàn bảng
+                $sheet->getStyle("A4:M{$lastRow}")->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC'],
+                        ],
+                    ],
+                ]);
+
+                // ===== TÔ MÀU XEN KẼ (KHÔNG ĐỤNG HEADER) =====
+                for ($row = 5; $row <= $lastRow; $row++) {
+                    if ($row % 2 == 0) {
+                        $sheet->getStyle("A{$row}:M{$row}")->applyFromArray([
+                            'fill' => [
+                                'fillType' => Fill::FILL_SOLID,
+                                'startColor' => ['rgb' => 'F2F2F2'],
+                            ],
+                        ]);
+                    }
+                }
+
+                // Format số
+                $sheet->getStyle("H5:H{$lastRow}")
+                    ->getNumberFormat()
+                    ->setFormatCode('#,##0');
+
+                // Freeze header
+                $sheet->freezePane('A5');
             },
         ];
     }

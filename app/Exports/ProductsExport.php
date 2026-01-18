@@ -20,11 +20,13 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
 {
     protected $categoryId;
     protected $search;
+    protected $supplierId;
 
-    public function __construct($categoryId = null, $search = null)
+    public function __construct($categoryId = null, $search = null, $supplierId = null)
     {
         $this->categoryId = $categoryId;
         $this->search = $search;
+        $this->supplierId = $supplierId;
     }
 
     public function collection()
@@ -35,6 +37,11 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
         // Filter by category
         if ($this->categoryId && $this->categoryId != 'all') {
             $query->where('category_id', $this->categoryId);
+        }
+
+        // Filter by supplier
+        if ($this->supplierId && $this->supplierId != 'all') {
+            $query->where('supplier_id', $this->supplierId);
         }
 
         // Search
@@ -54,7 +61,7 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
                 $product->product_name,
                 $product->category->category_name ?? 'N/A',
                 $product->unit,
-                $product->unit_price, // Raw number for formatting
+                number_format($product->unit_price, 0, ',', '.'),
                 $product->stock_quantity ?? 0,
                 $product->supplier->supplier_name ?? 'Chưa có',
                 $product->description ?? '',
@@ -65,55 +72,33 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
     public function headings(): array
     {
         return [
-            ['BÁO CÁO DANH SÁCH SẢN PHẨM NĂM ' . date('Y')],
-            ['Bệnh viện Đa Khoa Tâm Trí Cao Lãnh'],
-            ['Ngày xuất: ' . date('d/m/Y H:i:s')],
-            [''], // Spacer
-            [
-                'STT',
-                'Mã sản phẩm',
-                'Tên sản phẩm',
-                'Danh mục',
-                'Đơn vị',
-                'Đơn giá (VNĐ)',
-                'Tồn kho',
-                'Nhà cung cấp',
-                'Mô tả',
-            ]
+            'STT',
+            'Mã sản phẩm',
+            'Tên sản phẩm',
+            'Danh mục',
+            'Đơn vị',
+            'Đơn giá (VNĐ)',
+            'Tồn kho',
+            'Nhà cung cấp',
+            'Mô tả',
         ];
     }
 
     public function columnFormats(): array
     {
         return [
-            'F' => '#,##0', // Unit Price
-            'G' => '#,##0', // Stock Quantity
+            'F' => NumberFormat::FORMAT_NUMBER, // Unit Price
+            'G' => NumberFormat::FORMAT_NUMBER, // Stock Quantity
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
         return [
-            // Title Style (Row 1)
             1 => [
-                'font' => ['bold' => true, 'size' => 16, 'color' => ['rgb' => '000000']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Hospital Name Style (Row 2)
-            2 => [
-                'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '333333']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Date Style (Row 3)
-            3 => [
-                'font' => ['italic' => true, 'size' => 10],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-            ],
-            // Header Row Style (Row 5)
-            5 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
         ];
     }
@@ -121,34 +106,70 @@ class ProductsExport implements FromCollection, WithHeadings, WithStyles, Should
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
+            AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet;
+                
+                // Insert title rows at the top
+                $sheet->insertNewRowBefore(1, 3);
+                
+                // Add main title
+                $sheet->setCellValue('A1', 'DANH SÁCH SẢN PHẨM');
+                $sheet->mergeCells('A1:I1');
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 16],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+                
+                // Add filter info
+                $filterInfo = 'Ngày xuất: ' . date('d/m/Y H:i:s');
+                if ($this->categoryId) {
+                    $category = \App\Models\ProductCategory::find($this->categoryId);
+                    $filterInfo .= ' | Danh mục: ' . ($category->category_name ?? 'N/A');
+                }
+                if ($this->supplierId) {
+                    $supplier = \App\Models\Supplier::find($this->supplierId);
+                    $filterInfo .= ' | Nhà cung cấp: ' . ($supplier->supplier_name ?? 'N/A');
+                }
+                if ($this->search) {
+                    $filterInfo .= ' | Tìm kiếm: ' . $this->search;
+                }
+                
+                $sheet->setCellValue('A2', $filterInfo);
+                $sheet->mergeCells('A2:I2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => ['italic' => true, 'size' => 10],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+                ]);
+                
+                // Adjust existing styling to account for new rows
                 $highestRow = $sheet->getHighestRow();
-                $lastColumn = 'I'; // Total 9 columns (A-I)
-    
-                // Merge Header Rows
-                $sheet->mergeCells('A1:' . $lastColumn . '1'); // Title
-                $sheet->mergeCells('A2:' . $lastColumn . '2'); // Hospital Name
-                $sheet->mergeCells('A3:' . $lastColumn . '3'); // Date
-    
-                // Adjust Row Heights
-                $sheet->getRowDimension(1)->setRowHeight(30); // Title
-                $sheet->getRowDimension(2)->setRowHeight(20); // Hospital Name
-                $sheet->getRowDimension(5)->setRowHeight(25); // Header Table
-    
-                // Add borders to the table part (starting from row 5)
-                $sheet->getStyle('A5:' . $lastColumn . $highestRow)
+                
+                // Header row is now row 4
+                $sheet->getStyle('A4:I4')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+                
+                // Add borders to all data cells (from row 4 onwards)
+                $sheet->getStyle('A4:I' . $highestRow)
                     ->getBorders()
                     ->getAllBorders()
                     ->setBorderStyle(Border::BORDER_THIN);
-
-                // Center align STT (A), Category (D), Unit (E), Stock (G) - Starting from Data Row (6)
-                $sheet->getStyle('A6:A' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('E6:E' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                $sheet->getStyle('G6:G' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-                // Right align Price (F)
-                $sheet->getStyle('F6:F' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                
+                // Center align STT and Stock columns
+                $sheet->getStyle('A5:A' . $highestRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+                $sheet->getStyle('G5:G' . $highestRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+                // Right align price column
+                $sheet->getStyle('F5:F' . $highestRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             },
         ];
     }

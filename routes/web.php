@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
         // Inventory Management
         Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
+        Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
 
         // Placeholder routes for sidebar links
         Route::get('/users', function () {

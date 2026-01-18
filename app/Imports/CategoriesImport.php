@@ -47,7 +47,21 @@ class CategoriesImport implements ToModel, WithHeadingRow, WithValidation
     {
         return [
             'ma_danh_muc' => 'required|string|max:50',
-            'ten_danh_muc' => 'required|string|max:255',
+            'ten_danh_muc' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    // Check if category name already exists (excluding soft-deleted)
+                    $exists = ProductCategory::where('category_name', $value)
+                        ->where('is_delete', false)
+                        ->exists();
+                    
+                    if ($exists) {
+                        $fail('Tên danh mục "' . $value . '" đã tồn tại trong hệ thống!');
+                    }
+                },
+            ],
             'mo_ta' => 'nullable|string',
         ];
     }

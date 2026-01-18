@@ -31,6 +31,11 @@ class CategoryController extends Controller
         $query = ProductCategory::where('is_delete', false)
             ->withCount(['products' => $productFilter]);
 
+        // Filter by specific category
+        if ($request->filled('category_filter')) {
+            $query->where('id', $request->input('category_filter'));
+        }
+
         if ($request->has('category_id')) {
             $query->where('id', $request->category_id);
         }
@@ -73,9 +78,12 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category_name' => 'required|string|max:255',
-            'category_code' => 'nullable|string|max:50|unique:product_categories,category_code',
+            'category_name' => 'required|string|max:255|unique:product_categories,category_name,NULL,id,is_delete,0',
+            'category_code' => 'nullable|string|max:50|unique:product_categories,category_code,NULL,id,is_delete,0',
             'description' => 'nullable|string',
+        ], [
+            'category_name.unique' => 'Tên danh mục đã tồn tại trong hệ thống!',
+            'category_code.unique' => 'Mã danh mục đã tồn tại trong hệ thống!',
         ]);
 
         try {
@@ -102,14 +110,19 @@ class CategoryController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'category_name' => 'required|string|max:255',
+            'category_name' => 'required|string|max:255|unique:product_categories,category_name,' . $id . ',id,is_delete,0',
+            'category_code' => 'nullable|string|max:50|unique:product_categories,category_code,' . $id . ',id,is_delete,0',
             'description' => 'nullable|string',
+        ], [
+            'category_name.unique' => 'Tên danh mục đã tồn tại trong hệ thống!',
+            'category_code.unique' => 'Mã danh mục đã tồn tại trong hệ thống!',
         ]);
 
         try {
             $category = ProductCategory::findOrFail($id);
             $category->update([
                 'category_name' => $request->category_name,
+                'category_code' => $request->category_code,
                 'description' => $request->description,
             ]);
 

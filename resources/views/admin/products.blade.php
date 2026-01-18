@@ -716,10 +716,10 @@
                         <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Chỉnh sửa Sản phẩm</h3>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button type="button" onclick="closeModal()" 
+                        <!-- <button type="button" onclick="closeModal()" 
                                 class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 text-sm transition">
                             In nhãn
-                        </button>
+                        </button> -->
                         <button type="button" id="submitBtnHeader" 
                                 onclick="document.getElementById('productForm').dispatchEvent(new Event('submit'))" 
                                 class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm transition shadow-sm flex items-center gap-2">

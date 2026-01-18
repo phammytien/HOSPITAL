@@ -67,7 +67,7 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="">Tất cả</option>
                         <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
-                        <option value="RESOLVED" {{ request('status') == 'RESOLVED' ? 'selected' : '' }}>Đã giải quyết
+                        <option value="RESOLVED" {{ request('status') == 'RESOLVED' ? 'selected' : '' }}>Hoàn thành
                         </option>
                     </select>
                 </div>

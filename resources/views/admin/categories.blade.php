@@ -14,7 +14,7 @@
         <div class="flex space-x-3">
             <input type="file" id="importExcelInput" class="hidden" accept=".xlsx, .xls">
             <button onclick="document.getElementById('importExcelInput').click()" class="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium">
-                <i class="fas fa-file-excel mr-2"></i>Nhập Excel
+                <i class="fas fa-file-excel mr-2 text-green-600"></i>Nhập Excel
             </button>
             <button onclick="openAddModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium">
                 <i class="fas fa-plus mr-2"></i>Thêm danh mục
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-gray-600">Tổng sản phẩm</span>
@@ -51,23 +51,12 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-sm text-gray-600">Sản phẩm mới</span>
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-plus-circle text-blue-500"></i>
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cart-plus text-green-500"></i>
                 </div>
             </div>
             <h3 class="text-3xl font-bold text-gray-800">{{ $allProducts->where('created_at', '>=', now()->subDays(30))->count() }}</h3>
             <p class="text-xs text-gray-500 mt-2">Trong 30 ngày qua</p>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <!-- <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-gray-600">Cảnh báo tồn kho</span>
-                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-orange-500"></i>
-                </div>
-            </div> -->
-            <h3 class="text-3xl font-bold text-gray-800">{{ $allProducts->where('stock_quantity', '<', 10)->count() }}</h3>
-            <p class="text-xs text-red-600 mt-2">Cần nhập hàng ngay</p>
         </div>
     </div>
 

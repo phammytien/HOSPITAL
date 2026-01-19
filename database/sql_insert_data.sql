@@ -179,7 +179,7 @@ INSERT INTO purchase_orders (id, order_code, purchase_request_id, department_id,
 (2, 'PO-20250107-01', 3, 6, 2, '2025-01-07', '2025-01-07 11:00:00', NULL, NULL, NULL, 4250000, 'ORDERED', 'Đã gửi qua email', 'VPP Hồng Hà', 0, '2025-01-07 11:00:00', '2025-01-10'),
 (3, 'PO-20250104-01', 6, 8, 2, '2025-01-04', '2025-01-04 09:00:00', '2025-01-06 08:00:00', '2025-01-06 14:00:00', '2025-01-06 15:00:00', 110000000, 'COMPLETED', 'Nhập kho Dược', 'Dược Hậu Giang (DHG)', 0, '2025-01-04 09:00:00', '2025-01-07'),
 (4, 'PO-20250104-02', 6, 8, 2, '2025-01-04', '2025-01-04 09:15:00', '2025-01-06 10:00:00', '2025-01-07 09:00:00', '2025-01-07 10:00:00', 85000000, 'COMPLETED', NULL, 'Imexpharm', 0, '2025-01-04 09:15:00', '2025-01-08'),
-(5, 'PO-20250115-01', NULL, 8, 2, '2025-01-15', '2025-01-15 08:00:00', NULL, NULL, NULL, 175000000, 'PENDING', 'Đơn phát sinh', 'Pyrenees Medical', 0, '2025-01-15 08:00:00', '2025-01-18');
+(5, 'PO-20250115-01', NULL, 8, 2, '2025-01-15', '2025-01-15 08:00:00', NULL, NULL, NULL, 175000000, 'COMPLETED', 'Đơn phát sinh', 'Pyrenees Medical', 0, '2025-01-15 08:00:00', '2025-01-18');
 
 -- 11. Order Items (Chi tiết đơn hàng)
 INSERT INTO purchase_order_items (id, purchase_order_id, product_id, quantity, unit_price, status, is_delete) VALUES

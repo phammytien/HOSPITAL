@@ -33,7 +33,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <h3 class="text-xs font-medium text-gray-500 mb-1">Đã duyệt (Tháng)</h3>
-                    <span class="text-2xl font-bold text-gray-800">{{ $approvedMonthCount }}</span>
+                    <span class="text-2xl font-bold text-gray-800">{{ str_pad($approvedMonthCount, 2, '0', STR_PAD_LEFT) }}</span>
                 </div>
                 <div class="p-2 bg-green-50 rounded-lg">
                     <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,12 +182,12 @@
                                             default => 'bg-gray-100 text-gray-700'
                                         };
                                         $statusLabel = match ($request->status) {
-                                            'SUBMITTED' => 'Chờ duyệt',
-                                            'PENDING'   => 'Chờ duyệt',
+                                           
+                                            'PENDING'   => 'Chờ xử lý',
                                             'APPROVED' => 'Đã duyệt',
                                             'REJECTED' => 'Đã từ chối',
                                             'COMPLETED' => 'Hoàn thành',
-                                            null => 'Chờ duyệt',
+                                            null => 'Chờ xử lý',
                                             default => $request->status
                                         };
                                     @endphp

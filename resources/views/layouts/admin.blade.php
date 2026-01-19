@@ -76,7 +76,9 @@
                         <button onclick="document.getElementById('adminNotificationDropdown').classList.toggle('hidden')" class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none">
                             <i class="fas fa-bell text-lg"></i>
                             @if(isset($unreadCount) && $unreadCount > 0)
-                                <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold border-2 border-white"></span>
+                                <span class="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 border-2 border-white">
+                                    {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                                </span>
                             @endif
                         </button>
 

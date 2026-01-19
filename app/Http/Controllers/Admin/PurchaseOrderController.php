@@ -46,13 +46,34 @@ class PurchaseOrderController extends Controller
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(15);
 
-        // Statistics
+        // Statistics - Apply same filters as the main query
+        $statsQuery = PurchaseOrder::where('is_delete', false);
+        
+        // Apply department filter
+        if ($request->has('department_id') && $request->department_id != '') {
+            $statsQuery->where('department_id', $request->department_id);
+        }
+        
+        // Apply month filter
+        if ($request->has('month') && $request->month != '') {
+            $month = $request->month;
+            $statsQuery->whereYear('order_date', '=', substr($month, 0, 4))
+                      ->whereMonth('order_date', '=', substr($month, 5, 2));
+        }
+        
+        // Apply search filter
+        if ($request->has('search') && $request->search != '') {
+            $statsQuery->where(function ($q) use ($request) {
+                $q->where('order_code', 'like', '%' . $request->search . '%')
+                    ->orWhere('supplier_name', 'like', '%' . $request->search . '%');
+            });
+        }
+        
         $stats = [
-            'total' => PurchaseOrder::where('is_delete', false)->count(),
-            'pending' => PurchaseOrder::where('is_delete', false)->where('status', 'PENDING')->count(),
-
-            'completed' => PurchaseOrder::where('is_delete', false)->where('status', 'COMPLETED')->count(),
-            'cancelled' => PurchaseOrder::where('is_delete', false)->where('status', 'CANCELLED')->count(),
+            'total' => (clone $statsQuery)->count(),
+            'pending' => (clone $statsQuery)->where('status', 'PENDING')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'COMPLETED')->count(),
+            'cancelled' => (clone $statsQuery)->where('status', 'CANCELLED')->count(),
         ];
 
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();

@@ -50,16 +50,17 @@
             <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
         </a>
 
-        {{-- Status Update Form --}}
-        <div class="bg-white rounded-xl p-6 border border-gray-200">
+        {{-- Status Update Form - Hidden for Admin --}}
+        {{-- <div class="bg-white rounded-xl p-6 border border-gray-200">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Cập nhật trạng thái</h3>
             <form action="{{ route('admin.orders.update-status', $order->id) }}" method="POST"
                 class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái mới</label>
-                    <select name="status" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="status" id="statusSelect" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onchange="this.form.submit()">
                         <option value="CREATED" {{ $order->status == 'CREATED' ? 'selected' : '' }}>Mới tạo</option>
                         <option value="PENDING" {{ $order->status == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
                         <option value="ORDERED" {{ $order->status == 'ORDERED' ? 'selected' : '' }}>Đã đặt hàng</option>
@@ -82,7 +83,7 @@
                     </button>
                 </div>
             </form>
-        </div>
+        </div> --}}
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {{-- Order Details --}}

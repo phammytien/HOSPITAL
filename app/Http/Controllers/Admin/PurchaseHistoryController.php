@@ -19,8 +19,7 @@ class PurchaseHistoryController extends Controller
     public function index(Request $request)
     {
         $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->where('is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
+            ->where('is_delete', false);
 
         // Filter by department
         if ($request->has('department_id') && $request->department_id != '') {
@@ -35,6 +34,11 @@ class PurchaseHistoryController extends Controller
         if ($request->has('month_to') && $request->month_to != '') {
             $endDate = \Carbon\Carbon::parse($request->month_to)->endOfMonth();
             $query->whereDate('created_at', '<=', $endDate);
+        }
+
+        // Filter by status
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
         }
 
 
@@ -53,17 +57,15 @@ class PurchaseHistoryController extends Controller
             });
         }
 
-        $history = $query->orderBy('created_at', 'desc')->paginate(10);
+        $history = $query->orderBy('created_at', 'desc')->paginate(5);
 
         // Calculate statistics
         $totalSpent = PurchaseRequest::where('purchase_requests.is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
             ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_request_items.is_delete', false)
             ->sum(DB::raw('quantity * expected_price'));
 
         $totalRequests = PurchaseRequest::where('is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID'])
             ->count();
 
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
@@ -100,8 +102,7 @@ class PurchaseHistoryController extends Controller
     public function export(Request $request)
     {
         $query = PurchaseRequest::with(['department', 'requester', 'items.product'])
-            ->where('is_delete', false)
-            ->whereIn('status', ['APPROVED', 'COMPLETED', 'PAID']);
+            ->where('is_delete', false);
 
         // Apply same filters as index
         if ($request->has('department_id') && $request->department_id != '') {

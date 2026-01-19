@@ -300,14 +300,6 @@
 
                     <!-- Summary Section -->
                     <div class="print-summary">
-                        <div class="print-summary-row">
-                            <span style="color: #6b7280;">Tạm tính:</span>
-                            <span style="font-weight: 600;">{{ number_format($totalAmount, 0, ',', '.') }} đ</span>
-                        </div>
-                        <div class="print-summary-row">
-                            <span style="color: #6b7280;">Thuế (0%):</span>
-                            <span style="font-weight: 600;">0 đ</span>
-                        </div>
                         <div class="print-summary-total">
                             <span>Tổng cộng:</span>
                             <span class="amount">{{ number_format($totalAmount, 0, ',', '.') }} VNĐ</span>

@@ -21,12 +21,21 @@ class OrderController extends Controller
             ->where('is_delete', 0)
             ->when(request('status') && request('status') != 'all', function ($query) {
                 $status = request('status');
-                if ($status == 'processing') {
-                    return $query->whereIn('status', ['ORDERED', 'DELIVERING']);
-                } elseif ($status == 'action_required') {
+                if ($status == 'APPROVED') {
+                    return $query->where('status', '!=', 'DELIVERED')
+                        ->whereHas('purchaseRequest', function ($q) {
+                            $q->where('status', 'APPROVED');
+                        });
+                } elseif ($status == 'DELIVERED') {
                     return $query->where('status', 'DELIVERED');
-                } elseif ($status == 'history') {
-                    return $query->whereIn('status', ['COMPLETED', 'REJECTED', 'CANCELLED']);
+                } elseif ($status == 'COMPLETED') {
+                    return $query->whereHas('purchaseRequest', function ($q) {
+                        $q->where('status', 'COMPLETED');
+                    });
+                } elseif ($status == 'REJECTED') {
+                    return $query->whereHas('purchaseRequest', function ($q) {
+                        $q->where('status', 'REJECTED');
+                    });
                 } else {
                     return $query->where('status', $status);
                 }

@@ -84,6 +84,10 @@ php artisan db:seed
 
 git commit -m "Update README"
 
+## chạy lệnh này để backup database liên tục (phải chạy nền mới tự động backup)
+php artisan schedule:work
+
+
 ## chạy dữ liệu 18 bảng từ file sql_insert_data.sql
 //Chỉ chạy dữ liệu file sql_insert_data.sql để thêm tất cả dữ liệu file sql_insert_data.sql vào mysql
 

@@ -72,14 +72,14 @@
                 <table class="w-full">
                     <thead class="bg-gray-50 border-b border-gray-100">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Mã sản
-                                phẩm</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-20">
+                                Hình ảnh</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tên vật
                                 tư</th>
                             <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Loại
                                 vật tư</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Đơn vị
-                                tính</th>
+                            <th class="px-2 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-16">
+                                ĐVT</th>
                             <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Số
                                 lượng tồn</th>
                             <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Hành
@@ -93,10 +93,26 @@
                             @endphp
                             <tr class="hover:bg-gray-50 transition group">
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm font-semibold text-gray-700">{{ $item->product_code }}</span>
+                                    @php
+                                        $productImage = getProductImage($item->id);
+                                    @endphp
+                                    <div
+                                        class="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shadow-inner group-hover:shadow transition duration-200">
+                                        @if($productImage)
+                                            <img src="{{ $productImage }}" alt="{{ $item->product_name }}"
+                                                class="w-full h-full object-cover">
+                                        @else
+                                            <div class="flex flex-col items-center opacity-30">
+                                                <i class="fas fa-box-open text-gray-400 text-2xl"></i>
+                                                <span class="text-[8px] text-gray-500 mt-1 uppercase font-black">No Image</span>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-sm font-bold text-gray-900">{{ $item->product_name }}</span>
+                                    <span class="text-base font-bold text-gray-900 block mb-1">{{ $item->product_name }}</span>
+                                    <span
+                                        class="text-[10px] text-gray-400 font-mono tracking-wider">{{ $item->product_code }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -104,13 +120,13 @@
                                         {{ $item->category->category_name ?? 'Vật tư' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm text-gray-600">{{ $item->unit }}</span>
+                                <td class="px-2 py-4 whitespace-nowrap text-center">
+                                    <span class="text-sm font-bold text-gray-700">{{ $item->unit }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <div class="flex flex-col items-center">
                                         <span
-                                            class="text-lg font-bold {{ $qty == 0 ? 'text-red-500' : ($qty <= 10 ? 'text-orange-500' : 'text-gray-900') }}">
+                                            class="text-xl font-black {{ $qty == 0 ? 'text-red-500' : ($qty <= 10 ? 'text-orange-500' : 'text-gray-900') }}">
                                             {{ number_format($qty) }}
                                         </span>
                                         @if($qty == 0)
@@ -121,31 +137,41 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex flex-col gap-2">
-                                        <!-- Take (Lấy) Section -->
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-xs font-semibold text-green-700 w-8">Lấy:</span>
-                                            <input type="number" id="qty-take-{{ $item->id }}" value="0" min="0" class="w-12 h-7 text-xs border border-green-200 rounded text-center focus:ring-1 focus:ring-green-500 outline-none" onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'take')">
-                                            
-                                            <button onclick="addToQty({{ $item->id }}, 'take', 1)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+1</button>
-                                            <button onclick="addToQty({{ $item->id }}, 'take', 2)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+2</button>
-                                            <button onclick="addToQty({{ $item->id }}, 'take', 5)" class="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition border border-green-100 font-medium">+5</button>
-                                            
-                                            <button onclick="confirmAction({{ $item->id }}, 'take')" class="ml-1 px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition font-bold shadow-sm">
+                                    <div class="flex flex-col gap-3">
+                                        <!-- Take Section -->
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" id="qty-take-{{ $item->id }}" value="0" min="0"
+                                                class="w-14 h-11 text-lg border-2 border-green-200 rounded-lg text-center font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all focus:border-green-400"
+                                                onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'take')">
+
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 1)"
+                                                class="px-5 py-2 text-base bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition border border-green-100 font-bold">+1</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 2)"
+                                                class="px-5 py-2 text-base bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition border border-green-100 font-bold">+2</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'take', 5)"
+                                                class="px-5 py-2 text-base bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition border border-green-100 font-bold">+5</button>
+
+                                            <button onclick="confirmAction({{ $item->id }}, 'take')"
+                                                class="ml-auto px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-black shadow-md text-sm uppercase tracking-wider">
                                                 Lấy
                                             </button>
                                         </div>
 
-                                        <!-- Return (Trả) Section -->
-                                        <div class="flex items-center gap-1">
-                                            <span class="text-xs font-semibold text-blue-700 w-8">Trả:</span>
-                                            <input type="number" id="qty-return-{{ $item->id }}" value="0" min="0" class="w-12 h-7 text-xs border border-blue-200 rounded text-center focus:ring-1 focus:ring-blue-500 outline-none" onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'return')">
-                                            
-                                            <button onclick="addToQty({{ $item->id }}, 'return', 1)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+1</button>
-                                            <button onclick="addToQty({{ $item->id }}, 'return', 2)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+2</button>
-                                            <button onclick="addToQty({{ $item->id }}, 'return', 5)" class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition border border-blue-100 font-medium">+5</button>
-                                            
-                                            <button onclick="confirmAction({{ $item->id }}, 'return')" class="ml-1 px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition font-bold shadow-sm">
+                                        <!-- Return Section -->
+                                        <div class="flex items-center gap-2">
+                                            <input type="number" id="qty-return-{{ $item->id }}" value="0" min="0"
+                                                class="w-14 h-11 text-lg border-2 border-blue-200 rounded-lg text-center font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:border-blue-400"
+                                                onkeydown="if(event.key === 'Enter') confirmAction({{ $item->id }}, 'return')">
+
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 1)"
+                                                class="px-5 py-2 text-base bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border border-blue-100 font-bold">+1</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 2)"
+                                                class="px-5 py-2 text-base bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border border-blue-100 font-bold">+2</button>
+                                            <button onclick="addToQty({{ $item->id }}, 'return', 5)"
+                                                class="px-5 py-2 text-base bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition border border-blue-100 font-bold">+5</button>
+
+                                            <button onclick="confirmAction({{ $item->id }}, 'return')"
+                                                class="ml-auto px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-black shadow-md text-sm uppercase tracking-wider">
                                                 Trả
                                             </button>
                                         </div>
@@ -192,11 +218,11 @@
         function confirmAction(productId, action) {
             const inputId = `qty-${action}-${productId}`;
             const input = document.getElementById(inputId);
-            
+
             if (!input) return;
 
             const quantity = parseInt(input.value);
-            
+
             if (!quantity || quantity <= 0) {
                 alert('Vui lòng nhập số lượng lớn hơn 0!');
                 return;
@@ -208,32 +234,32 @@
         }
 
         function quickAction(productId, action, quantity) {
-             fetch('{{ route("department.inventory.quick-action") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        product_id: productId,
-                        action: action,
-                        quantity: quantity
-                    })
+            fetch('{{ route("department.inventory.quick-action") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    action: action,
+                    quantity: quantity
                 })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Auto reload
-                            location.reload();
-                        } else {
-                            alert(data.message || 'Có lỗi xảy ra!');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Có lỗi xảy ra khi thực hiện thao tác!');
-                    });
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Auto reload
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi thực hiện thao tác!');
+                });
         }
     </script>
 @endsection

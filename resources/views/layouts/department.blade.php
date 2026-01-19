@@ -68,6 +68,44 @@
 </head>
 
 <body class="bg-gray-50">
+@php
+    $user = Auth::user();
+    $dept = $user->department;
+    $deptSlug = $dept ? $dept->slug : '';
+
+    // Base query for notifications intended for department role
+    $baseNotifyQuery = \App\Models\Notification::where(function($q) {
+        $q->where('target_role', 'DEPARTMENT')
+          ->orWhere('target_role', 'ALL')
+          ->orWhereNull('target_role');
+    });
+
+    // Get all candidate notifications to filter them by message content
+    $allDevelNotifications = $baseNotifyQuery->orderBy('created_at', 'desc')->get();
+
+    // Filter notifications: Only keep those that match current department slug OR have no specific code
+    $filteredNotifications = $allDevelNotifications->filter(function($n) use ($deptSlug) {
+        // If message has a PO or REQ code, check if it contains the department slug
+        if (preg_match('/#(PO|REQ)_[0-9]{4}_Q[1-4]_([A-Z0-9_]+)_[0-9]+/', $n->message, $matches)) {
+            $codeDept = $matches[2];
+            return $codeDept === $deptSlug;
+        }
+        // If no specific code found, show to all departments (general announcements)
+        return true;
+    });
+
+    $deptUnreadCount = $filteredNotifications->where('is_read', false)->count();
+    $headerNotifications = $filteredNotifications->take(10);
+
+    // Get ALL DELIVERED orders that need confirmation (for auto-popup carousel)
+    $urgentOrders = \App\Models\PurchaseOrder::where('department_id', $user->department_id)
+        ->where('status', 'DELIVERED')
+        ->orderBy('delivered_at', 'desc')
+        ->get();
+    
+    $hasUrgentOrders = $urgentOrders->count() > 0;
+@endphp
+
     <div class="flex flex-col min-h-screen">
         <div class="flex flex-1 w-full">
             <!-- Sidebar -->
@@ -105,15 +143,8 @@
                             class="flex items-center space-x-3 px-4 py-2.5 rounded-lg {{ request()->routeIs('department.notifications.*') ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-bell w-5 text-sm"></i>
                             <span class="font-medium text-sm">Thông báo</span>
-                            @php
-                                $unreadNotifyCount = \App\Models\Notification::where(function($q) {
-                                    $q->where('target_role', 'DEPARTMENT')
-                                      ->orWhere('target_role', 'ALL')
-                                      ->orWhereNull('target_role');
-                                })->where('is_read', false)->count();
-                            @endphp
-                            @if($unreadNotifyCount > 0)
-                                <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-semibold">{{ $unreadNotifyCount }}</span>
+                            @if($deptUnreadCount > 0)
+                                <span class="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-semibold">{{ $deptUnreadCount }}</span>
                             @endif
                         </a>
                     </div>
@@ -213,10 +244,10 @@
                                 <button onclick="toggleNotifications()"
                                     class="relative p-2 text-gray-400 hover:text-blue-600 transition focus:outline-none">
                                     <i class="fas fa-bell text-xl"></i>
-                                    @if(isset($unreadCount) && $unreadCount > 0)
+                                    @if($deptUnreadCount > 0)
                                         <span
                                             class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full">
-                                            {{ $unreadCount }}
+                                            {{ $deptUnreadCount }}
                                         </span>
                                     @endif
                                 </button>
@@ -226,12 +257,13 @@
                                     class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 transform origin-top-right transition-all">
                                     <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-white">
                                         <h3 class="font-bold text-gray-800 text-base">Thông báo</h3>
+                                        <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{{ $deptUnreadCount }} tin mới</span>
                                         <button onclick="markAllNotificationsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
                                     </div>
                                     
                                     <div class="max-h-[400px] overflow-y-auto">
-                                        @if(isset($notifications))
-                                            @forelse($notifications as $notify)
+                                        @if(isset($headerNotifications))
+                                            @forelse($headerNotifications as $notify)
                                                 @php 
                                                     $data = $notify->data ?? [];
                                                     $iconClass = match($notify->type) {
@@ -329,6 +361,7 @@
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit"
+                                            onclick="sessionStorage.clear();"
                                             class="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50">
                                             <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
                                         </button>
@@ -521,6 +554,91 @@
             }
         }
 
+        @if($hasUrgentOrders)
+        // Carousel for multiple urgent delivery orders
+        let currentOrderIndex = 0;
+        const urgentOrders = @json($urgentOrders->map(function($order) {
+            return ['id' => $order->id, 'code' => $order->order_code];
+        })->values());
+        
+        // Show urgent delivery popup once per login session OR when the top priority order changes
+        window.addEventListener('load', function() {
+            // Use the ID of the first (latest) urgent order as part of the key
+            // This ensures that if the user confirms the current top order, 
+            // the next one will have a different ID, triggering the popup again.
+            const topOrderId = urgentOrders.length > 0 ? urgentOrders[0].id : '';
+            const sessionKey = 'urgentPopupShown_order_' + topOrderId;
+            
+            // Check if popup was already shown for THIS specific top order in this session
+            if (!sessionStorage.getItem(sessionKey) && urgentOrders.length > 0) {
+                // Wait a second to not overwhelm user immediately
+                setTimeout(() => {
+                    updateUrgentModal(0);
+                    const modal = document.getElementById('urgentDeliveryModal');
+                    if (modal) {
+                        modal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden';
+                        // Mark as shown for this specific order
+                        sessionStorage.setItem(sessionKey, 'true');
+                    }
+                }, 1000);
+            }
+        });
+
+        function updateUrgentModal(index) {
+            currentOrderIndex = index;
+            const order = urgentOrders[index];
+            
+            const orderCodeEl = document.getElementById('urgentOrderCode');
+            const orderLinkEl = document.getElementById('urgentOrderLink');
+            const orderCounterEl = document.getElementById('urgentOrderCounter');
+            const prevBtn = document.getElementById('urgentPrevBtn');
+            const nextBtn = document.getElementById('urgentNextBtn');
+            
+            // Safety checks for core elements
+            if (!orderCodeEl || !orderLinkEl || !orderCounterEl) {
+                return;
+            }
+            
+            orderCodeEl.textContent = '#' + order.code;
+            orderLinkEl.href = `/department/orders/${order.id}`;
+            orderCounterEl.textContent = `${index + 1}/${urgentOrders.length}`;
+            
+            // Update navigation buttons if they exist
+            if (prevBtn && nextBtn) {
+                if (index === 0) {
+                    prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    prevBtn.disabled = true;
+                } else {
+                    prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    prevBtn.disabled = false;
+                }
+                
+                if (index === urgentOrders.length - 1) {
+                    nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    nextBtn.disabled = true;
+                } else {
+                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    nextBtn.disabled = false;
+                }
+            }
+        }
+
+        function navigateUrgentOrder(direction) {
+            const newIndex = currentOrderIndex + direction;
+            if (newIndex >= 0 && newIndex < urgentOrders.length) {
+                updateUrgentModal(newIndex);
+            }
+        }
+
+        function closeUrgentModal() {
+            const modal = document.getElementById('urgentDeliveryModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            // Popup will continue to show on next login until all orders are confirmed
+        }
+        @endif
+
         function markAllNotificationsRead() {
             fetch('{{ route("department.notifications.read-all") }}', {
                 method: 'POST',
@@ -533,6 +651,53 @@
             });
         }
     </script>
+
+    <!-- Urgent Delivery Modal -->
+    @if($hasUrgentOrders)
+    <div id="urgentDeliveryModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div class="p-1 bg-blue-500"></div>
+            <div class="p-8 text-center relative">
+                <!-- Counter Badge -->
+                <div class="absolute top-4 right-4 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+                    <span id="urgentOrderCounter">1/{{ $urgentOrders->count() }}</span>
+                </div>
+                
+                <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
+                    <i class="fas fa-truck-fast text-4xl"></i>
+                </div>
+                
+                <h3 class="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Vật tư đã tới kho!</h3>
+                <p class="text-gray-600 mb-8 px-4">
+                    Đơn hàng <span id="urgentOrderCode" class="font-bold text-blue-600">#</span> đã được giao tới kho. Vui lòng nhận hàng và xác nhận ngay.
+                </p>
+
+                <!-- Navigation Buttons -->
+                @if($urgentOrders->count() > 1)
+                <div class="flex justify-center gap-2 mb-6">
+                    <button id="urgentPrevBtn" onclick="navigateUrgentOrder(-1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition flex items-center justify-center">
+                        <i class="fas fa-chevron-left text-gray-700"></i>
+                    </button>
+                    <button id="urgentNextBtn" onclick="navigateUrgentOrder(1)" class="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition flex items-center justify-center">
+                        <i class="fas fa-chevron-right text-gray-700"></i>
+                    </button>
+                </div>
+                @endif
+
+                <div class="flex flex-col gap-3">
+                    <a id="urgentOrderLink" href="#" class="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-lg shadow-lg hover:bg-blue-700 transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                        <span>ĐI XÁC NHẬN NGAY</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    
+                    <button onclick="closeUrgentModal()" class="w-full py-3 text-gray-400 font-bold hover:text-gray-600 transition text-sm">
+                        Để sau
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     @stack('scripts')
 </body>

@@ -13,21 +13,22 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div
+            class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('department.dept_orders.index', ['status' => 'all']) }}"
                     class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status', 'all') == 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
                     Tất cả
                 </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'CREATED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'CREATED' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
-                    Chờ xác nhận
+                <a href="{{ route('department.dept_orders.index', ['status' => 'APPROVED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
+                    Đã duyệt
                 </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'PAID']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'PAID' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
-                    Đã thanh toán
+                <a href="{{ route('department.dept_orders.index', ['status' => 'DELIVERED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'DELIVERED' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
+                    Xác nhận đã nhận hàng
                 </a>
 
                 <a href="{{ route('department.dept_orders.index', ['status' => 'COMPLETED']) }}"
@@ -35,19 +36,12 @@
                     Hoàn thành
                 </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'CANCELLED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'CANCELLED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
-                    Đã hủy
+                <a href="{{ route('department.dept_orders.index', ['status' => 'REJECTED']) }}"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'REJECTED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
+                    Đã từ chối
                 </a>
             </div>
 
-            <!-- History Icon Button -->
-            <a href="{{ route('department.dept_orders.index', ['status' => 'history']) }}"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 {{ request('status') == 'history' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}"
-                title="Lịch sử">
-                <i class="fas fa-history"></i>
-                <span class="hidden sm:inline">Lịch sử</span>
-            </a>
         </div>
 
         <!-- Orders Table -->
@@ -76,12 +70,27 @@
                                     {{ number_format($order->total_amount ?? 0, 0, ',', '.') }} đ
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ get_status_class($order->status) }}">
-                                        {{ get_status_label($order->status) }}
+                                    @php
+                                        $req = $order->purchaseRequest;
+                                        if ($order->status == 'DELIVERED') {
+                                            $statusLabel = 'Xác nhận đã nhận hàng';
+                                            $statusClass = 'bg-yellow-100 text-yellow-800';
+                                        } else {
+                                            $statusLabel = $req->status ? get_request_status_label($req->status) : ($req->is_submitted ? 'Chờ duyệt' : 'Bản nháp');
+                                            $statusClass = $req->status ? get_request_status_class($req->status) : ($req->is_submitted ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800');
+
+                                            // Handle blue color for "Đã duyệt" specifically on this page
+                                            if ($statusLabel == 'Đã duyệt') {
+                                                $statusClass = 'bg-blue-100 text-blue-700';
+                                            }
+                                        }
+                                    @endphp
+                                    <span class="px-2 py-1 rounded text-xs font-semibold {{ $statusClass }}">
+                                        {{ $statusLabel }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right space-x-2">
-                                    <a href="{{ route('department.dept_orders.show', $order->id) }}" 
+                                    <a href="{{ route('department.dept_orders.show', $order->id) }}"
                                         class="px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 font-medium transition">
                                         Chi tiết
                                     </a>

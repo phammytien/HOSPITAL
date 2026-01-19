@@ -72,7 +72,7 @@ class InventoryController extends Controller
             }
         }
 
-        $products = $query->paginate(10);
+        $products = $query->paginate(5);
 
         // Prepare categories for filter
         $categories = \App\Models\ProductCategory::where('is_delete', 0)->get();

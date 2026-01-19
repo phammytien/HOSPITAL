@@ -21,9 +21,17 @@
                     class="py-4 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all {{ $status === 'PENDING' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                     <i class="far fa-clock text-xs"></i>
                     Chờ xử lý
-                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] {{ $status === 'PENDING' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
-                        {{ $counts['PENDING'] }}
-                    </span>
+                    <div class="relative ml-1">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] {{ $status === 'PENDING' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                            {{ $counts['PENDING'] }}
+                        </span>
+                        @if($counts['PENDING'] > 0)
+                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                            </span>
+                        @endif
+                    </div>
                 </a>
 
                 <a href="{{ route('buyer.proposals.index', ['status' => 'APPROVED']) }}"

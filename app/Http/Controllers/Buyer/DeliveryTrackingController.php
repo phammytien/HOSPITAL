@@ -12,9 +12,7 @@ class DeliveryTrackingController extends Controller
 {
     public function index(Request $request)
     {
-        // Display orders that are in "Tracking" workflow (e.g. not just Created, or maybe all?)
-        // User said "move this delivery process function... create another category".
-        // Let's list all orders but focus on tracking status.
+        $status = $request->get('status', 'CREATED'); // Default to CREATED (Mới tạo)
 
         $query = PurchaseOrder::with(['department', 'purchaseRequest'])
             ->orderBy('created_at', 'desc');
@@ -29,15 +27,44 @@ class DeliveryTrackingController extends Controller
             });
         }
 
-        // Filter by status if needed?
-        // Maybe default to showing active orders?
-        // For now, list all like the original Orders page, but the view will be different (focused on tracking).
+        // Apply status filter
+        if ($status === 'CREATED') {
+            $query->whereIn('status', ['CREATED', 'PENDING']);
+        } elseif ($status === 'CANCELLED') {
+            $query->whereIn('status', ['CANCELLED', 'REJECTED']);
+        } else {
+            $query->where('status', $status);
+        }
 
         $orders = $query->paginate(10);
         $departments = \App\Models\Department::all();
         $periods = \App\Models\PurchaseRequest::select('period')->distinct()->orderBy('period', 'desc')->pluck('period');
 
-        return view('buyer.tracking.index', compact('orders', 'departments', 'periods'));
+        // Get counts for each tab with filters applied
+        $countQuery = PurchaseOrder::query();
+        if ($request->has('department_id') && $request->department_id != '') {
+            $countQuery->where('department_id', $request->department_id);
+        }
+        if ($request->has('period') && $request->period != '') {
+            $countQuery->whereHas('purchaseRequest', function ($q) use ($request) {
+                $q->where('period', $request->period);
+            });
+        }
+
+        $allCounts = $countQuery->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $counts = [
+            'CREATED' => ($allCounts['CREATED'] ?? 0) + ($allCounts['PENDING'] ?? 0),
+            'ORDERED' => $allCounts['ORDERED'] ?? 0,
+            'DELIVERING' => $allCounts['DELIVERING'] ?? 0,
+            'DELIVERED' => $allCounts['DELIVERED'] ?? 0,
+            'COMPLETED' => $allCounts['COMPLETED'] ?? 0,
+            'CANCELLED' => ($allCounts['CANCELLED'] ?? 0) + ($allCounts['REJECTED'] ?? 0),
+        ];
+
+        return view('buyer.tracking.index', compact('orders', 'departments', 'periods', 'status', 'counts'));
     }
 
     public function show($id)
@@ -73,83 +100,144 @@ class DeliveryTrackingController extends Controller
         ]);
 
         $order = PurchaseOrder::findOrFail($id);
+        $success = $this->performStatusUpdate($order, $request->status, $request->expected_delivery_date);
 
-        if ($request->filled('expected_delivery_date')) {
-            $order->expected_delivery_date = $request->expected_delivery_date;
-            // When buyer confirms date, if status is CREATED, move to PENDING (Chờ xử lý) as requested
-            if ($order->status == 'CREATED') {
-                $order->status = 'PENDING';
-                $request->merge(['status' => 'PENDING']); // Override request status for downstream logic
+        if (!$success) {
+            return redirect()->back()->with('error', 'Không thể chuyển lùi trạng thái đơn hàng.');
+        }
+
+        return redirect()->back()->with('success', 'Cập nhật tiến độ giao hàng thành công.');
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'order_ids' => 'required|array',
+            'order_ids.*' => 'exists:purchase_orders,id',
+            'status' => 'required|in:CREATED,ORDERED,PENDING,DELIVERING,DELIVERED,COMPLETED,CANCELLED',
+            'expected_delivery_date' => 'nullable|date',
+        ]);
+
+        $orders = PurchaseOrder::whereIn('id', $request->order_ids)->get();
+        $count = 0;
+
+        foreach ($orders as $order) {
+            if ($this->performStatusUpdate($order, $request->status, $request->expected_delivery_date)) {
+                $count++;
             }
+        }
+
+        if ($count === 0 && count($request->order_ids) > 0) {
+            return redirect()->back()->with('error', 'Không có đơn hàng nào hợp lệ để chuyển đổi trạng thái.');
+        }
+
+        return redirect()->back()->with('success', "Đã cập nhật trạng thái thành công cho {$count} đơn hàng.");
+    }
+
+    private function getStatusRank(string $status): int
+    {
+        return match ($status) {
+            'CREATED' => 1,
+            'PENDING' => 2,
+            'ORDERED' => 3,
+            'DELIVERING' => 4,
+            'DELIVERED' => 5,
+            'COMPLETED' => 6,
+            'CANCELLED' => 0, // Terminal but low rank for transition logic
+            'REJECTED' => 0,
+            default => 0
+        };
+    }
+
+    private function performStatusUpdate(PurchaseOrder $order, string $status, ?string $expectedDeliveryDate = null)
+    {
+        $oldStatus = $order->status;
+        $oldRank = $this->getStatusRank($oldStatus);
+
+        if ($expectedDeliveryDate) {
+            $order->expected_delivery_date = $expectedDeliveryDate;
+        }
+
+        $newRank = $this->getStatusRank($status);
+
+        // Enforce forward-only transition (except for setting expected delivery date which might stay at the same status)
+        // We allow same rank if expectedDeliveryDate is being set for the first time
+        if ($newRank < $oldRank && !in_array($status, ['CANCELLED', 'REJECTED'])) {
+            return false;
         }
 
         // Update timestamps based on status
         $now = now();
-        if ($request->status == 'ORDERED' && !$order->ordered_at) {
+        if ($status == 'ORDERED' && !$order->ordered_at) {
             $order->ordered_at = $now;
-        } elseif ($request->status == 'DELIVERING' && !$order->shipping_at) {
+        } elseif ($status == 'DELIVERING' && !$order->shipping_at) {
             $order->shipping_at = $now;
-        } elseif ($request->status == 'DELIVERED' && !$order->delivered_at) {
+        } elseif ($status == 'DELIVERED' && !$order->delivered_at) {
             $order->delivered_at = $now;
-        } elseif ($request->status == 'COMPLETED' && !$order->completed_at) {
+        } elseif ($status == 'COMPLETED' && !$order->completed_at) {
             $order->completed_at = $now;
         }
 
-        $order->status = $request->status;
+        $order->status = $status;
         $order->save();
 
-        if ($request->status == 'DELIVERED') {
+        if ($status == 'DELIVERED') {
             $order->items()->update(['status' => 'DELIVERED']);
 
             // Notification: Delivered to Warehouse
-            Notification::create([
+            \App\Models\Notification::create([
                 'title' => 'Vật tư đã giao',
                 'message' => "Đơn hàng #{$order->order_code} đã về kho",
-                'type' => 'info', // Icon matching truck/delivery
+                'type' => 'info',
                 'target_role' => 'department',
                 'created_by' => auth()->id(),
             ]);
 
-        } elseif ($request->status == 'ORDERED') {
-            $order->items()->where('status', 'PENDING')->update(['status' => 'ORDERED']);
+        } elseif ($status == 'ORDERED') {
+            // Update ALL items to ORDERED when the whole order is confirmed
+            $order->items()->update(['status' => 'ORDERED']);
 
             // Notification: Order Confirmed by Buyer
-            Notification::create([
+            \App\Models\Notification::create([
                 'title' => 'Đơn hàng đã duyệt',
                 'message' => "Bộ phận mua hàng đã xác nhận đơn #{$order->order_code}",
                 'type' => 'success',
                 'target_role' => 'department',
                 'created_by' => auth()->id(),
             ]);
-        }
-
-        // 1. If Order is ORDERED (Đã đặt hàng) -> Request becomes PROCESSING (Đang xử lý)
-        if ($request->status == 'PENDING') {
-            $purchaseRequest = $order->purchaseRequest;
-            // Fallback: try to find by ID if relation not loaded
-            if (!$purchaseRequest && $order->purchase_request_id) {
-                $purchaseRequest = \App\Models\PurchaseRequest::find($order->purchase_request_id);
-            }
-
-            // Also update Items to PENDING
-            $order->items()->where('status', 'PENDING')->update(['status' => 'PENDING']);
-
-            // Notification: Order Confirmed/Pending by Buyer
-            Notification::create([
-                'title' => 'Đơn hàng chờ xử lý',
-                'message' => "Bộ phận mua hàng đã xác nhận ngày giao cho đơn #{$order->order_code}: " . \Carbon\Carbon::parse($request->expected_delivery_date)->format('d/m/Y'),
+        } elseif ($status == 'DELIVERING') {
+            // Update ALL items to DELIVERING
+            $order->items()->update(['status' => 'DELIVERING']);
+            
+            // Notification: Shipping started
+            \App\Models\Notification::create([
+                'title' => 'Đơn hàng đang giao',
+                'message' => "Đơn hàng #{$order->order_code} đang trên đường giao",
                 'type' => 'info',
                 'target_role' => 'department',
                 'created_by' => auth()->id(),
             ]);
         }
 
-        // 2. If Order is COMPLETED or PAID -> Request becomes PAID
-        // Note: The user said COMPLETED triggers PAID for request. 
-        // But if Buyer sets it to PAID manually here, we should probably also sync it.
-        if ($request->status == 'COMPLETED') {
+        if ($status == 'PENDING') {
+            // Update items to PENDING
+            $order->items()->update(['status' => 'PENDING']);
+
+            // Notification: Order Confirmed/Pending by Buyer
+            \App\Models\Notification::create([
+                'title' => 'Đơn hàng chờ xử lý',
+                'message' => "Bộ phận mua hàng đã xác nhận ngày giao cho đơn #{$order->order_code}" . ($order->expected_delivery_date ? ": " . \Carbon\Carbon::parse($order->expected_delivery_date)->format('d/m/Y') : ""),
+                'type' => 'info',
+                'target_role' => 'department',
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        if ($status == 'COMPLETED') {
+            // Keep items status updated if needed
+            $order->items()->update(['status' => 'COMPLETED']);
+            
             $purchaseRequest = $order->purchaseRequest;
-            // Fallback
             if (!$purchaseRequest && $order->purchase_request_id) {
                 $purchaseRequest = \App\Models\PurchaseRequest::find($order->purchase_request_id);
             }
@@ -157,11 +245,19 @@ class DeliveryTrackingController extends Controller
             if ($purchaseRequest) {
                 $purchaseRequest->status = 'COMPLETED';
                 $purchaseRequest->save();
-                session()->flash('info', "Đã cập nhật trạng thái Yêu cầu #{$purchaseRequest->request_code} sang Hoàn thành.");
             }
+            
+            // Notification: Order Completed
+            \App\Models\Notification::create([
+                'title' => 'Đơn hàng hoàn tất',
+                'message' => "Đơn hàng #{$order->order_code} đã hoàn tất quy trình",
+                'type' => 'success',
+                'target_role' => 'department',
+                'created_by' => auth()->id(),
+            ]);
         }
 
-        return redirect()->back()->with('success', 'Cập nhật tiến độ giao hàng thành công.');
+        return true;
     }
 
     public function updateItem(Request $request, $itemId)

@@ -91,20 +91,20 @@ class SupplierController extends Controller
     public function generateCode()
     {
         // Find latest supplier code
-        $latestSupplier = Supplier::where('supplier_code', 'like', 'NCC%')
+        $latestSupplier = Supplier::where('supplier_code', 'like', 'SUP%')
             ->orderBy('id', 'desc')
             ->first();
 
         if ($latestSupplier) {
-            // Extract number part (assuming format NCC+Number)
+            // Extract number part (assuming format SUP+Number)
             $numberPart = preg_replace('/[^0-9]/', '', substr($latestSupplier->supplier_code, 3));
             $nextNumber = intval($numberPart) + 1;
         } else {
             $nextNumber = 1;
         }
 
-        // Pad with zeros (e.g., NCC001, NCC002)
-        $newCode = 'NCC' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        // Pad with zeros (e.g., SUP001, SUP002)
+        $newCode = 'SUP' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         return response()->json(['success' => true, 'code' => $newCode]);
     }

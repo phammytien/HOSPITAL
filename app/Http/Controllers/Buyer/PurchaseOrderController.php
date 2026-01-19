@@ -25,7 +25,11 @@ class PurchaseOrderController extends Controller
         }
 
         if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+            if ($request->status == 'IN_PROGRESS') {
+                $query->whereIn('status', ['CREATED', 'ORDERED', 'DELIVERING', 'DELIVERED']);
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         $orders = $query->paginate(10);

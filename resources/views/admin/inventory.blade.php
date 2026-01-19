@@ -92,12 +92,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs">Kho lưu trữ</label>
-                    <select name="warehouse_id" id="warehouseFilter" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50">
-                        <option value="">Tất cả kho</option>
-                        @foreach($warehouses as $warehouse)
-                        <option value="{{ $warehouse->id }}" {{ request('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
-                            {{ $warehouse->warehouse_name }}
+                    <label class="block text-sm font-medium text-gray-700 mb-2 uppercase text-xs">Danh mục</label>
+                    <select name="category_id" id="categoryFilter" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50">
+                        <option value="">Tất cả danh mục</option>
+                        @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                            {{ $category->category_name }}
                         </option>
                         @endforeach
                     </select>
@@ -258,10 +258,6 @@
 <script>
 // Auto-submit form on filter change
 document.getElementById('departmentFilter')?.addEventListener('change', function() {
-    document.getElementById('filterForm').submit();
-});
-
-document.getElementById('warehouseFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 

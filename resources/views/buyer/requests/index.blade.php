@@ -6,43 +6,87 @@
 @section('content')
     <div class="space-y-6">
 
-        <!-- Filters -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
-            <form method="GET" action="{{ route('buyer.requests.index') }}" class="flex gap-4 w-full md:w-auto">
-                <select name="department_id"
-                    class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">-- Tất cả Khoa/Phòng --</option>
-                    @foreach($departments as $dept)
-                        <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
-                            {{ $dept->department_name }}
-                        </option>
+        <!-- Tabs & Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <!-- Status Tabs -->
+            <div class="border-b border-gray-100 bg-gray-50/50">
+                <nav class="flex -mb-px px-4 gap-4 overflow-x-auto" aria-label="Tabs">
+                    @php
+                        $currentStatus = request('status');
+                        $tabs = [
+                            ['label' => 'Tất cả', 'value' => '', 'icon' => 'M4 6h16M4 12h16M4 18h16'],
+                            ['label' => 'Chờ xử lý', 'value' => 'PENDING', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            ['label' => 'Đã duyệt', 'value' => 'APPROVED', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                            ['label' => 'Hoàn thành', 'value' => 'COMPLETED', 'icon' => 'M5 13l4 4L19 7'],
+                            ['label' => 'Đã từ chối', 'value' => 'REJECTED', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ];
+                    @endphp
+
+                    @foreach($tabs as $tab)
+                        <a href="{{ request()->fullUrlWithQuery(['status' => $tab['value'], 'page' => 1]) }}"
+                           class="flex items-center gap-2 py-4 px-4 text-sm font-medium border-b-2 transition-all duration-200 whitespace-nowrap {{ ($currentStatus == $tab['value']) ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}" />
+                            </svg>
+                            {{ $tab['label'] }}
+                            @if($tab['value'] === 'PENDING' && $pendingCount > 0)
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                </span>
+                            @endif
+                        </a>
                     @endforeach
-                </select>
+                </nav>
+            </div>
 
-                <select name="status" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">-- Tất cả Trạng thái --</option>
-                    <option value="SUBMITTED" {{ request('status') == 'SUBMITTED' ? 'selected' : '' }}>Chờ duyệt</option>
-                    <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
-                    <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Đã từ chối</option>
-                    <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
-                </select>
+            <!-- Additional Filters -->
+            <div class="p-4 flex flex-wrap gap-6 items-center">
+                <form method="GET" action="{{ route('buyer.requests.index') }}" id="filterForm" class="flex flex-wrap gap-4 w-full md:w-auto">
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                    
+                    <div class="flex items-center gap-4">
+                        <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Lọc:</span>
+                        <div class="flex items-center gap-2">
+                            <select name="department_id" onchange="this.form.submit()"
+                                class="border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 bg-white border shadow-sm py-2 pl-3 pr-10">
+                                <option value="">-- Tất cả Khoa/Phòng --</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->department_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+            
+                            <select name="period" onchange="this.form.submit()"
+                                class="border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 bg-white border shadow-sm py-2 pl-3 pr-10">
+                                <option value="">-- Tất cả Kỳ/Quý --</option>
+                                @foreach($periods as $p)
+                                    <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
+                                @endforeach
+                            </select>
 
-                <select name="period" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">-- Tất cả Kỳ/Quý --</option>
-                    @foreach($periods as $p)
-                        <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
-                    @endforeach
-                </select>
+                            <a href="{{ route('buyer.requests.index') }}"
+                                class="inline-flex items-center px-6 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 shadow-sm">
+                                Xóa lọc
+                            </a>
+                        </div>
+                    </div>
+                </form>
 
-                <button type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition">
-                    Lọc
-                </button>
-                <a href="{{ route('buyer.requests.index') }}"
-                    class="px-4 py-2 text-gray-600 bg-gray-100 rounded-md text-sm font-medium hover:bg-gray-200 transition">
-                    Xóa lọc
-                </a>
-            </form>
+                @if(request('status') == 'PENDING')
+                <div class="ml-auto flex items-center gap-3">
+                    <button type="button" id="bulkApproveBtn" disabled
+                        onclick="handleBulkApprove()"
+                        class="hidden md:flex items-center gap-2 px-6 py-2.5 bg-[#cdeed7] text-white rounded-2xl text-sm font-bold transition disabled:cursor-not-allowed shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        </svg>
+                        Duyệt toàn bộ ( <span id="selectedCount">0</span> )
+                    </button>
+                </div>
+                @endif
+            </div>
         </div>
 
         <!-- Requests Table -->
@@ -51,6 +95,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100">
+                            @if(request('status') == 'PENDING')
+                            <th class="px-6 py-4 w-10">
+                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </th>
+                            @endif
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã yêu cầu
                             </th>
                             <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Khoa/Phòng
@@ -68,6 +117,11 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse($requests as $req)
                             <tr class="hover:bg-gray-50 transition group">
+                                @if(request('status') == 'PENDING')
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" name="request_ids[]" value="{{ $req->id }}" class="request-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </td>
+                                @endif
                                 <td class="px-6 py-4 text-sm font-medium text-blue-600">
                                     {{ $req->request_code }}
                                 </td>
@@ -85,18 +139,16 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     @php
-                                        if ($req->status) {
-                                            $statusClass = get_request_status_class($req->status);
-                                            $statusLabel = get_request_status_label($req->status);
-                                        } elseif ($req->is_submitted) {
-                                            $statusClass = 'bg-yellow-100 text-yellow-800'; // Pending/Submitted
-                                            $statusLabel = 'Chờ duyệt';
-                                        } else {
+                                        $status = $req->status ?: ($req->is_submitted ? 'PENDING' : 'DRAFT');
+                                        $statusClass = get_request_status_class($status);
+                                        $statusLabel = get_request_status_label($status);
+                                        
+                                        if ($status === 'DRAFT') {
                                             $statusClass = 'bg-gray-100 text-gray-800';
                                             $statusLabel = 'Bản nháp';
                                         }
                                     @endphp
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap {{ $statusClass }}">
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
@@ -107,7 +159,7 @@
                                         So kết quả
                                     </button>
 
-                                    @if($req->is_submitted && (!$req->status || $req->status == 'SUBMITTED'))
+                                    @if($req->is_submitted && (!$req->status || $req->status == 'PENDING'))
                                         <span class="text-gray-300">|</span>
                                         <form action="{{ route('buyer.requests.approve', $req->id) }}" method="POST"
                                             class="inline-block"
@@ -127,7 +179,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-12 text-center text-gray-500 italic">
+                                <td colspan="{{ (request('status') == 'PENDING') ? 8 : 7 }}" class="px-6 py-12 text-center text-gray-500 italic">
                                     Không tìm thấy yêu cầu nào phù hợp.
                                 </td>
                             </tr>
@@ -140,6 +192,87 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('selectAll');
+            const bulkBtn = document.getElementById('bulkApproveBtn');
+            const countSpan = document.getElementById('selectedCount');
+
+            if (!selectAll) return; // Only run if selectAll exists (PENDING tab)
+
+            function updateBulkBtn() {
+                const checkboxes = document.querySelectorAll('.request-checkbox');
+                const checkedCount = Array.from(checkboxes).filter(c => c.checked).length;
+                if (bulkBtn) {
+                    bulkBtn.disabled = checkedCount === 0;
+                    countSpan.textContent = checkedCount;
+                    
+                    if (checkedCount > 0) {
+                        bulkBtn.classList.remove('bg-[#cdeed7]');
+                        bulkBtn.classList.add('bg-[#8bd3a1]');
+                        bulkBtn.classList.add('hover:bg-[#7bc291]');
+                    } else {
+                        bulkBtn.classList.add('bg-[#cdeed7]');
+                        bulkBtn.classList.remove('bg-[#8bd3a1]');
+                        bulkBtn.classList.remove('hover:bg-[#7bc291]');
+                    }
+                }
+            }
+
+            selectAll.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.request-checkbox');
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                updateBulkBtn();
+            });
+
+            // Using event delegation for checkboxes in case of future dynamic changes
+            document.querySelector('table').addEventListener('change', function(e) {
+                if (e.target.classList.contains('request-checkbox')) {
+                    const checkboxes = document.querySelectorAll('.request-checkbox');
+                    const allChecked = Array.from(checkboxes).every(c => c.checked);
+                    const noneChecked = Array.from(checkboxes).every(c => !c.checked);
+                    
+                    selectAll.checked = allChecked;
+                    selectAll.indeterminate = !allChecked && !noneChecked;
+                    
+                    updateBulkBtn();
+                }
+            });
+        });
+
+        function handleBulkApprove() {
+            const selectedIds = Array.from(document.querySelectorAll('.request-checkbox:checked')).map(cb => cb.value);
+            
+            if (selectedIds.length === 0) return;
+
+            if (confirm(`Bạn có chắc chắn muốn phê duyệt ${selectedIds.length} yêu cầu đã chọn?`)) {
+                
+                fetch("{{ route('buyer.requests.bulk-approve') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ ids: selectedIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Đã có lỗi xảy ra.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Đã có lỗi xảy ra hệ thống.');
+                });
+            }
+        }
+    </script>
+    @endpush
 
 
 

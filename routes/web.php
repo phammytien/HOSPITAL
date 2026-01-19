@@ -140,6 +140,7 @@ Route::middleware(['auth'])->group(function () {
         Route::group(['prefix' => 'buyer/requests', 'as' => 'buyer.requests.'], function () {
             Route::get('/', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'index'])->name('index');
             Route::post('/{id}/approve', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'approve'])->name('approve');
+            Route::post('/bulk-approve', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'bulkApprove'])->name('bulk-approve');
             Route::post('/{id}/reject', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'reject'])->name('reject');
             Route::post('/{id}/update-status', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'updateStatus'])->name('update-status');
             Route::get('/{id}/compare', [App\Http\Controllers\Buyer\PurchaseRequestController::class, 'compare'])->name('compare');
@@ -151,6 +152,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'index'])->name('index');
             Route::get('/{id}/edit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'edit'])->name('edit');
             Route::get('/generate-code', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'generateCode'])->name('generate-code');
+            Route::get('/get-suppliers', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'getSuppliersByCategory'])->name('get-suppliers');
             Route::put('/{id}', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'update'])->name('update');
             Route::post('/{id}/submit', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'submit'])->name('submit');
             Route::post('/{id}/reject', [\App\Http\Controllers\Buyer\ProductProposalController::class, 'reject'])->name('reject');
@@ -173,6 +175,7 @@ Route::middleware(['auth'])->group(function () {
         // Delivery Tracking (Interactive)
         Route::group(['prefix' => 'buyer/tracking', 'as' => 'buyer.tracking.'], function () {
             Route::get('/', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'index'])->name('index');
+            Route::post('/bulk-update', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'bulkUpdate'])->name('bulk-update');
             Route::get('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'show'])->name('show');
             Route::put('/{id}', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'update'])->name('update');
             Route::post('/items/{itemId}/update', [App\Http\Controllers\Buyer\DeliveryTrackingController::class, 'updateItem'])->name('update_item');

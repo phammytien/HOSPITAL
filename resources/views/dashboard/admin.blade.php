@@ -86,7 +86,7 @@
                 <div
                     class="flex items-center text-xs {{ $approvedGrowth >= 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50' }} font-bold w-fit px-2 py-1 rounded">
                     <i
-                        class="bi {{ $approvedGrowth >= 0 ? 'bi-arrow-up-short' : 'bi-arrow-down-short' }} mr-1"></i>{{ abs($approvedGrowth) }}%
+                        class="bi {{ $approvedGrowth >= 0 ? 'bi-arrow-up-short' : 'bi-arrow-down-short' }} mr-1"></i>{{ round(abs($approvedGrowth)) }}%
                     so với kỳ trước
                 </div>
             </div>
@@ -99,7 +99,7 @@
                     <div>
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tổng chi phí</p>
                         <h3 class="text-3xl font-extrabold text-blue-600 mt-1">
-                            {{ number_format($totalValue / 1000000, 1) }}<span class="text-sm text-gray-500 ml-1">Tr</span>
+                            {{ $formattedTotalValue['value'] }}<span class="text-sm text-gray-500 ml-1">{{ $formattedTotalValue['unit'] }}</span>
                         </h3>
                     </div>
                     <div
@@ -110,7 +110,7 @@
                 <div
                     class="flex items-center text-xs {{ $spendingGrowth >= 0 ? 'text-blue-600 bg-blue-50' : 'text-red-600 bg-red-50' }} font-bold w-fit px-2 py-1 rounded">
                     <i
-                        class="bi {{ $spendingGrowth >= 0 ? 'bi-arrow-up-short' : 'bi-arrow-down-short' }} mr-1"></i>{{ abs($spendingGrowth) }}%
+                        class="bi {{ $spendingGrowth >= 0 ? 'bi-arrow-up-short' : 'bi-arrow-down-short' }} mr-1"></i>{{ round(abs($spendingGrowth)) }}%
                     so với kỳ trước
                 </div>
             </div>
@@ -394,7 +394,7 @@
                     </button>
                     <h2 class="text-xl font-bold text-gray-800">Chi tiết đơn hàng</h2>
                 </div>
-                <div class="flex space-x-3">
+                <!-- <div class="flex space-x-3">
                     <button
                         class="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm">
                         <i class="fas fa-print mr-2"></i> In đơn hàng
@@ -406,7 +406,7 @@
                     <button onclick="darkToggle()" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
                         <i class="fas fa-moon"></i>
                     </button>
-                </div>
+                </div> -->
             </div>
 
             <div id="orderDetailContent" class="p-8">

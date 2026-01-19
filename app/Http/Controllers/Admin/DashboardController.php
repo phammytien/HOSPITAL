@@ -55,7 +55,17 @@ class DashboardController extends Controller
         // Total Spending (Current vs Previous) - Based on PAID Purchase Orders
         $totalValue = $this->calculateSpending($startDate, $endDate, $deptId);
         $prevTotalValue = $this->calculateSpending($prevStartDate, $prevEndDate, $deptId);
-        $spendingGrowth = $prevTotalValue > 0 ? (($totalValue - $prevTotalValue) / $prevTotalValue) * 100 : 100;
+        
+        // Calculate spending growth with proper handling of zero values
+        if ($totalValue == 0 && $prevTotalValue == 0) {
+            $spendingGrowth = 0; // No change when both are zero
+        } elseif ($prevTotalValue > 0) {
+            $spendingGrowth = (($totalValue - $prevTotalValue) / $prevTotalValue) * 100;
+        } elseif ($totalValue > 0) {
+            $spendingGrowth = 100; // 100% growth when previous was 0 but current has value
+        } else {
+            $spendingGrowth = 0; // Current is 0, previous was 0
+        }
 
         // Stats Cards Counts (Apply Filters where appropriate, or keep global)
         // Note: Usually "Pending Requests" is a global operational metric, not historical.
@@ -63,7 +73,11 @@ class DashboardController extends Controller
         // or we keep them as "Quick Stats" distinct from the "Analytical Stats".
         // Let's keep specific card logic consistent with their labels.
         
-        $pendingRequests = PurchaseRequest::where('status', 'SUBMITTED')
+        $pendingRequests = PurchaseRequest::where(function($q) {
+                $q->whereIn('status', ['SUBMITTED', 'PENDING'])
+                  ->orWhereNull('status');
+            })
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->count();
             
@@ -81,7 +95,10 @@ class DashboardController extends Controller
 
         $newToday = PurchaseRequest::whereDate('created_at', today())->count();
         $totalProducts = Product::where('is_delete', false)->count();
-        $lowStock = Product::where('is_delete', false)->where('stock_quantity', '<', 10)->count();
+        $lowStock = Product::where('is_delete', false)
+            ->where('stock_quantity', '>', 0)
+            ->where('stock_quantity', '<=', 10)
+            ->count();
 
         // --- 3. Charts Data ---
 
@@ -138,7 +155,7 @@ class DashboardController extends Controller
         $recentRequests = PurchaseRequest::with('department')
             ->where('is_delete', false)
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit(5)
             ->get();
 
         $departments = Department::where('is_delete', false)->get(); // For dropdown
@@ -159,11 +176,16 @@ class DashboardController extends Controller
         // Prepare available years for dropdown
         $availableYears = range(2020, 2030);
 
+        // Format spending values for display
+        $formattedTotalValue = $this->formatCurrency($totalValue);
+        $formattedPrevTotalValue = $this->formatCurrency($prevTotalValue);
+
         return view('dashboard.admin', compact(
             'periodType', 'deptId', 'selectedYear', 'availableYears', // Filter State
             'pendingRequests', 'newToday',
             'approvedThisPeriod', 'approvedGrowth',
             'totalValue', 'spendingGrowth', 'prevTotalValue',
+            'formattedTotalValue', 'formattedPrevTotalValue', // Formatted values
             'totalProducts', 'lowStock',
             'recentRequests', 'departments',
             'chartData', 'recentActivities', 'topDepartments'
@@ -176,6 +198,35 @@ class DashboardController extends Controller
             ->whereIn('status', ['PAID', 'COMPLETED', 'DELIVERED'])
             ->when($deptId, fn($q) => $q->where('department_id', $deptId))
             ->sum('total_amount');
+    }
+
+    private function formatCurrency($amount)
+    {
+        if ($amount >= 1000000000) {
+            // Billions (Tỷ)
+            return [
+                'value' => number_format($amount / 1000000000, 1),
+                'unit' => 'Tỷ'
+            ];
+        } elseif ($amount >= 1000000) {
+            // Millions (Triệu)
+            return [
+                'value' => number_format($amount / 1000000, 1),
+                'unit' => 'Tr'
+            ];
+        } elseif ($amount >= 1000) {
+            // Thousands (Nghìn)
+            return [
+                'value' => number_format($amount / 1000, 0),
+                'unit' => 'K'
+            ];
+        } else {
+            // Raw VND
+            return [
+                'value' => number_format($amount, 0),
+                'unit' => 'đ'
+            ];
+        }
     }
 
     private function getRecentActivities()

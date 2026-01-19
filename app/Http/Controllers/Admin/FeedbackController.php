@@ -20,7 +20,11 @@ class FeedbackController extends Controller
 
         // Filter by status
         if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+            if ($request->status == 'RESOLVED') {
+                $query->where('status', '!=', 'PENDING');
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         // Filter by department
@@ -30,12 +34,12 @@ class FeedbackController extends Controller
             });
         }
 
-        $feedbacks = $query->orderBy('created_at', 'desc')->paginate(15);
+        $feedbacks = $query->orderBy('created_at', 'desc')->paginate(5);
 
         $stats = [
             'total' => PurchaseFeedback::where('is_delete', false)->count(),
             'pending' => PurchaseFeedback::where('is_delete', false)->where('status', 'PENDING')->count(),
-            'resolved' => PurchaseFeedback::where('is_delete', false)->where('status', 'RESOLVED')->count(),
+            'resolved' => PurchaseFeedback::where('is_delete', false)->where('status', '!=', 'PENDING')->count(),
         ];
 
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();

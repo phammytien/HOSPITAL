@@ -57,6 +57,7 @@ if (!function_exists('get_request_status_label')) {
     function get_request_status_label($status)
     {
         return match ($status) {
+            'PENDING' => 'Chờ xử lý',
             'APPROVED' => 'Đã duyệt',
             'REJECTED' => 'Đã từ chối',
             'COMPLETED' => 'Hoàn thành',
@@ -77,6 +78,7 @@ if (!function_exists('get_request_status_class')) {
     function get_request_status_class($status)
     {
         return match ($status) {
+            'PENDING' => 'bg-orange-100 text-orange-700',
             'APPROVED' => 'bg-green-100 text-green-700',
             'REJECTED' => 'bg-red-100 text-red-700',
             'COMPLETED' => 'bg-green-100 text-green-800',

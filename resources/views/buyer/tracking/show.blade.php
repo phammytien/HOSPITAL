@@ -1,6 +1,7 @@
 @extends('layouts.buyer')
 
 @section('title', 'Theo dõi đơn hàng #' . ($order->order_code ?? $order->id))
+@section('header_title', 'Theo dõi chi tiết đơn hàng')
 
 @section('content')
     <div class="max-w-7xl mx-auto space-y-8">
@@ -19,24 +20,24 @@
                 @csrf
                 @method('PUT')
                 @if($order->status == 'CREATED')
-                    <div class="flex items-center gap-2">
-                        <input type="date" name="expected_delivery_date" required min="{{ date('Y-m-d') }}"
-                            class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
-                        <button type="submit" name="status" value="ORDERED"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center">
-                            <i class="fas fa-clock mr-2"></i> Xác nhận / Chờ xử lý
-                        </button>
-                    </div>
+                    <button type="submit" name="status" value="ORDERED"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center">
+                        <i class="fas fa-clock mr-2"></i> Xác nhận
+                    </button>
                 @elseif($order->status == 'PENDING')
                     <button type="submit" name="status" value="ORDERED"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm flex items-center">
                         <i class="fas fa-shopping-cart mr-2"></i> Xác nhận Đặt hàng
                     </button>
                 @elseif($order->status == 'ORDERED')
-                    <button type="submit" name="status" value="DELIVERING"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition shadow-sm flex items-center">
-                        <i class="fas fa-truck mr-2"></i> Bắt đầu Giao hàng
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <input type="date" name="expected_delivery_date" required min="{{ date('Y-m-d') }}"
+                            class="text-sm border-gray-100 shadow-sm rounded-xl focus:ring-blue-100 focus:border-blue-400 py-2 px-4 font-semibold text-gray-700 transition-all">
+                        <button type="submit" name="status" value="DELIVERING"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition shadow-sm flex items-center">
+                            <i class="fas fa-truck mr-2"></i> Bắt đầu Giao hàng
+                        </button>
+                    </div>
                 @elseif($order->status == 'DELIVERING')
                     <button type="submit" name="status" value="DELIVERED" onclick="return confirm('Xác nhận hàng đã về kho?')"
                         class="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition shadow-sm flex items-center">
@@ -261,10 +262,7 @@
                         <span class="font-semibold text-gray-900">{{ number_format($order->total_amount, 0, ',', '.') }}
                             đ</span>
                     </div>
-                    <div class="flex justify-between w-72 text-gray-500 text-sm">
-                        <span>VAT (0%):</span>
-                        <span class="font-semibold text-gray-900">0 đ</span>
-                    </div>
+                    
                     <div
                         class="flex justify-between w-72 text-blue-600 text-xl font-bold mt-3 pt-3 border-t border-gray-100">
                         <span>Tổng cộng:</span>

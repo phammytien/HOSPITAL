@@ -17,7 +17,7 @@ class SupplierSeeder extends Seeder
         // 1. Create Sample Suppliers
         $suppliers = [
             [
-                'supplier_code' => 'NCC001',
+                'supplier_code' => 'SUP001',
                 'supplier_name' => 'Dược phẩm TW2',
                 'contact_person' => 'Nguyễn Văn A',
                 'phone_number' => '0901234567',
@@ -25,7 +25,7 @@ class SupplierSeeder extends Seeder
                 'address' => 'Hà Nội',
             ],
             [
-                'supplier_code' => 'NCC002',
+                'supplier_code' => 'SUP002',
                 'supplier_name' => 'MediEquipment Japan',
                 'contact_person' => 'Tran Thi B',
                 'phone_number' => '0909888777',
@@ -33,7 +33,7 @@ class SupplierSeeder extends Seeder
                 'address' => 'Tokyo, Japan',
             ],
             [
-                'supplier_code' => 'NCC003',
+                'supplier_code' => 'SUP003',
                 'supplier_name' => 'Công ty Thiết bị Y tế HN',
                 'contact_person' => 'Le Van C',
                 'phone_number' => '0243999888',
@@ -41,7 +41,7 @@ class SupplierSeeder extends Seeder
                 'address' => 'Hai Bà Trưng, Hà Nội',
             ],
             [
-                'supplier_code' => 'NCC999',
+                'supplier_code' => 'SUP999',
                 'supplier_name' => 'May mặc y tế 10/10',
                 'contact_person' => 'Pham Thi D',
                 'phone_number' => '0912341234',

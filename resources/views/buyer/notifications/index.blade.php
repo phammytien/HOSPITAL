@@ -5,40 +5,6 @@
 
 @section('content')
 
-{{-- Toast Notification --}}
-@if(session('success'))
-<div id="toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white rounded-xl shadow-2xl border border-green-200 p-6 min-w-[400px]">
-    <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <i class="fas fa-check-circle text-green-600 text-2xl"></i>
-        </div>
-        <div class="flex-1">
-            <h4 class="font-bold text-gray-900 mb-1">Thành công!</h4>
-            <p class="text-gray-600 text-sm">{{ session('success') }}</p>
-        </div>
-        <button onclick="closeToast()" class="text-gray-400 hover:text-gray-600">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-</div>
-@endif
-
-@if(session('error'))
-<div id="toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white rounded-xl shadow-2xl border border-red-200 p-6 min-w-[400px]">
-    <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-            <i class="fas fa-exclamation-circle text-red-600 text-2xl"></i>
-        </div>
-        <div class="flex-1">
-            <h4 class="font-bold text-gray-900 mb-1">Lỗi!</h4>
-            <p class="text-gray-600 text-sm">{{ session('error') }}</p>
-        </div>
-        <button onclick="closeToast()" class="text-gray-400 hover:text-gray-600">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-</div>
-@endif
 
 <div class="space-y-6">
     {{-- Tab Navigation --}}
@@ -492,20 +458,5 @@ function closeNotificationDetail() {
     currentNotificationWasRead = false;
 }
 
-// Toast functions
-function closeToast() {
-    const toast = document.getElementById('toast');
-    if (toast) {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }
-}
-
-// Auto-hide toast after 3 seconds
-if (document.getElementById('toast')) {
-    setTimeout(() => {
-        closeToast();
-    }, 3000);
-}
 </script>
 @endsection

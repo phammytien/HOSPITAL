@@ -7,23 +7,7 @@
 
 @section('content')
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        <!-- Card 1: Pending -->
-        <div
-            class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between h-32 relative overflow-hidden group hover:shadow-md transition">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h3 class="text-xs font-medium text-gray-500 mb-1">Chờ duyệt</h3>
-                    <span class="text-2xl font-bold text-gray-800">{{ $pendingCount }}</span>
-                </div>
-                <div class="p-2 bg-orange-50 rounded-lg">
-                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                </div>
-            </div>
-        </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
         <!-- Card 2: Chờ xử lý (PENDING Orders) -->
         <div

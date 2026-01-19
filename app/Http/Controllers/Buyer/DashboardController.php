@@ -8,6 +8,7 @@ use App\Models\PurchaseRequest;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseFeedback;
 use App\Models\Notification;
+use App\Models\ProductProposal;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
@@ -15,19 +16,25 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // Stats
-        $pendingOrderCount = PurchaseOrder::where('status', 'PENDING')->count();
-        $approvedMonthCount = PurchaseRequest::where('status', 'APPROVED')
-            ->whereMonth('updated_at', now()->month)
-            ->whereYear('updated_at', now()->year)
-            ->count();
-        $completedCount = PurchaseOrder::where('status', 'COMPLETED')->count();
-        $rejectedCount = PurchaseRequest::where('status', 'REJECTED')->count();
         $pendingRequestCount = PurchaseRequest::where(function($query) {
             $query->where('status', 'PENDING')
                   ->orWhere(function($q) {
                       $q->whereNull('status')->where('is_submitted', true);
                   });
         })->count();
+
+        $pendingProposalCount = ProductProposal::where('status', 'PENDING')
+            ->where('is_delete', false)
+            ->count();
+
+        $pendingOrderCount = $pendingRequestCount + $pendingProposalCount;
+
+        $approvedMonthCount = PurchaseRequest::where('status', 'APPROVED')
+            ->whereMonth('updated_at', now()->month)
+            ->whereYear('updated_at', now()->year)
+            ->count();
+        $completedCount = PurchaseOrder::where('status', 'COMPLETED')->count();
+        $rejectedCount = PurchaseRequest::where('status', 'REJECTED')->count();
 
         // Recent Requests (last 5)
         $recentRequests = PurchaseRequest::with(['department', 'requester'])

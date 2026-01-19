@@ -18,6 +18,13 @@
                 display: none !important;
             }
         }
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in {
+            animation: slide-in 0.5s ease-out;
+        }
     </style>
 </head>
 
@@ -469,7 +476,51 @@
         function closeRequestDetailModal() {
             document.getElementById('requestDetailModal').classList.add('hidden');
         }
+
+        // Auto-hide flash messages after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.flash-message');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    alert.style.transform = 'translateX(50px)';
+                    setTimeout(() => alert.remove(), 500);
+                }, 5000);
+            });
+        });
     </script>
+    @stack('scripts')
+
+    <!-- Flash Messages (Bottom) -->
+    @if(session('success'))
+        <div class="flash-message fixed top-24 right-8 z-[9999] min-w-[320px] p-4 bg-white border border-green-100 text-green-800 rounded-2xl flex items-center shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border-l-4 border-l-green-500 animate-slide-in">
+            <div class="flex-shrink-0 w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-check-circle text-green-500 text-lg"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm text-gray-800">Thành công</h4>
+                <p class="text-xs text-gray-600">{{ session('success') }}</p>
+            </div>
+            <button onclick="this.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="flash-message fixed top-24 right-8 z-[9999] min-w-[320px] p-4 bg-white border border-red-100 text-red-800 rounded-2xl flex items-center shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border-l-4 border-l-red-500 animate-slide-in">
+            <div class="flex-shrink-0 w-10 h-10 bg-red-50 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-exclamation-circle text-red-500 text-lg"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-sm text-gray-800">Lỗi</h4>
+                <p class="text-xs text-gray-600">{{ session('error') }}</p>
+            </div>
+            <button onclick="this.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
 </body>
 
 </html>

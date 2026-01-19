@@ -5,24 +5,6 @@
 @section('content')
     <div class="max-w-6xl mx-auto space-y-6">
 
-        <!-- Success/Error Messages -->
-        @if(session('success'))
-            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                    <p class="text-green-700 font-medium">{{ session('success') }}</p>
-                </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                <div class="flex items-center">
-                    <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
-                    <p class="text-red-700 font-medium">{{ session('error') }}</p>
-                </div>
-            </div>
-        @endif
 
         <!-- Header / Banner -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -296,15 +278,6 @@
             }
         }
 
-        // Auto-hide success/error messages after 5 seconds
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"]');
-            alerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
 
         // Close modal if password change was successful
         @if(session('success') && str_contains(session('success'), 'mật khẩu'))

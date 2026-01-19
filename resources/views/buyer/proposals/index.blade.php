@@ -5,21 +5,45 @@
 
 @section('content')
     <div class="space-y-6">
-        <!-- Header & Filter -->
-        <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-bold text-gray-900">Danh sách đề xuất</h2>
+        <!-- New Tab Style -->
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-8" aria-label="Tabs">
+                <a href="{{ route('buyer.proposals.index', ['status' => 'all']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all {{ (!$status || $status === 'all') ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    <i class="fas fa-bars text-xs"></i>
+                    Tất cả
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] {{ (!$status || $status === 'all') ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                        {{ $counts['all'] }}
+                    </span>
+                </a>
 
-            <!-- Status Filter -->
-            <form method="GET" class="flex items-center space-x-3">
-                <select name="status" onchange="this.form.submit()"
-                    class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Tất cả trạng thái</option>
-                    <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
-                    <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Mới tạo</option>
-                    <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
-                    <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Đã từ chối</option>
-                </select>
-            </form>
+                <a href="{{ route('buyer.proposals.index', ['status' => 'PENDING']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all {{ $status === 'PENDING' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    <i class="far fa-clock text-xs"></i>
+                    Chờ xử lý
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] {{ $status === 'PENDING' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                        {{ $counts['PENDING'] }}
+                    </span>
+                </a>
+
+                <a href="{{ route('buyer.proposals.index', ['status' => 'APPROVED']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all {{ $status === 'APPROVED' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    <i class="far fa-check-circle text-xs"></i>
+                    Đã duyệt
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] {{ $status === 'APPROVED' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                        {{ $counts['APPROVED'] }}
+                    </span>
+                </a>
+
+                <a href="{{ route('buyer.proposals.index', ['status' => 'REJECTED']) }}"
+                    class="py-4 px-1 border-b-2 font-bold text-sm flex items-center gap-2 transition-all {{ $status === 'REJECTED' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    <i class="far fa-times-circle text-xs"></i>
+                    Đã từ chối
+                    <span class="ml-1 px-2 py-0.5 rounded-full text-[10px] {{ $status === 'REJECTED' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500' }}">
+                        {{ $counts['REJECTED'] }}
+                    </span>
+                </a>
+            </nav>
         </div>
 
         <!-- Table -->
@@ -54,21 +78,12 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                @if($proposal->status == 'PENDING')
-                                    <div class="flex justify-center space-x-2">
+                                    @if($proposal->status == 'PENDING')
+                                    <div class="flex justify-center">
                                         <a href="{{ route('buyer.proposals.edit', $proposal->id) }}"
-                                            class="px-4 py-2 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition">
-                                            <i class="fas fa-edit mr-1"></i> Sửa
+                                            class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                            <i class="fas fa-edit mr-2"></i> Tiếp nhận & Xử lý
                                         </a>
-                                        <form action="{{ route('buyer.proposals.submit', $proposal->id) }}" method="POST"
-                                            class="inline">
-                                            @csrf
-                                            <button type="submit"
-                                                onclick="return confirm('Bạn có chắc muốn gửi đề xuất này lên Admin để duyệt?')"
-                                                class="px-4 py-2 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 transition">
-                                                <i class="fas fa-paper-plane mr-1"></i> Gửi duyệt
-                                            </button>
-                                        </form>
                                     </div>
                                 @elseif($proposal->status == 'CREATED')
                                     <span class="text-xs text-gray-500">Chờ Admin duyệt</span>
@@ -106,7 +121,7 @@
     </div>
     <!-- Proposal Detail Modal -->
     <div id="proposalDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-[480px] mx-4 overflow-hidden transform transition-all">
             <!-- Header -->
             <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="text-lg font-bold text-gray-800">Chi tiết đề xuất</h3>
@@ -117,64 +132,80 @@
 
             <!-- Body -->
             <div class="p-6 space-y-4">
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Status Row -->
+                <div class="flex justify-between items-start">
                     <div>
-                        <label class="text-xs text-gray-500 uppercase font-semibold">Mã đề xuất</label>
-                        <p class="font-medium text-gray-900" id="modal_code"></p>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Mã đề xuất</label>
+                        <p class="font-semibold text-gray-900 text-base" id="modal_code"></p>
                     </div>
-                    <div>
-                        <label class="text-xs text-gray-500 uppercase font-semibold">Trạng thái</label>
-                        <span id="modal_status_badge" class="px-2 py-1 text-xs font-semibold rounded-full"></span>
+                    <div class="text-right">
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider block mb-1">Trạng thái</label>
+                        <span id="modal_status_badge" class="px-3 py-1 text-xs font-bold rounded-full"></span>
                     </div>
-                </div>
-
-                <!-- Product Image -->
-                <div id="modal_image_container" class="hidden flex justify-center py-2">
-                    <img id="modal_product_image" src="" alt="Sản phẩm"
-                        class="max-h-48 rounded-lg border border-gray-200 object-cover">
                 </div>
 
                 <!-- Product Image -->
                 <div id="modal_image_container"
-                    class="hidden flex justify-center py-2 h-48 bg-gray-50 rounded-lg mb-3 items-center">
+                    class="hidden flex justify-center py-2 h-32 bg-gray-50/50 border border-gray-100 rounded-xl items-center overflow-hidden">
                     <img id="modal_product_image" src="" alt="Sản phẩm"
-                        class="max-h-full max-w-full object-contain rounded-lg">
+                        class="max-h-full max-w-full object-contain transform hover:scale-105 transition-transform duration-500">
                 </div>
 
-                <div>
-                    <label class="text-xs text-gray-500 uppercase font-semibold">Tên sản phẩm</label>
-                    <p class="font-medium text-gray-900 text-lg" id="modal_product_name"></p>
-                </div>
-
+                <!-- Product Info Row -->
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs text-gray-500 uppercase font-semibold">Danh mục</label>
-                        <p class="text-gray-700" id="modal_category"></p>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Tên sản phẩm</label>
+                        <p class="font-semibold text-gray-900 text-base mt-1" id="modal_product_name"></p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 uppercase font-semibold">Giá dự kiến</label>
-                        <p class="text-gray-700" id="modal_price"></p>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Khoa đề xuất</label>
+                        <p class="text-gray-700 font-medium text-sm mt-1" id="modal_department"></p>
                     </div>
                 </div>
 
-                <div>
-                    <label class="text-xs text-gray-500 uppercase font-semibold">Khoa đề xuất</label>
-                    <p class="text-gray-700" id="modal_department"></p>
+                <!-- Category & Price Row -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Danh mục</label>
+                        <p class="text-gray-700 font-medium text-sm mt-1" id="modal_category"></p>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Giá dự kiến</label>
+                        <p class="text-blue-600 font-bold text-base mt-1" id="modal_price"></p>
+                    </div>
+                </div>
+
+                <!-- Dates Row -->
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-50">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="far fa-paper-plane text-[9px] text-gray-400"></i>
+                            <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Ngày gửi</label>
+                        </div>
+                        <p class="text-gray-700 font-medium text-sm" id="modal_created_at"></p>
+                    </div>
+                    <div id="modal_approved_at_container">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i class="far fa-check-circle text-[9px] text-gray-400"></i>
+                            <label class="text-[10px] text-gray-500 uppercase font-semibold tracking-wider">Ngày duyệt</label>
+                        </div>
+                        <p class="text-gray-700 font-medium text-sm" id="modal_updated_at"></p>
+                    </div>
                 </div>
 
                 <!-- Rejection Reason Section -->
-                <div id="modal_rejection_section" class="hidden mt-4 p-3 bg-red-50 rounded-lg border border-red-100">
-                    <label class="text-xs text-red-600 uppercase font-bold flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i> Lý do từ chối
+                <div id="modal_rejection_section" class="hidden p-3 bg-red-50/50 rounded-xl border border-red-100/50">
+                    <label class="text-[10px] text-red-600 uppercase font-bold tracking-wider flex items-center gap-2 mb-1">
+                        <i class="fas fa-exclamation-circle"></i> Lý do từ chối
                     </label>
-                    <p class="text-red-700 text-sm mt-1" id="modal_rejection_reason"></p>
+                    <p class="text-red-700 text-sm font-bold leading-relaxed" id="modal_rejection_reason"></p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 text-right">
+            <div class="px-6 py-3 bg-gray-50/50 border-t border-gray-100 text-right">
                 <button onclick="closeProposalDetail()"
-                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium text-sm transition">
+                    class="px-6 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm">
                     Đóng
                 </button>
             </div>
@@ -182,44 +213,56 @@
     </div>
 
     <script>
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function openProposalDetail(proposal) {
             // Populate basic info
             document.getElementById('modal_code').innerText = '#' + proposal.id;
             document.getElementById('modal_product_name').innerText = proposal.product_name;
             document.getElementById('modal_category').innerText = proposal.category ? proposal.category.category_name : '-';
             document.getElementById('modal_department').innerText = proposal.department ? proposal.department.department_name : '-';
+            
+            // Dates
+            document.getElementById('modal_created_at').innerText = formatDate(proposal.created_at);
+            
+            const approvedContainer = document.getElementById('modal_approved_at_container');
+            if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
+                document.getElementById('modal_updated_at').innerText = formatDate(proposal.updated_at);
+                approvedContainer.classList.remove('invisible');
+                const label = approvedContainer.querySelector('label');
+                label.innerText = proposal.status === 'APPROVED' ? 'Ngày duyệt đề xuất' : 'Ngày từ chối';
+            } else {
+                approvedContainer.classList.add('invisible');
+            }
 
             // Image Logic
             const imageContainer = document.getElementById('modal_image_container');
             const productImage = document.getElementById('modal_product_image');
 
-            // Check if we have an image
             if (proposal.primary_image && proposal.primary_image.file_path) {
-                // User stores in public/products, database path is 'products/filename'
-                // Direct access from public root
                 productImage.src = '/' + proposal.primary_image.file_path;
                 productImage.classList.remove('hidden');
-
-                // Remove any existing text placeholder if I added one previously?
-                // Or cleaner: reset container content
-                // But I have an img tag there. Let's just handle it via visibility/innerHTML if needed.
-                // Simplest: 
-                // Clear container innerHTML
-                imageContainer.innerHTML = '';
-                // Append IMG
-                const img = document.createElement('img');
-                img.src = '/' + proposal.primary_image.file_path;
-                img.alt = 'Sản phẩm';
-                img.className = 'max-h-full max-w-full object-contain rounded-lg';
-                imageContainer.appendChild(img);
+                
+                // Remove placeholder if present (cleanup)
+                const placeholder = imageContainer.querySelector('span');
+                if (placeholder) placeholder.remove();
 
                 imageContainer.classList.remove('hidden');
                 imageContainer.classList.add('flex');
             } else {
-                // No image -> Show text placeholder
-                imageContainer.innerHTML = '<span class="text-gray-400 font-medium italic">Không có ảnh sản phẩm</span>';
-                imageContainer.classList.remove('hidden'); // Always show container
-                imageContainer.classList.add('flex');
+                // HIDE CONTAINER if no image
+                imageContainer.classList.add('hidden');
+                imageContainer.classList.remove('flex');
             }
 
             // Format Price

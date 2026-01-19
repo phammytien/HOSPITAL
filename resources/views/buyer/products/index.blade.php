@@ -6,62 +6,61 @@
 @section('content')
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            
-            <h1 class="text-2xl font-bold text-gray-800">Danh mục sản phẩm</h1>
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-8 border-b border-gray-50">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-800 tracking-tight">Danh mục sản phẩm</h1>
+                    <p class="text-sm text-gray-500 mt-1">Tìm kiếm và lọc sản phẩm theo nhu cầu</p>
+                </div>
 
-            <!-- Search Bar -->
-            <form action="{{ route('buyer.products.index') }}" method="GET" class="relative w-full md:w-96">
-                @if(request('category_id'))
-                    <input type="hidden" name="category_id" value="{{ request('category_id') }}">
-                @endif
-                <input type="text" name="search" value="{{ request('search') }}"
-                    class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                    placeholder="Tìm kiếm tên sản phẩm, mã số...">
-                <svg class="w-5 h-5 absolute left-3 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </form>
+                <!-- Search Bar -->
+                <form action="{{ route('buyer.products.index') }}" method="GET" class="relative w-full md:w-[400px]">
+                    @if(request('category_id'))
+                        <input type="hidden" name="category_id" value="{{ request('category_id') }}">
+                    @endif
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400 text-sm"></i>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400 font-medium text-sm"
+                        placeholder="Mã sản phẩm, tên sản phẩm...">
+                </form>
+            </div>
         </div>
 
-       <!-- Category Filter + Suggest Button -->
-<div class="mb-6 flex items-center justify-between gap-4">
-    
-    <!-- Left: Category Filter -->
-    <div class="flex items-center gap-3 bg-blue-50/50 p-2 rounded-xl border border-blue-100 shadow-sm">
-        <div class="flex items-center gap-2 px-2">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                <i class="fas fa-filter text-xs"></i>
-            </div>
-            <span class="text-sm font-bold text-gray-700 whitespace-nowrap">
-                Lọc theo danh mục:
-            </span>
-        </div>
+        <!-- Filter Bar -->
+        <div class="px-8 py-5 bg-gray-50/30 flex flex-wrap items-center gap-6">
+            <div class="text-[12px] font-bold text-gray-400 uppercase tracking-widest">LỌC THEO:</div>
 
-        <div class="relative">
-            <select id="category_filter"
-                onchange="window.location.href=this.value"
-                class="block w-64 pl-4 pr-10 py-2.5 text-sm font-bold text-gray-700 bg-white border-2 border-blue-200 
-                       focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 rounded-xl appearance-none cursor-pointer hover:border-blue-400 hover:shadow-md transition-all">
-                <option value="{{ route('buyer.products.index', ['search' => request('search')]) }}">
-                    Tất cả danh mục
-                </option>
-                @foreach($categories as $cat)
-                    <option value="{{ route('buyer.products.index', ['category_id' => $cat->id, 'search' => request('search')]) }}"
-                        {{ request('category_id') == $cat->id ? 'selected' : '' }}>
-                        {{ $cat->category_name }}
-                    </option>
-                @endforeach
-            </select>
-            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-blue-500">
-                <i class="fas fa-chevron-down text-xs"></i>
+            <div class="min-w-[280px]">
+                <div class="relative">
+                    <select id="category_filter" onchange="window.location.href=this.value"
+                        class="w-full pl-4 pr-12 py-2.5 bg-white border border-gray-100 shadow-sm rounded-xl text-sm font-semibold text-gray-700 focus:border-blue-400 focus:ring-blue-100 hover:border-gray-200 transition-all cursor-pointer appearance-none">
+                        <option value="{{ route('buyer.products.index', ['search' => request('search')]) }}">
+                            -- Tất cả danh mục --
+                        </option>
+                        @foreach($categories as $cat)
+                            <option value="{{ route('buyer.products.index', ['category_id' => $cat->id, 'search' => request('search')]) }}"
+                                {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                                {{ $cat->category_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
             </div>
+
+            @if(request('category_id') || request('search'))
+                <a href="{{ route('buyer.products.index') }}" 
+                   class="px-8 py-2.5 bg-white border border-gray-100 rounded-xl text-sm font-extrabold text-gray-700 hover:bg-gray-50 hover:border-gray-200 transition-all shadow-sm">
+                    Xóa lọc
+                </a>
+            @endif
         </div>
     </div>
-
-    
-</div>
 
     </div>
 

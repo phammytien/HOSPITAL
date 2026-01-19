@@ -74,16 +74,16 @@ INSERT INTO `product_categories` (`id`, `category_code`, `category_name`, `descr
 -- 4. Dữ liệu mẫu cho bảng `suppliers`
 -- Code: Mã định danh viết hoa
 INSERT INTO `suppliers` (`id`, `supplier_code`, `supplier_name`, `contact_person`, `phone_number`, `email`, `address`, `note`, `is_delete`, `created_at`, `updated_at`) VALUES
-(1, 'DUOC_HAU_GIANG', 'Dược Hậu Giang (DHG)', 'Nguyễn Văn A', '02923891433', 'dhg@dhgpharma.com.vn', '288 Nguyễn Văn Cừ, Ninh Kiều, Cần Thơ', 'Đối tác chiến lược - Thuốc Generic', 0, NOW(), NOW()),
-(2, 'TRAPHACO', 'Traphaco', 'Trần Thị B', '18006612', 'info@traphaco.com.vn', '75 Yên Ninh, Ba Đình, Hà Nội', 'Đông dược', 0, NOW(), NOW()),
-(3, 'IMEXPHARM', 'Imexpharm', 'Lê Văn C', '02773851941', 'imexpharm@imexpharm.com', 'Cao Lãnh, Đồng Tháp', 'Kháng sinh chất lượng cao', 0, NOW(), NOW()),
-(4, 'DUOC_BINH_DINH', 'Dược Bình Định (Bidiphar)', 'Hoàng Văn D', '02563846500', 'bidiphar@bidiphar.com', 'Quy Nhơn, Bình Định', 'Thuốc ung thư, dịch truyền', 0, NOW(), NOW()),
-(5, 'VIMEDIMEX', 'Vimedimex', 'Phạm Thị E', '02438443333', 'vimedimex@vimedimex.com.vn', 'TP.HCM', 'Nhập khẩu thuốc đặc trị', 0, NOW(), NOW()),
-(6, 'TBYT_VIET_NHAT', 'Thiết Bị Y Tế Việt Nhật', 'Đặng Văn F', '02435772666', 'jvc@jvc.com.vn', 'Hà Nội', 'Cung cấp máy móc chẩn đoán', 0, NOW(), NOW()),
-(7, 'DOMESCO', 'Domesco', 'Vũ Thị G', '02773852278', 'domesco@domesco.com', 'Đồng Tháp', 'Thuốc thiết yếu', 0, NOW(), NOW()),
-(8, 'PYRENEES', 'Pyrenees Medical', 'Ngô Văn H', '02838383838', 'contact@pyrenees.vn', 'TP.HCM', 'Vật tư tiêu hao ngoại nhập', 0, NOW(), NOW()),
-(9, 'SANOFI', 'Sanofi Việt Nam', 'Mai Thị I', '02838298526', 'info@sanofi.vn', 'KCN Công Nghệ Cao, Q.9, TP.HCM', 'Dược phẩm đa quốc gia', 0, NOW(), NOW()),
-(10, 'VPP_HONG_HA', 'VPP Hồng Hà', 'Lý Văn K', '0909090909', 'abc@vpp.com', 'Hà Nội', 'Cung cấp văn phòng phẩm', 0, NOW(), NOW());
+(1, 'SUP001', 'Dược Hậu Giang (DHG)', 'Nguyễn Văn A', '02923891433', 'dhg@dhgpharma.com.vn', '288 Nguyễn Văn Cừ, Ninh Kiều, Cần Thơ', 'Đối tác chiến lược - Thuốc Generic', 0, NOW(), NOW()),
+(2, 'SUP002', 'Traphaco', 'Trần Thị B', '18006612', 'info@traphaco.com.vn', '75 Yên Ninh, Ba Đình, Hà Nội', 'Đông dược', 0, NOW(), NOW()),
+(3, 'SUP003', 'Imexpharm', 'Lê Văn C', '02773851941', 'imexpharm@imexpharm.com', 'Cao Lãnh, Đồng Tháp', 'Kháng sinh chất lượng cao', 0, NOW(), NOW()),
+(4, 'SUP004', 'Dược Bình Định (Bidiphar)', 'Hoàng Văn D', '02563846500', 'bidiphar@bidiphar.com', 'Quy Nhơn, Bình Định', 'Thuốc ung thư, dịch truyền', 0, NOW(), NOW()),
+(5, 'SUP005', 'Vimedimex', 'Phạm Thị E', '02438443333', 'vimedimex@vimedimex.com.vn', 'TP.HCM', 'Nhập khẩu thuốc đặc trị', 0, NOW(), NOW()),
+(6, 'SUP006', 'Thiết Bị Y Tế Việt Nhật', 'Đặng Văn F', '02435772666', 'jvc@jvc.com.vn', 'Hà Nội', 'Cung cấp máy móc chẩn đoán', 0, NOW(), NOW()),
+(7, 'SUP007', 'Domesco', 'Vũ Thị G', '02773852278', 'domesco@domesco.com', 'Đồng Tháp', 'Thuốc thiết yếu', 0, NOW(), NOW()),
+(8, 'SUP008', 'Pyrenees Medical', 'Ngô Văn H', '02838383838', 'contact@pyrenees.vn', 'TP.HCM', 'Vật tư tiêu hao ngoại nhập', 0, NOW(), NOW()),
+(9, 'SUP009', 'Sanofi Việt Nam', 'Mai Thị I', '02838298526', 'info@sanofi.vn', 'KCN Công Nghệ Cao, Q.9, TP.HCM', 'Dược phẩm đa quốc gia', 0, NOW(), NOW()),
+(10, 'SUP010', 'VPP Hồng Hà', 'Lý Văn K', '0909090909', 'abc@vpp.com', 'Hà Nội', 'Cung cấp văn phòng phẩm', 0, NOW(), NOW());
 
 -- 4.1. Liên kết Category - Supplier
 INSERT INTO `category_supplier` (`id`, `supplier_id`, `product_category_id`, `created_at`, `updated_at`) VALUES

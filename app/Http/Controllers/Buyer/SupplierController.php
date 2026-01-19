@@ -50,15 +50,15 @@ class SupplierController extends Controller
 
         // Auto-generate Supplier Code
         $lastSupplier = Supplier::latest('id')->first();
-        $nextCode = 'NCC001';
+        $nextCode = 'SUP001';
         
         if ($lastSupplier && $lastSupplier->supplier_code) {
             // Extract numbers from the code
-            if (preg_match('/^NCC(\d+)$/', $lastSupplier->supplier_code, $matches)) {
+            if (preg_match('/^SUP(\d+)$/', $lastSupplier->supplier_code, $matches)) {
                 $number = intval($matches[1]) + 1;
                 // Pad with zeros to ensure at least 3 digits, or maintain existing length if longer
                 $length = max(3, strlen($matches[1]));
-                $nextCode = 'NCC' . str_pad($number, $length, '0', STR_PAD_LEFT);
+                $nextCode = 'SUP' . str_pad($number, $length, '0', STR_PAD_LEFT);
             }
         }
 

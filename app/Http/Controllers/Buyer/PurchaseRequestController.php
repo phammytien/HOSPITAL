@@ -9,9 +9,10 @@ use App\Models\PurchaseFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\PurchaseRequestWorkflow;
-use App\Models\Notification; // Added Import
+use App\Models\Notification;
 
 class PurchaseRequestController extends Controller
 {
@@ -26,9 +27,9 @@ class PurchaseRequestController extends Controller
         }
 
         if ($request->has('status') && $request->status != '') {
-            if ($request->status == 'SUBMITTED') {
+            if ($request->status == 'PENDING') {
                 $query->where(function ($q) {
-                    $q->where('status', 'PENDING')->orWhere('status', 'SUBMITTED')->orWhereNull('status');
+                    $q->where('status', 'PENDING')->orWhereNull('status');
                 });
             } else {
                 $query->where('status', $request->status);
@@ -44,7 +45,12 @@ class PurchaseRequestController extends Controller
         // Get unique periods for filter
         $periods = PurchaseRequest::select('period')->distinct()->orderBy('period', 'desc')->pluck('period');
 
-        return view('buyer.requests.index', compact('requests', 'departments', 'periods'));
+        $pendingCount = PurchaseRequest::where('is_submitted', true)
+            ->where(function ($q) {
+                $q->where('status', 'PENDING')->orWhereNull('status');
+            })->count();
+
+        return view('buyer.requests.index', compact('requests', 'departments', 'periods', 'pendingCount'));
     }
 
     public function show($id)
@@ -126,15 +132,78 @@ class PurchaseRequestController extends Controller
 
     public function approve($id)
     {
-        $purchaseRequest = PurchaseRequest::findOrFail($id);
+        try {
+            $purchaseRequest = PurchaseRequest::findOrFail($id);
+            
+            $result = $this->processApproval($purchaseRequest);
+            
+            if (!$result['success']) {
+                return redirect()->back()->with('error', $result['message']);
+            }
 
-        // Check if submitted and not already processed (status is null)
-        if (!$purchaseRequest->is_submitted || $purchaseRequest->status) {
-            return redirect()->back()->with('error', 'Only submitted (pending) requests can be approved.');
+            return redirect()->back()->with('success', 'Yêu cầu đã được phê duyệt thành công.');
+        } catch (\Exception $e) {
+            Log::error('Individual approval error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Đã xảy ra lỗi khi phê duyệt yêu cầu.');
+        }
+    }
+
+    public function bulkApprove(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn ít nhất một yêu cầu để phê duyệt.'
+            ], 400);
         }
 
-        DB::transaction(function () use ($purchaseRequest) {
-            $oldStatus = 'SUBMITTED'; // Since we checked it's submitted and status is null
+        $successCount = 0;
+        $errors = [];
+
+        foreach ($ids as $id) {
+            try {
+                $purchaseRequest = PurchaseRequest::find($id);
+                if (!$purchaseRequest) {
+                    $errors[] = "Không tìm thấy yêu cầu #{$id}";
+                    continue;
+                }
+
+                $result = $this->processApproval($purchaseRequest);
+                if ($result['success']) {
+                    $successCount++;
+                } else {
+                    $errors[] = "Yêu cầu #{$purchaseRequest->request_code}: " . $result['message'];
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Lỗi hệ thống khi xử lý yêu cầu #{$id}";
+                Log::error("Bulk approval error for ID {$id}: " . $e->getMessage());
+            }
+        }
+
+        $message = "Đã phê duyệt thành công {$successCount} yêu cầu." . (!empty($errors) ? " (Có " . count($errors) . " lỗi)" : "");
+        session()->flash('success', $message);
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'errors' => $errors
+        ]);
+    }
+
+    private function processApproval(PurchaseRequest $purchaseRequest)
+    {
+        // Check if submitted and not already processed (status is null or PENDING)
+        if (!$purchaseRequest->is_submitted || ($purchaseRequest->status && $purchaseRequest->status !== 'PENDING')) {
+            return [
+                'success' => false,
+                'message' => 'Chỉ có thể duyệt các yêu cầu đang chờ xử lý.'
+            ];
+        }
+
+        return DB::transaction(function () use ($purchaseRequest) {
+            $oldStatus = 'PENDING';
 
             // Update Request Status
             $purchaseRequest->status = 'APPROVED';
@@ -151,22 +220,19 @@ class PurchaseRequestController extends Controller
             ]);
 
             // Auto-create Purchase Order upon Approval
+            $purchaseOrder = null;
             if (!$purchaseRequest->purchaseOrder) {
                 $totalAmount = $purchaseRequest->items->sum(function ($item) {
                     return $item->quantity * $item->expected_price;
                 });
 
-                // Generate Order Code: PO_Year_Quarter_Dept_Seq
                 $year = now()->year;
                 $quarter = 'Q' . ceil(now()->month / 3);
-                $deptSlug = $purchaseRequest->department->slug;
+                $deptSlug = $purchaseRequest->department->slug ?? 'DEPT';
 
                 $prefix = "PO_{$year}_{$quarter}_{$deptSlug}_";
-
-                // Count existing POs for this Department in this Quarter
                 $count = \App\Models\PurchaseOrder::where('order_code', 'LIKE', $prefix . '%')->count();
                 $seq = $count + 1;
-
                 $orderCode = $prefix . sprintf('%02d', $seq);
 
                 $purchaseOrder = \App\Models\PurchaseOrder::create([
@@ -187,25 +253,21 @@ class PurchaseRequestController extends Controller
                         'quantity' => $item->quantity,
                         'unit_price' => $item->expected_price,
                         'is_delete' => 0,
-                        'status' => 'PENDING' // Default status
+                        'status' => 'PENDING'
                     ]);
                 }
             }
 
-            // Optional: If we ever want to log "Approved" as feedback, we can do it here.
-            // For now, since "Quick Approve" has no note, we don't force a feedback entry unless desired.
-
             // Create Notification
             Notification::create([
-                'title' => 'Admin bình luận',
+                'title' => 'Admin phê duyệt',
                 'message' => "Yêu cầu #{$purchaseRequest->request_code} đã được phê duyệt",
                 'type' => 'info',
-                'target_role' => 'department', // Target the requester's role or department? For now 'department' seems appropriate as per user context
+                'target_role' => 'department',
                 'created_by' => Auth::id(),
             ]);
 
-            // Notification for Order Creation
-            if (isset($purchaseOrder)) {
+            if ($purchaseOrder) {
                 Notification::create([
                     'title' => 'Đơn hàng mới',
                     'message' => "Đơn hàng #{$purchaseOrder->order_code} đã được tạo cho yêu cầu #{$purchaseRequest->request_code}",
@@ -214,9 +276,9 @@ class PurchaseRequestController extends Controller
                     'created_by' => Auth::id(),
                 ]);
             }
-        });
 
-        return redirect()->back()->with('success', 'Purchase request approved successfully.');
+            return ['success' => true];
+        });
     }
 
     public function reject(Request $request, $id)
@@ -227,13 +289,13 @@ class PurchaseRequestController extends Controller
 
         $purchaseRequest = PurchaseRequest::findOrFail($id);
 
-        // Check if submitted and not already processed
-        if (!$purchaseRequest->is_submitted || $purchaseRequest->status) {
-            return redirect()->back()->with('error', 'Only submitted (pending) requests can be rejected.');
+        // Check if submitted and not already processed (status is null or PENDING)
+        if (!$purchaseRequest->is_submitted || ($purchaseRequest->status && $purchaseRequest->status !== 'PENDING')) {
+            return redirect()->back()->with('error', 'Chỉ có thể từ chối các yêu cầu đang chờ xử lý.');
         }
 
         DB::transaction(function () use ($purchaseRequest, $request) {
-            $oldStatus = 'SUBMITTED';
+            $oldStatus = 'PENDING';
 
             $purchaseRequest->status = 'REJECTED';
             $purchaseRequest->save();

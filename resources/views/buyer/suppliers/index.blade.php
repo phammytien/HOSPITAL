@@ -25,25 +25,10 @@
         </div>
     </div>
 
-    <!-- Alert -->
-    @if(session('success'))
-        <div class="rounded-md bg-green-50 p-4 mb-6 border-l-4 border-green-400">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
-                </div>
-            </div>
-        </div>
-    @endif
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <form action="{{ route('buyer.suppliers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <form id="filterForm" action="{{ route('buyer.suppliers.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <!-- Search Text -->
             <div class="md:col-span-2">
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm nhà cung cấp</label>
@@ -75,17 +60,46 @@
 
             <!-- Buttons -->
             <div class="flex gap-2">
-                <button type="submit" 
-                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                    Lọc
-                </button>
                 <a href="{{ route('buyer.suppliers.index') }}" 
-                    class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors text-center">
-                    Xóa
+                    class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors text-center">
+                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Xóa lọc
                 </a>
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('filterForm');
+            const searchInput = document.getElementById('search');
+            const categorySelect = document.getElementById('category_id');
+            let timeout = null;
+
+            // Auto-submit on category change
+            categorySelect.addEventListener('change', function() {
+                filterForm.submit();
+            });
+
+            // Auto-submit on search input (with debounce)
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    filterForm.submit();
+                }, 500); // 500ms delay
+            });
+
+            // Keep cursor at the end of search input after auto-submit
+            if (searchInput.value) {
+                searchInput.focus();
+                const val = searchInput.value;
+                searchInput.value = '';
+                searchInput.value = val;
+            }
+        });
+    </script>
 
     <!-- Data Table -->
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-gray-200">
@@ -94,7 +108,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Mã & Tên NCC
+                            Mã & Tên SUP
                         </th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Liên hệ

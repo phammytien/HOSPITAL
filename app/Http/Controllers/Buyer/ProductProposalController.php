@@ -14,17 +14,37 @@ class ProductProposalController extends Controller
 {
     public function index(Request $request)
     {
+        $status = $request->input('status');
+
         $query = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier', 'primaryImage'])
             ->notDeleted();
 
-        // Filter by status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
+        // Apply status filter
+        if ($status && $status !== 'all') {
+            if ($status === 'PENDING') {
+                $query->whereIn('status', ['PENDING', 'CREATED']);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         $proposals = $query->latest()->paginate(15);
 
-        return view('buyer.proposals.index', compact('proposals'));
+        // Get counts for tabs
+        $allCounts = ProductProposal::notDeleted()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $counts = [
+            'all' => array_sum($allCounts),
+            'PENDING' => ($allCounts['PENDING'] ?? 0) + ($allCounts['CREATED'] ?? 0),
+            'APPROVED' => $allCounts['APPROVED'] ?? 0,
+            'REJECTED' => $allCounts['REJECTED'] ?? 0,
+        ];
+
+        return view('buyer.proposals.index', compact('proposals', 'status', 'counts'));
     }
 
     public function edit($id)
@@ -92,10 +112,23 @@ class ProductProposalController extends Controller
         // Remove image from validated data since it's not in the table anymore
         unset($validated['image']);
 
+        // Check if we are also submitting for approval
+        if ($request->input('action') === 'submit') {
+            // Validation for submission (all fields must be present)
+            if (empty($validated['product_code']) || empty($validated['category_id']) || empty($validated['unit']) || empty($validated['supplier_id'])) {
+                return back()->withInput()->with('error', 'Vui lòng điền đầy đủ thông tin (bao gồm Mã sản phẩm) trước khi gửi duyệt!');
+            }
+            $validated['status'] = 'CREATED';
+            $validated['buyer_id'] = Auth::id();
+            $msg = 'Đã lưu và gửi đề xuất lên Admin để duyệt!';
+        } else {
+            $msg = 'Cập nhật đề xuất thành công!';
+        }
+
         $proposal->update($validated);
 
         return redirect()->route('buyer.proposals.index')
-            ->with('success', 'Cập nhật đề xuất thành công!');
+            ->with('success', $msg);
     }
 
     public function submit($id)
@@ -218,6 +251,26 @@ class ProductProposalController extends Controller
         return response()->json([
             'success' => true,
             'code' => $newCode
+        ]);
+    }
+    public function getSuppliersByCategory(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+        
+        if (!$categoryId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn danh mục'
+            ]);
+        }
+
+        $suppliers = Supplier::whereHas('categories', function($query) use ($categoryId) {
+            $query->where('product_categories.id', $categoryId);
+        })->get(['id', 'supplier_name']);
+
+        return response()->json([
+            'success' => true,
+            'suppliers' => $suppliers
         ]);
     }
 }

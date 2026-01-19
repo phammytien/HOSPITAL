@@ -10,7 +10,7 @@
             <a href="{{ route('buyer.proposals.index') }}" class="text-gray-600 hover:text-gray-900">
                 <i class="fas fa-arrow-left"></i>
             </a>
-            <h2 class="text-2xl font-bold text-gray-900">Cập nhật đề xuất #{{ $proposal->id }}</h2>
+            <h2 class="text-2xl font-bold text-gray-900">Tiếp nhận & Xử lý đề xuất #{{ $proposal->id }}</h2>
         </div>
 
         <!-- Proposal Info (Read-only) -->
@@ -42,9 +42,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
             <h3 class="font-bold text-white text-xl flex items-center">
-                <i class="fas fa-edit mr-3"></i> Bổ sung thông tin chi tiết
+                <i class="fas fa-tasks mr-3"></i> Xử lý & Phê duyệt sơ bộ
             </h3>
-            <p class="text-blue-100 text-sm mt-1">Vui lòng điền đầy đủ thông tin để gửi Admin duyệt</p>
+            <p class="text-blue-100 text-sm mt-1">Bổ sung thông tin chi tiết và quyết định gửi duyệt Admin hoặc lưu tạm</p>
         </div>
         
         <form action="{{ route('buyer.proposals.update', $proposal->id) }}" method="POST" enctype="multipart/form-data" class="p-8">
@@ -58,22 +58,51 @@
                 </h4>
                 
                 <div class="grid grid-cols-2 gap-6 mt-6">
-                    <!-- Category (triggers auto product code) -->
+                    <!-- Category (Custom Searchable Dropdown) -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             Danh mục <span class="text-red-500">*</span>
                         </label>
-                        <select name="category_id" id="category_id" required onchange="generateProductCode()"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            <option value="">-- Chọn danh mục --</option>
-                            @foreach($categories as $category)
-                            <option value="{{ $category->id }}" 
-                                    data-code="{{ $category->category_code }}"
-                                    {{ old('category_id', $proposal->category_id) == $category->id ? 'selected' : '' }}>
-                                {{ $category->category_name }}
-                            </option>
-                            @endforeach
-                        </select>
+                        <div class="relative" id="category_dropdown_container">
+                            <input type="hidden" name="category_id" id="category_id" value="{{ old('category_id', $proposal->category_id) }}">
+                            
+                            <!-- Display Button -->
+                            <button type="button" onclick="toggleCategoryDropdown()" id="categoryButton"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-left flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                                <span id="category_display_text" class="{{ old('category_id', $proposal->category_id) ? 'text-gray-900' : 'text-gray-500' }}">
+                                    {{ $categories->firstWhere('id', old('category_id', $proposal->category_id))?->category_name ?? '-- Chọn danh mục --' }}
+                                </span>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200" id="categoryChevron"></i>
+                            </button>
+                        
+                            <!-- Dropdown Menu -->
+                            <div id="category_dropdown_menu" class="hidden absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                <!-- Search Input -->
+                                <div class="p-2 border-b border-gray-100 bg-gray-50">
+                                    <input type="text" id="category_search" onkeyup="filterCategories()"
+                                        class="w-full px-3 py-2 border border-blue-100 rounded-md text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-gray-400"
+                                        placeholder="Gõ để tìm kiếm danh mục...">
+                                </div>
+                                
+                                <!-- Options List -->
+                                <div class="overflow-y-auto max-h-48 scroll-smooth" id="category_options_list">
+                                    <div class="px-4 py-2 hover:bg-red-50 cursor-pointer text-gray-500 border-b border-gray-50 transition-colors duration-150"
+                                         onclick="selectCategory('', '-- Chọn danh mục --')">
+                                        -- Bỏ chọn --
+                                    </div>
+                                    @foreach($categories as $category)
+                                    <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer text-gray-700 border-b border-gray-50 last:border-0 transition-colors duration-150 category-option"
+                                         data-search="{{ strtolower($category->category_name) }}"
+                                         onclick="selectCategory('{{ $category->id }}', '{{ $category->category_name }}')">
+                                        {{ $category->category_name }}
+                                    </div>
+                                    @endforeach
+                                    <div id="no_category_found" class="hidden px-4 py-3 text-sm text-gray-500 text-center italic">
+                                        Không tìm thấy danh mục phù hợp
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         @error('category_id')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -156,7 +185,7 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         Chọn nhà cung cấp <span class="text-red-500">*</span>
                     </label>
-                    <select name="supplier_id" required
+                    <select name="supplier_id" id="supplier_id" required
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                         <option value="">-- Chọn nhà cung cấp --</option>
                         @foreach($suppliers as $supplier)
@@ -228,9 +257,14 @@
                     </button>
                 </div>
                 <div class="flex space-x-3">
-                    <button type="submit"
-                            class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition shadow-md hover:shadow-lg flex items-center">
-                        <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                    <button type="submit" name="action" value="save"
+                            class="px-6 py-3 bg-white border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 font-bold transition shadow-sm flex items-center">
+                        <i class="fas fa-save mr-2"></i> Lưu tạm thời
+                    </button>
+                    <button type="submit" name="action" value="submit"
+                            onclick="return confirm('Bạn có chắc muốn gửi đề xuất này lên Admin để duyệt?')"
+                            class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold transition shadow-md hover:shadow-lg flex items-center">
+                        <i class="fas fa-paper-plane mr-2"></i> Lưu & Gửi duyệt Admin
                     </button>
                 </div>
             </div>
@@ -272,6 +306,49 @@
 </div>
 
 <script>
+function onCategoryChange() {
+    generateProductCode();
+    updateSupplierList();
+}
+
+// Update supplier list based on category
+function updateSupplierList() {
+    const categoryId = document.getElementById('category_id').value;
+    const supplierSelect = document.getElementById('supplier_id');
+    const currentSupplierId = '{{ $proposal->supplier_id }}';
+    
+    if (categoryId) {
+        // Show loading state
+        supplierSelect.innerHTML = '<option value="">Đang tải nhà cung cấp...</option>';
+        
+        fetch(`{{ route('buyer.proposals.get-suppliers') }}?category_id=${categoryId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    supplierSelect.innerHTML = '<option value="">-- Chọn nhà cung cấp --</option>';
+                    data.suppliers.forEach(supplier => {
+                        const option = document.createElement('option');
+                        option.value = supplier.id;
+                        option.textContent = supplier.supplier_name;
+                        if (supplier.id == currentSupplierId) {
+                            option.selected = true;
+                        }
+                        supplierSelect.appendChild(option);
+                    });
+                } else {
+                    console.error(data.message);
+                    supplierSelect.innerHTML = '<option value="">Lỗi tải dữ liệu</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                supplierSelect.innerHTML = '<option value="">Lỗi kết nối</option>';
+            });
+    } else {
+        supplierSelect.innerHTML = '<option value="">-- Chọn danh mục trước --</option>';
+    }
+}
+
 // Auto-generate product code based on category
 function generateProductCode() {
     const categorySelect = document.getElementById('category_id');
@@ -335,9 +412,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category_id');
     const productCodeInput = document.getElementById('product_code');
     
-    // Only generate if category is selected but code is empty
-    if (categorySelect.value && !productCodeInput.value) {
-        generateProductCode();
+    if (categorySelect.value) {
+        // Only generate if code is empty
+        if (!productCodeInput.value) {
+            generateProductCode();
+        }
+        // Always update supplier list on load to ensure filtering, 
+        // but current logic will keep the selected one if it exists.
+        updateSupplierList();
     }
 });
 
@@ -381,6 +463,74 @@ document.addEventListener('click', function(event) {
         dropdown.classList.add('hidden');
         document.getElementById('unitChevron').style.transform = 'rotate(0deg)';
     }
+
+    // Category Dropdown Outside Click
+    const catDropdown = document.getElementById('category_dropdown_menu');
+    const catButton = document.getElementById('categoryButton');
+    if (catDropdown && catButton && !catButton.contains(event.target) && !catDropdown.contains(event.target)) {
+        catDropdown.classList.add('hidden');
+        document.getElementById('categoryChevron').style.transform = 'rotate(0deg)';
+    }
 });
+
+// --- Custom Category Searchable Dropdown ---
+function toggleCategoryDropdown() {
+    const dropdown = document.getElementById('category_dropdown_menu');
+    const chevron = document.getElementById('categoryChevron');
+    const searchInput = document.getElementById('category_search');
+    
+    dropdown.classList.toggle('hidden');
+    
+    if (!dropdown.classList.contains('hidden')) {
+        chevron.style.transform = 'rotate(180deg)';
+        // Focus search input when opening
+        setTimeout(() => searchInput.focus(), 100);
+    } else {
+        chevron.style.transform = 'rotate(0deg)';
+    }
+}
+
+function filterCategories() {
+    const input = document.getElementById('category_search');
+    const filter = input.value.toLowerCase();
+    const list = document.getElementById('category_options_list');
+    const options = list.getElementsByClassName('category-option');
+    let hasVisible = false;
+
+    for (let i = 0; i < options.length; i++) {
+        const txtValue = options[i].getAttribute('data-search');
+        if (txtValue.indexOf(filter) > -1) {
+            options[i].style.display = "";
+            hasVisible = true;
+        } else {
+            options[i].style.display = "none";
+        }
+    }
+
+    const noResult = document.getElementById('no_category_found');
+    if (!hasVisible) {
+        noResult.classList.remove('hidden');
+    } else {
+        noResult.classList.add('hidden');
+    }
+}
+
+function selectCategory(id, name) {
+    document.getElementById('category_id').value = id;
+    const btnText = document.getElementById('category_display_text');
+    
+    if(id) {
+        btnText.innerText = name;
+        btnText.className = 'text-gray-900';
+    } else {
+        btnText.innerText = '-- Chọn danh mục --';
+        btnText.className = 'text-gray-500';
+    }
+    
+    toggleCategoryDropdown();
+    
+    // Trigger existing change logic
+    onCategoryChange();
+}
     </script>
 @endsection

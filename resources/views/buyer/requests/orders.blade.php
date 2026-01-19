@@ -6,40 +6,67 @@
 @section('content')
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
     
-    <!-- Filters -->
-    <div class="p-4 border-b border-gray-100 bg-gray-50 flex flex-wrap gap-4 items-center justify-between">
-        <form action="{{ route('buyer.orders.index') }}" method="GET" class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
-            
-            <select name="department_id" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="">-- Tất cả Khoa/Phòng --</option>
-                @foreach($departments as $dept)
-                    <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->department_name }}</option>
+    <!-- Tabs & Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <!-- Status Tabs -->
+        <div class="border-b border-gray-100 bg-gray-50/50">
+            <nav class="flex -mb-px px-4 gap-4 overflow-x-auto" aria-label="Tabs">
+                @php
+                    $currentStatus = request('status');
+                    $tabs = [
+                        ['label' => 'Tất cả', 'value' => '', 'icon' => 'M4 6h16M4 12h16M4 18h16'],
+                        ['label' => 'Đã duyệt', 'value' => 'CREATED', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Hoàn thành', 'value' => 'COMPLETED', 'icon' => 'M5 13l4 4L19 7'],
+                        ['label' => 'Đã từ chối', 'value' => 'CANCELLED', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ];
+                @endphp
+
+                @foreach($tabs as $tab)
+                    <a href="{{ request()->fullUrlWithQuery(['status' => $tab['value'], 'page' => 1]) }}"
+                       class="flex items-center gap-2 py-4 px-4 text-sm font-medium border-b-2 transition-all duration-200 whitespace-nowrap {{ ($currentStatus == $tab['value']) ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $tab['icon'] }}" />
+                        </svg>
+                        {{ $tab['label'] }}
+                    </a>
                 @endforeach
-            </select>
+            </nav>
+        </div>
 
-            <select name="period" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="">-- Tất cả Kỳ/Quý --</option>
-                @foreach($periods as $p)
-                    <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
-                @endforeach
-            </select>
+        <!-- Additional Filters -->
+        <div class="p-4 flex flex-wrap gap-6 items-center">
+            <form action="{{ route('buyer.orders.index') }}" method="GET" class="flex flex-wrap gap-4 w-full">
+                <input type="hidden" name="status" value="{{ request('status') }}">
+                
+                <div class="flex items-center gap-4">
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Lọc:</span>
+                    <div class="flex items-center gap-2">
+                        <select name="department_id" onchange="this.form.submit()"
+                            class="border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 bg-white border shadow-sm py-2 pl-3 pr-10">
+                            <option value="">-- Tất cả Khoa/Phòng --</option>
+                            @foreach($departments as $dept)
+                                <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                                    {{ $dept->department_name }}
+                                </option>
+                            @endforeach
+                        </select>
+        
+                        <select name="period" onchange="this.form.submit()"
+                            class="border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 bg-white border shadow-sm py-2 pl-3 pr-10">
+                            <option value="">-- Tất cả Kỳ/Quý --</option>
+                            @foreach($periods as $p)
+                                <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
+                            @endforeach
+                        </select>
 
-            <select name="status" class="border-gray-200 rounded-md text-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="">-- Tất cả Trạng thái --</option>
-                <option value="CREATED" {{ request('status') == 'CREATED' ? 'selected' : '' }}>Chờ xác nhận</option>
-                <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
-            </select>
-
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition">
-                Lọc
-            </button>
-            
-            @if(request('department_id') || request('period'))
-            <a href="{{ route('buyer.orders.index') }}" class="text-gray-500 text-sm hover:text-gray-700 underline">
-                Xóa lọc
-            </a>
-            @endif
-        </form>
+                        <a href="{{ route('buyer.orders.index') }}"
+                            class="inline-flex items-center px-6 py-2 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 shadow-sm">
+                            Xóa lọc
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -49,10 +76,8 @@
                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã đơn hàng</th>
                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Mã yêu cầu</th>
                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Khoa/Phòng</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ngày đặt</th>
                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Tổng tiền</th>
                     <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Trạng thái</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center">Người duyệt</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
@@ -67,9 +92,6 @@
                     <td class="px-6 py-4 text-sm text-gray-700 font-medium">
                         {{ $order->department->department_name ?? 'N/A' }}
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-500">
-                        {{ \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') }}
-                    </td>
                     <td class="px-6 py-4 text-sm font-bold text-gray-800 text-right">
                         {{ number_format($order->total_amount, 0, ',', '.') }} ₫
                     </td>
@@ -82,29 +104,10 @@
                             {{ get_status_label($requestStatus) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-sm text-gray-600 text-center">
-                        @php
-                            $confirmerName = $order->approver->full_name ?? null;
-                            
-                            // Fallback to Request Approver (who set status to APPROVED)
-                            if (!$confirmerName && $order->purchaseRequest) {
-                                $workflow = $order->purchaseRequest->workflows
-                                    ->where('to_status', 'APPROVED')
-                                    ->sortByDesc('id')
-                                    ->first();
-                                if ($workflow && $workflow->actionBy) {
-                                    $confirmerName = $workflow->actionBy->full_name;
-                                }
-                            }
-
-                            if (!$confirmerName) $confirmerName = 'N/A';
-                        @endphp
-                        {{ $confirmerName }}
-                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-500 italic">
+                    <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
                         Không có đơn hàng nào đã thanh toán.
                     </td>
                 </tr>
@@ -226,21 +229,44 @@
                             <h4 class="font-semibold text-gray-700 border-b pb-2 mb-3">Thông tin chung</h4>
                             <dl class="space-y-3 text-sm">
                                 <div>
-                                    <dt class="text-gray-500 text-xs uppercase">Ngày đặt hàng</dt>
-                                    <dd class="font-medium text-gray-900">{{ \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') }}</dd>
+                                    <dt class="text-gray-500 text-xs uppercase font-bold tracking-wider">Ngày đặt hàng</dt>
+                                    <dd class="font-medium text-gray-900 mt-0.5">
+                                        <i class="far fa-calendar-alt text-blue-500 mr-1"></i>
+                                        {{ \Carbon\Carbon::parse($order->order_date)->format('d/m/Y') }}
+                                    </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-gray-500 text-xs uppercase">Khoa/Phòng</dt>
-                                    <dd class="font-medium text-gray-900">{{ $order->department->department_name ?? 'N/A' }}</dd>
+                                    <dt class="text-gray-500 text-xs uppercase font-bold tracking-wider">Khoa/Phòng</dt>
+                                    <dd class="font-medium text-gray-900 mt-0.5">
+                                        <i class="fas fa-hospital text-blue-500 mr-1"></i>
+                                        {{ $order->department->department_name ?? 'N/A' }}
+                                    </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-gray-500 text-xs uppercase">Người duyệt</dt>
-                                    <dd class="font-medium text-gray-900">{{ $order->approver->full_name ?? 'N/A' }}</dd>
+                                    <dt class="text-gray-500 text-xs uppercase font-bold tracking-wider">Người duyệt</dt>
+                                    <dd class="font-medium text-gray-900 mt-0.5">
+                                        <i class="fas fa-user-check text-blue-500 mr-1"></i>
+                                        @php
+                                            $confirmerName = $order->approver->full_name ?? null;
+                                            
+                                            if (!$confirmerName && $order->purchaseRequest) {
+                                                $workflow = $order->purchaseRequest->workflows
+                                                    ->where('to_status', 'APPROVED')
+                                                    ->sortByDesc('id')
+                                                    ->first();
+                                                if ($workflow && $workflow->actionBy) {
+                                                    $confirmerName = $workflow->actionBy->full_name;
+                                                }
+                                            }
+                                            if (!$confirmerName) $confirmerName = 'N/A';
+                                        @endphp
+                                        {{ $confirmerName }}
+                                    </dd>
                                 </div>
                                 <div>
-                                    <dt class="text-gray-500 text-xs uppercase">Trạng thái</dt>
+                                    <dt class="text-gray-500 text-xs uppercase font-bold tracking-wider">Trạng thái</dt>
                                     <dd class="mt-1">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full {{ get_status_class($order->status) }}">
+                                        <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full {{ get_status_class($order->status) }}">
                                             {{ get_status_label($order->status) }}
                                         </span>
                                     </dd>

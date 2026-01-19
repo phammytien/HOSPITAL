@@ -100,7 +100,7 @@
                     </div>
                     <div>
                         <p class="text-gray-500 mb-1">Vai trò</p>
-                        <p class="font-semibold text-gray-900">{{ $feedback->feedbackBy->role ?? 'N/A' }}</p>
+                        <p class="font-semibold text-gray-900">{{ ($feedback->feedbackBy->role ?? '') === 'DEPARTMENT' ? 'Khoa/Phòng' : ($feedback->feedbackBy->role ?? 'N/A') }}</p>
                     </div>
                 </div>
             </div>

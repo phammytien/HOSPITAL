@@ -350,7 +350,7 @@
             const form = document.getElementById('productForm');
             const modalTitle = document.getElementById('modalTitle');
             const modalSubtitle = document.getElementById('modalSubtitle');
-            const submitBtn = document.getElementById('submitBtnHeader');
+            const submitBtn = document.getElementById('submitBtn');
             const changeImageBtn = document.getElementById('changeImageBtn');
             const deleteImageBtn = document.getElementById('deleteImageBtn');
             const lastUpdatedInfo = document.getElementById('lastUpdatedInfo');
@@ -499,7 +499,7 @@
             formData.append('_method', 'PUT');
         }
         // Show loading state
-        const submitBtn = document.getElementById('submitBtnHeader');
+        const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
@@ -708,23 +708,14 @@
                 <div
                     class="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <div>
-                        <div class="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        <!-- <div class="flex items-center gap-2 text-xs text-gray-500 mb-1">
                             <span>Quản lý sản phẩm</span>
                             <i class="fas fa-chevron-right text-[10px]"></i>
                             <span>Chi tiết sản phẩm</span>
-                        </div>
+                        </div> -->
                         <h3 class="text-xl font-bold text-gray-900" id="modalTitle">Chỉnh sửa Sản phẩm</h3>
                     </div>
                     <div class="flex items-center gap-3">
-                        <!-- <button type="button" onclick="closeModal()" 
-                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 text-sm transition">
-                            In nhãn
-                        </button> -->
-                        <button type="button" id="submitBtnHeader" 
-                                onclick="document.getElementById('productForm').dispatchEvent(new Event('submit'))" 
-                                class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm transition shadow-sm flex items-center gap-2">
-                            <i class="fas fa-save"></i> Lưu thay đổi
-                        </button>
                         <button onclick="closeModal()" class="ml-2 text-gray-400 hover:text-gray-600 transition">
                             <i class="fas fa-times text-xl"></i>
                         </button>
@@ -967,9 +958,18 @@
                         <span id="lastUpdatedText">Lần cuối cập nhật: 10/01/2026 bởi Admin</span>
                     </div>
                 </form>
-                <!-- Footer (Hidden or removed since buttons are in header) -->
-                <!-- <div class="hidden sticky bottom-0 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-3 px-6 py-4">
-                </div> -->
+                <!-- Footer -->
+                <div class="sticky bottom-0 bg-white border-t border-gray-200 flex items-center justify-end gap-3 px-6 py-4">
+                    <button type="button" onclick="closeModal()" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 text-sm transition">
+                        Hủy
+                    </button>
+                    <button type="button" id="submitBtn" 
+                            onclick="document.getElementById('productForm').dispatchEvent(new Event('submit'))" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm transition shadow-sm flex items-center gap-2">
+                        <i class="fas fa-save"></i> Lưu thay đổi
+                    </button>
+                </div>
             </div>
         </div>
     </div>

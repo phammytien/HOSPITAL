@@ -8,62 +8,52 @@
 @section('content')
 <div class="space-y-6">
     {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         {{-- Total Spent --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <div class="flex items-start justify-between mb-3">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Tổng chi tiêu (Năm 2024)</p>
+                    <p class="text-sm text-gray-600 mb-1">Tổng chi tiêu</p>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($totalSpent, 0, ',', '.') }} <span class="text-sm font-normal text-gray-500">đ</span></h3>
                 </div>
                 <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                     <i class="fas fa-wallet text-blue-600 text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-green-600 flex items-center">
-                <i class="fas fa-arrow-up mr-1"></i>
-                <span>+12.5% so với năm ngoái</span>
-            </p>
         </div>
 
-        {{-- Total Approved Requests --}}
+        {{-- Total Requests --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <div class="flex items-start justify-between mb-3">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Yêu cầu đã duyệt</p>
+                    <p class="text-sm text-gray-600 mb-1">Tổng yêu cầu</p>
                     <h3 class="text-3xl font-bold text-gray-900">{{ number_format($totalRequests) }}</h3>
                 </div>
                 <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    <i class="fas fa-file-alt text-green-600 text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-blue-600 flex items-center">
-                <i class="fas fa-check mr-1"></i>
-                <span>98% tỷ lệ duyệt</span>
-            </p>
-        </div>
-
-        {{-- Pending Requests --}}
-        <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-start justify-between mb-3">
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Đang chờ xử lý</p>
-                    <h3 class="text-3xl font-bold text-gray-900">8</h3>
-                </div>
-                <div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-clock text-orange-600 text-xl"></i>
-                </div>
-            </div>
-            <p class="text-sm text-orange-600 flex items-center">
-                <i class="fas fa-exclamation-circle mr-1"></i>
-                <span>Đang chờ xử lý</span>
-            </p>
         </div>
     </div>
 
     {{-- Filters --}}
-    <div class="bg-white rounded-xl p-6 border border-gray-200">
-        <form method="GET" action="{{ route('admin.history') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+    <div class="bg-white rounded-xl border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-base font-bold text-gray-800">Tùy chọn tìm kiếm</h3>
+            <div class="flex gap-2">
+                <a href="{{ route('admin.history.export', ['search' => request('search'), 'department_id' => request('department_id'), 'status' => request('status'), 'month_from' => request('month_from'), 'month_to' => request('month_to')]) }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2" title="Xuất Excel">
+                    <i class="fas fa-download"></i>
+                    <span class="text-sm font-medium">Xuất Excel</span>
+                </a>
+                <button type="button" onclick="clearFilters()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2" title="Xóa lọc">
+                    <i class="fas fa-times"></i>
+                    <span class="text-sm font-medium">Xóa lọc</span>
+                </button>
+            </div>
+        </div>
+        <form method="GET" action="{{ route('admin.history') }}" id="filterForm" class="p-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             {{-- Search --}}
             <div class="md:col-span-3">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Từ khóa tìm kiếm</label>
@@ -89,6 +79,22 @@
                 </select>
             </div>
 
+            {{-- Status --}}
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                <select name="status" id="statusFilter"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
+                    <option value="SUBMITTED" {{ request('status') == 'SUBMITTED' ? 'selected' : '' }}>Đã gửi</option>
+                    <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
+                    <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Từ chối</option>
+                    <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
+                    <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
+                    <option value="PAID" {{ request('status') == 'PAID' ? 'selected' : '' }}>Đã thanh toán</option>
+                </select>
+            </div>
+
             {{-- Month From --}}
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Thời gian (Từ tháng)</label>
@@ -101,18 +107,6 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">(Đến tháng)</label>
                 <input type="month" name="month_to" id="monthToFilter" value="{{ request('month_to') }}" 
                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            {{-- Export and Clear Buttons --}}
-            <div class="md:col-span-3 flex justify-end gap-2">
-                <a href="{{ route('admin.history.export', ['search' => request('search'), 'department_id' => request('department_id'), 'month_from' => request('month_from'), 'month_to' => request('month_to')]) }}" 
-                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition" title="Xuất Excel">
-                    <i class="fas fa-download"></i>
-                </a>
-                <button type="button" onclick="clearFilters()" 
-                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition" title="Xóa lọc">
-                    <i class="fas fa-times"></i>
-                </button>
             </div>
         </form>
     </div>
@@ -204,6 +198,10 @@ function clearFilters() {
 
 // Auto-submit form on filter change
 document.getElementById('departmentFilter')?.addEventListener('change', function() {
+    document.getElementById('filterForm').submit();
+});
+
+document.getElementById('statusFilter')?.addEventListener('change', function() {
     document.getElementById('filterForm').submit();
 });
 

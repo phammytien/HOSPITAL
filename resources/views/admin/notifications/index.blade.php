@@ -144,44 +144,32 @@
                     <i class="fas fa-bell text-blue-600 text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-green-600 flex items-center">
-                <i class="fas fa-arrow-up mr-1"></i>
-                <span>+3 thư mới tuần này</span>
-            </p>
         </div>
 
-        {{-- Error Alerts --}}
+        {{-- Unread Notifications --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <div class="flex items-start justify-between mb-3">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Cảnh báo lỗi</p>
-                    <h3 class="text-3xl font-bold text-red-600">3</h3>
+                    <p class="text-sm text-gray-600 mb-1">Chưa đọc</p>
+                    <h3 class="text-3xl font-bold text-orange-600">{{ number_format($stats['unread']) }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-circle text-red-600 text-xl"></i>
+                <div class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-exclamation-circle text-orange-600 text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-red-600 flex items-center">
-                <i class="fas fa-exclamation-triangle mr-1"></i>
-                <span>Cần xử lý gấp</span>
-            </p>
         </div>
 
-        {{-- Maintenance Schedule --}}
+        {{-- Read Notifications --}}
         <div class="bg-white rounded-xl p-6 border border-gray-200">
             <div class="flex items-start justify-between mb-3">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Lịch bảo trì</p>
-                    <h3 class="text-3xl font-bold text-purple-600">1</h3>
+                    <p class="text-sm text-gray-600 mb-1">Đã đọc</p>
+                    <h3 class="text-3xl font-bold text-green-600">{{ number_format($stats['read']) }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-tools text-purple-600 text-xl"></i>
+                <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-600 flex items-center">
-                <i class="far fa-calendar mr-1"></i>
-                <span>Sắp tới: 02/01/2025</span>
-            </p>
         </div>
     </div>
 

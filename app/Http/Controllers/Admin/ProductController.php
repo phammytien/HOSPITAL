@@ -49,7 +49,7 @@ class ProductController extends Controller
         }
 
         // Pagination - 4 items per page
-        $perPage = $request->input('per_page', 4);
+        $perPage = $request->input('per_page', 8);
         $products = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         // Preserve query parameters in pagination links

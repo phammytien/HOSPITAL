@@ -35,6 +35,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/products', [App\Http\Controllers\Admin\ProductController::class, 'index'])->name('products.index');
         Route::post('/products', [App\Http\Controllers\Admin\ProductController::class, 'store'])->name('products.store');
         Route::get('/products/generate-code', [App\Http\Controllers\Admin\ProductController::class, 'generateCode'])->name('products.generate-code');
+        Route::get('/products/suppliers-by-category', [App\Http\Controllers\Admin\ProductController::class, 'getSuppliersByCategory'])->name('products.suppliers-by-category');
+        Route::get('/products/categories-by-supplier', [App\Http\Controllers\Admin\ProductController::class, 'getCategoriesBySupplier'])->name('products.categories-by-supplier');
         Route::get('/products/export', [App\Http\Controllers\Admin\ProductController::class, 'export'])->name('products.export');
         Route::get('/products/{id}', [App\Http\Controllers\Admin\ProductController::class, 'show'])->name('products.show');
         Route::post('/products/{id}/approve', [App\Http\Controllers\Admin\ProductController::class, 'approve'])->name('products.approve');
@@ -86,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/notifications/{id}', [App\Http\Controllers\Admin\NotificationController::class, 'update'])->name('notifications.update');
         Route::post('/notifications/{id}/read', [App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.read');
         Route::delete('/notifications/{id}', [App\Http\Controllers\Admin\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::post('/notifications/upload', [App\Http\Controllers\Admin\NotificationController::class, 'uploadDocument'])->name('notifications.upload');
 
         // Feedback
         Route::get('/feedback', [App\Http\Controllers\Admin\FeedbackController::class, 'index'])->name('feedback');
@@ -177,6 +180,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('buyer.notifications.read-all');
         Route::delete('/buyer/notifications/{id}', [App\Http\Controllers\Buyer\NotificationController::class, 'destroy'])
             ->name('buyer.notifications.destroy');
+        Route::post('/buyer/notifications/upload', [App\Http\Controllers\Buyer\NotificationController::class, 'uploadDocument'])
+            ->name('buyer.notifications.upload');
 
         // Delivery Tracking (Interactive)
         Route::group(['prefix' => 'buyer/tracking', 'as' => 'buyer.tracking.'], function () {

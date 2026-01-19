@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Supplier;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use App\Exports\ProductsExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -57,10 +58,11 @@ class ProductController extends Controller
 
         $categories = ProductCategory::where('is_delete', false)->get();
         $suppliers = Supplier::where('is_delete', false)->get();
+        $warehouses = Warehouse::where('is_delete', false)->get();
         // Get unique units for suggestions
         $units = Product::where('is_delete', false)->whereNotNull('unit')->distinct()->orderBy('unit')->pluck('unit');
 
-        return view('admin.products', compact('products', 'categories', 'suppliers', 'units'));
+        return view('admin.products', compact('products', 'categories', 'suppliers', 'units', 'warehouses'));
     }
     public function store(Request $request)
     {
@@ -72,7 +74,9 @@ class ProductController extends Controller
             'unit_price' => 'required|numeric|min:0',
             'stock_quantity' => 'required|numeric|min:0',
             'description' => 'nullable',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'warehouse_ids' => 'nullable|array',
+            'warehouse_ids.*' => 'exists:warehouses,id'
         ], [
             'product_code.required' => 'Vui lòng nhập mã sản phẩm.',
             'product_code.unique' => 'Mã sản phẩm đã tồn tại.',
@@ -88,7 +92,11 @@ class ProductController extends Controller
             'image.max' => 'Kích thước ảnh không được vượt quá 2MB.'
         ]);
 
-        $product = Product::create($request->except('image'));
+        $product = Product::create($request->except(['image', 'warehouse_ids']));
+
+        if ($request->filled('warehouse_ids')) {
+            $product->warehouses()->sync($request->input('warehouse_ids'));
+        }
 
         // Handle image upload
         \Log::info('=== PRODUCT STORE DEBUG ===');
@@ -113,7 +121,7 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with('warehouses')->findOrFail($id);
         return response()->json($product);
     }
 
@@ -144,7 +152,11 @@ class ProductController extends Controller
         ]);
 
         $product = Product::findOrFail($id);
-        $product->update($request->except('image'));
+        $product->update($request->except(['image', 'warehouse_ids']));
+
+        if ($request->has('warehouse_ids')) {
+            $product->warehouses()->sync($request->input('warehouse_ids', []));
+        }
 
         // Handle image deletion
         if ($request->input('delete_image') == '1') {
@@ -310,5 +322,57 @@ class ProductController extends Controller
     {
         $imageUrl = getProductImage($id);
         return response()->json(['image_url' => $imageUrl]);
+    }
+
+    public function getSuppliersByCategory(Request $request)
+    {
+        $categoryId = $request->input('category_id');
+        
+        if (!$categoryId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn danh mục'
+            ]);
+        }
+
+        // Get suppliers that provide this category
+        $suppliers = Supplier::whereHas('categories', function($query) use ($categoryId) {
+            $query->where('product_categories.id', $categoryId);
+        })
+        ->where('is_delete', false)
+        ->select('id', 'supplier_name', 'supplier_code')
+        ->orderBy('supplier_name')
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'suppliers' => $suppliers
+        ]);
+    }
+
+    public function getCategoriesBySupplier(Request $request)
+    {
+        $supplierId = $request->input('supplier_id');
+        
+        if (!$supplierId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn nhà cung cấp'
+            ]);
+        }
+
+        // Get categories that this supplier can provide
+        $categories = ProductCategory::whereHas('suppliers', function($query) use ($supplierId) {
+            $query->where('suppliers.id', $supplierId);
+        })
+        ->where('is_delete', false)
+        ->select('id', 'category_name', 'category_code')
+        ->orderBy('category_name')
+        ->get();
+
+        return response()->json([
+            'success' => true,
+            'categories' => $categories
+        ]);
     }
 }

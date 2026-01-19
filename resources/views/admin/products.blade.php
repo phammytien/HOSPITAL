@@ -289,6 +289,10 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
+        // Store original full lists for filtering
+        let originalCategories = [];
+        let originalSuppliers = [];
+        
         // Auto-submit form on search input (with debounce)
         let searchTimeout;
         document.getElementById('searchInput')?.addEventListener('input', function(e) {
@@ -370,6 +374,16 @@
                 el.classList.remove('bg-gray-100');
             });
 
+            // Reset dropdowns to show all options
+            resetCategoryDropdown();
+            resetSupplierDropdown();
+            
+            // Reset Warehouse selection
+            const warehouseSelect = document.getElementById('warehouse_ids');
+            if(warehouseSelect) {
+                Array.from(warehouseSelect.options).forEach(opt => opt.selected = false);
+            }
+
             // Make product_code readonly for add mode (will be changed for edit mode below)
             document.getElementById('product_code').setAttribute('readonly', true);
             document.getElementById('product_code').classList.add('bg-gray-50');
@@ -414,6 +428,17 @@
 
                         if(data.supplier_id) {
                             document.getElementById('supplier_id').value = data.supplier_id;
+                        }
+
+                        // Fill Warehouse selection
+                        if(data.warehouses) {
+                            const warehouseSelect = document.getElementById('warehouse_ids');
+                            if(warehouseSelect) {
+                                const selectedIds = data.warehouses.map(w => w.id);
+                                Array.from(warehouseSelect.options).forEach(opt => {
+                                    opt.selected = selectedIds.includes(parseInt(opt.value));
+                                });
+                            }
                         }
 
                         form.dataset.id = id;
@@ -467,7 +492,31 @@
         // Auto-generate Code Logic - works in both Add and Edit mode
         document.getElementById('category_id').addEventListener('change', function() {
             const productId = document.getElementById('productForm').dataset.id;
-            generateProductCode(this.value, productId);
+            const categoryId = this.value;
+            
+            // Generate product code
+            generateProductCode(categoryId, productId);
+            
+            // Filter suppliers by category
+            if (categoryId) {
+                filterSuppliersByCategory(categoryId);
+            } else {
+                // Reset to all suppliers if no category selected
+                resetSupplierDropdown();
+            }
+        });
+        
+        // Listen for supplier changes
+        document.getElementById('supplier_id').addEventListener('change', function() {
+            const supplierId = this.value;
+            
+            // Filter categories by supplier
+            if (supplierId) {
+                filterCategoriesBySupplier(supplierId);
+            } else {
+                // Reset to all categories if no supplier selected
+                resetCategoryDropdown();
+            }
         });
 
         function generateProductCode(categoryId, productId = null) {
@@ -691,6 +740,144 @@
         document.getElementById('stock_quantity')?.addEventListener('input', function() {
             updateInventoryUI(this.value);
         });
+        
+        // === Dynamic Category-Supplier Filtering ===
+        
+        // Store original dropdown options on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            storeOriginalDropdownOptions();
+        });
+        
+        function storeOriginalDropdownOptions() {
+            const categorySelect = document.getElementById('category_id');
+            const supplierSelect = document.getElementById('supplier_id');
+            
+            // Store categories
+            originalCategories = Array.from(categorySelect.options).map(opt => ({
+                value: opt.value,
+                text: opt.text
+            }));
+            
+            // Store suppliers
+            originalSuppliers = Array.from(supplierSelect.options).map(opt => ({
+                value: opt.value,
+                text: opt.text
+            }));
+        }
+        
+        function filterSuppliersByCategory(categoryId) {
+            fetch(`/admin/products/suppliers-by-category?category_id=${categoryId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const supplierSelect = document.getElementById('supplier_id');
+                        const currentValue = supplierSelect.value;
+                        
+                        // Clear current options except the first (placeholder)
+                        supplierSelect.innerHTML = '<option value="">-- Chọn nhà cung cấp --</option>';
+                        
+                        if (data.suppliers.length === 0) {
+                            // No suppliers for this category
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.text = 'Chưa có nhà cung cấp cho danh mục này';
+                            option.disabled = true;
+                            supplierSelect.appendChild(option);
+                        } else {
+                            // Add filtered suppliers
+                            data.suppliers.forEach(supplier => {
+                                const option = document.createElement('option');
+                                option.value = supplier.id;
+                                option.text = supplier.supplier_name;
+                                supplierSelect.appendChild(option);
+                            });
+                            
+                            // Restore previous selection if it's in the filtered list
+                            if (currentValue && data.suppliers.some(s => s.id == currentValue)) {
+                                supplierSelect.value = currentValue;
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error('Error filtering suppliers:', err));
+        }
+        
+        function filterCategoriesBySupplier(supplierId) {
+            fetch(`/admin/products/categories-by-supplier?supplier_id=${supplierId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const categorySelect = document.getElementById('category_id');
+                        const currentValue = categorySelect.value;
+                        
+                        // Clear current options except the first (placeholder)
+                        categorySelect.innerHTML = '<option value="" disabled selected>-- Chọn danh mục --</option>';
+                        
+                        if (data.categories.length === 0) {
+                            // No categories for this supplier
+                            const option = document.createElement('option');
+                            option.value = '';
+                            option.text = 'Nhà cung cấp chưa đăng ký danh mục nào';
+                            option.disabled = true;
+                            categorySelect.appendChild(option);
+                        } else {
+                            // Add filtered categories
+                            data.categories.forEach(category => {
+                                const option = document.createElement('option');
+                                option.value = category.id;
+                                option.text = category.category_name;
+                                categorySelect.appendChild(option);
+                            });
+                            
+                            // Restore previous selection if it's in the filtered list
+                            if (currentValue && data.categories.some(c => c.id == currentValue)) {
+                                categorySelect.value = currentValue;
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error('Error filtering categories:', err));
+        }
+        
+        function resetSupplierDropdown() {
+            const supplierSelect = document.getElementById('supplier_id');
+            const currentValue = supplierSelect.value;
+            
+            supplierSelect.innerHTML = '';
+            originalSuppliers.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.text;
+                supplierSelect.appendChild(option);
+            });
+            
+            // Restore selection if possible
+            if (currentValue) {
+                supplierSelect.value = currentValue;
+            }
+        }
+        
+        function resetCategoryDropdown() {
+            const categorySelect = document.getElementById('category_id');
+            const currentValue = categorySelect.value;
+            
+            categorySelect.innerHTML = '';
+            originalCategories.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.text;
+                if (opt.value === '' || opt.text.includes('Chọn danh mục')) {
+                    option.disabled = true;
+                    option.selected = true;
+                }
+                categorySelect.appendChild(option);
+            });
+            
+            // Restore selection if possible
+            if (currentValue) {
+                categorySelect.value = currentValue;
+            }
+        }
         </script>
     @endpush
 

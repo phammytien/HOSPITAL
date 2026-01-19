@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Supplier;
+use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -27,10 +29,13 @@ class SupplierController extends Controller
         $perPage = $request->input('per_page', 4);
         $suppliers = $query->orderBy('created_at', 'desc')->paginate($perPage);
         
+        // Get all categories for filter/modal
+        $categories = ProductCategory::where('is_delete', false)->get();
+        
         // Preserve query parameters in pagination links
         $suppliers->appends($request->except('page'));
         
-        return view('admin.suppliers', compact('suppliers'));
+        return view('admin.suppliers', compact('suppliers', 'categories'));
     }
 
     public function store(Request $request)
@@ -42,23 +47,30 @@ class SupplierController extends Controller
             'email' => 'nullable|email',
             'contact_person' => 'nullable',
             'address' => 'nullable',
-            'note' => 'nullable'
+            'note' => 'nullable',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:product_categories,id'
         ], [
             'supplier_code.required' => 'Vui lòng nhập mã nhà cung cấp.',
             'supplier_code.unique' => 'Mã nhà cung cấp đã tồn tại.',
             'supplier_name.required' => 'Vui lòng nhập tên nhà cung cấp.',
             'phone_number.digits' => 'Số điện thoại phải gồm đúng 10 số.',
-            'email.email' => 'Email không hợp lệ.'
+            'email.email' => 'Email không hợp lệ.',
+            'categories.*.exists' => 'Danh mục sản phẩm không hợp lệ.'
         ]);
 
-        Supplier::create($request->all());
+        $supplier = Supplier::create($request->all());
+
+        if ($request->has('categories')) {
+            $supplier->categories()->sync($request->input('categories'));
+        }
 
         return response()->json(['success' => true, 'message' => 'Thêm nhà cung cấp thành công!']);
     }
 
     public function show($id)
     {
-        $supplier = Supplier::withCount('products')->findOrFail($id);
+        $supplier = Supplier::withCount('products')->with('categories')->findOrFail($id);
         return response()->json($supplier);
     }
 
@@ -71,17 +83,24 @@ class SupplierController extends Controller
             'email' => 'nullable|email',
             'contact_person' => 'nullable',
             'address' => 'nullable',
-            'note' => 'nullable'
+            'note' => 'nullable',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:product_categories,id'
         ], [
             'supplier_code.required' => 'Vui lòng nhập mã nhà cung cấp.',
             'supplier_code.unique' => 'Mã nhà cung cấp đã tồn tại.',
             'supplier_name.required' => 'Vui lòng nhập tên nhà cung cấp.',
             'phone_number.digits' => 'Số điện thoại phải gồm đúng 10 số.',
-            'email.email' => 'Email không hợp lệ.'
+            'email.email' => 'Email không hợp lệ.',
+            'categories.*.exists' => 'Danh mục sản phẩm không hợp lệ.'
         ]);
 
         $supplier = Supplier::findOrFail($id);
         $supplier->update($request->all());
+
+        if ($request->has('categories')) {
+            $supplier->categories()->sync($request->input('categories'));
+        }
 
         return response()->json(['success' => true, 'message' => 'Cập nhật nhà cung cấp thành công!']);
     }
@@ -89,7 +108,7 @@ class SupplierController extends Controller
     public function generateCode()
     {
         // Find latest supplier code
-        $latestSupplier = Supplier::where('supplier_code', 'like', 'NCC%')
+        $latestSupplier = Supplier::where('supplier_code', 'like', 'SUP%')
             ->orderBy('id', 'desc')
             ->first();
 
@@ -102,7 +121,7 @@ class SupplierController extends Controller
         }
 
         // Pad with zeros (e.g., NCC001, NCC002)
-        $newCode = 'NCC' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $newCode = 'SUP' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         return response()->json(['success' => true, 'code' => $newCode]);
     }

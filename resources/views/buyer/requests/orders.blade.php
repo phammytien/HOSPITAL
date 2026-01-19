@@ -15,7 +15,7 @@
                     $currentStatus = request('status');
                     $tabs = [
                         ['label' => 'Tất cả', 'value' => '', 'icon' => 'M4 6h16M4 12h16M4 18h16'],
-                        ['label' => 'Đã duyệt', 'value' => 'CREATED', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                        ['label' => 'Đã duyệt', 'value' => 'IN_PROGRESS', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
                         ['label' => 'Hoàn thành', 'value' => 'COMPLETED', 'icon' => 'M5 13l4 4L19 7'],
                         ['label' => 'Đã từ chối', 'value' => 'CANCELLED', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'],
                     ];
@@ -116,7 +116,7 @@
         </table>
     </div>
     <div class="px-6 py-4 border-t border-gray-100">
-        {{ $orders->links() }}
+        {{ $orders->appends(request()->query())->links() }}
     </div>
 </div>
 

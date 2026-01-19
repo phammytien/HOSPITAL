@@ -15,7 +15,6 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // Stats
-        $pendingCount = PurchaseRequest::where('is_submitted', true)->whereNull('status')->count();
         $pendingOrderCount = PurchaseOrder::where('status', 'PENDING')->count();
         $approvedMonthCount = PurchaseRequest::where('status', 'APPROVED')
             ->whereMonth('updated_at', now()->month)
@@ -98,7 +97,6 @@ class DashboardController extends Controller
         }
 
         return view('dashboard.buyer', compact(
-            'pendingCount',
             'pendingOrderCount',
             'approvedMonthCount',
             'completedCount',

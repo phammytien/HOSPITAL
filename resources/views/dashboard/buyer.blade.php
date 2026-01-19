@@ -727,4 +727,77 @@
             quantityChart.render();
         });
     </script>
+
+    <!-- Pending Requests Notification Modal -->
+    @if(isset($showPendingModal) && $showPendingModal && $pendingRequestCount > 0)
+    <div id="pendingRequestModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center pointer-events-none">
+        <div class="bg-white rounded-2xl shadow-2xl border border-blue-100 p-6 max-w-md w-full mx-4 pointer-events-auto transform transition-all duration-500 ease-out translate-y-10 opacity-0 relative" id="pendingRequestContent">
+            
+            <button onclick="closePendingModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="flex items-start gap-5">
+                <div class="flex-shrink-0 bg-blue-100 rounded-full p-4"> <!-- Increased padding -->
+                    <svg class="w-8 h-8 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"> <!-- Increased icon size -->
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <div class="flex-1 pt-1">
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Yêu cầu cần xử lý</h3>
+                    <p class="text-sm text-gray-600 mb-5 leading-relaxed">
+                        Hệ thống ghi nhận bạn đang có <span class="font-bold text-blue-600 text-base">{{ $pendingRequestCount }}</span> yêu cầu mua hàng chờ duyệt.
+                    </p>
+                    <a href="{{ route('buyer.requests.index', ['status' => 'PENDING']) }}" 
+                       class="block w-full bg-blue-600 text-white text-sm font-bold py-3 px-4 rounded-xl hover:bg-blue-700 text-center transition shadow-lg shadow-blue-200 hover:shadow-blue-300 transform hover:-translate-y-0.5">
+                        Xử lý ngay lập tức
+                    </a>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="absolute bottom-0 left-0 h-1.5 bg-blue-500 rounded-b-2xl transition-all duration-[5000ms] ease-linear w-full" id="pendingProgressBar"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const modal = document.getElementById('pendingRequestModal');
+                const content = document.getElementById('pendingRequestContent');
+                const progressBar = document.getElementById('pendingProgressBar');
+                
+                if (modal && content) {
+                    modal.classList.remove('hidden');
+                    // Small delay to allow display before transition
+                    setTimeout(() => {
+                        content.classList.remove('translate-y-10', 'opacity-0');
+                    }, 10);
+
+                    // Shrink progress bar
+                    if(progressBar) {
+                        progressBar.style.width = '0%';
+                    }
+
+                    // Auto hide after 5s
+                    setTimeout(function() {
+                        closePendingModal();
+                    }, 5000);
+                }
+            }, 1000); // Show 1 second after page load
+        });
+
+        function closePendingModal() {
+            const modal = document.getElementById('pendingRequestModal');
+            const content = document.getElementById('pendingRequestContent');
+            
+            if (content) {
+                content.classList.add('translate-y-10', 'opacity-0');
+            }
+            
+            setTimeout(() => {
+                if (modal) modal.classList.add('hidden');
+            }, 500);
+        }
+    </script>
+    @endif
 @endsection

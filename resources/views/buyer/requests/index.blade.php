@@ -152,29 +152,31 @@
                                         {{ $statusLabel }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-right space-x-2">
-
-                                    <button onclick="openCompareModal({{ $req->id }})"
-                                        class="text-indigo-600 hover:text-indigo-900 text-sm font-medium" title="So sánh">
-                                        So kết quả
-                                    </button>
-
-                                    @if($req->is_submitted && (!$req->status || $req->status == 'PENDING'))
-                                        <span class="text-gray-300">|</span>
-                                        <form action="{{ route('buyer.requests.approve', $req->id) }}" method="POST"
-                                            class="inline-block"
-                                            onsubmit="return confirm('Bạn có chắc chắn muốn duyệt yêu cầu này?');">
-                                            @csrf
-                                            <button type="submit" class="text-green-600 hover:text-green-900 text-sm font-medium">
-                                                Duyệt
-                                            </button>
-                                        </form>
-                                        <button onclick="openRejectModal({{ $req->id }})"
-                                            class="text-red-600 hover:text-red-900 text-sm font-medium">
-                                            Từ chối
+                                <td class="px-6 py-4 text-right">
+                                    <div class="inline-flex flex-col items-center gap-1">
+                                        <button onclick="openCompareModal({{ $req->id }})"
+                                            class="text-indigo-600 hover:text-indigo-900 text-sm font-medium block mb-1" title="So sánh">
+                                            So kết quả
                                         </button>
 
-                                    @endif
+                                        @if($req->is_submitted && (!$req->status || $req->status == 'PENDING'))
+                                            <div class="flex items-center justify-end gap-2 text-xs mt-1">
+                                                <form action="{{ route('buyer.requests.approve', $req->id) }}" method="POST"
+                                                    class="inline-block"
+                                                    onsubmit="return confirm('Bạn có chắc chắn muốn duyệt yêu cầu này?');">
+                                                    @csrf
+                                                    <button type="submit" class="bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800 px-3 py-1.5 rounded-lg font-bold transition-colors whitespace-nowrap shadow-sm">
+                                                        Duyệt
+                                                    </button>
+                                                </form>
+                                                
+                                                <button onclick="openRejectModal({{ $req->id }})"
+                                                    class="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 px-3 py-1.5 rounded-lg font-bold transition-colors whitespace-nowrap shadow-sm border border-red-100">
+                                                    Từ chối
+                                                </button>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty

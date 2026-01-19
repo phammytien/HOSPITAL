@@ -22,6 +22,12 @@ class DashboardController extends Controller
             ->count();
         $completedCount = PurchaseOrder::where('status', 'COMPLETED')->count();
         $rejectedCount = PurchaseRequest::where('status', 'REJECTED')->count();
+        $pendingRequestCount = PurchaseRequest::where(function($query) {
+            $query->where('status', 'PENDING')
+                  ->orWhere(function($q) {
+                      $q->whereNull('status')->where('is_submitted', true);
+                  });
+        })->count();
 
         // Recent Requests (last 5)
         $recentRequests = PurchaseRequest::with(['department', 'requester'])
@@ -96,6 +102,13 @@ class DashboardController extends Controller
             $quantityChartData[] = $quarterlyData[$i] ?? 0;
         }
 
+        // Logic to show pending request modal only once per session
+        $showPendingModal = false;
+        if (!session()->has('has_shown_pending_modal') && $pendingRequestCount > 0) {
+            $showPendingModal = true;
+            session()->put('has_shown_pending_modal', true);
+        }
+
         return view('dashboard.buyer', compact(
             'pendingOrderCount',
             'approvedMonthCount',
@@ -112,7 +125,9 @@ class DashboardController extends Controller
             'spendingYear',
             'spendingYear',
             'quantityYear',
-            'notifications' // Added variable
+            'notifications',
+            'pendingRequestCount',
+            'showPendingModal'
         ));
     }
 }

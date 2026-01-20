@@ -184,59 +184,75 @@ class DeliveryTrackingController extends Controller
         if ($status == 'DELIVERED') {
             $order->items()->update(['status' => 'DELIVERED']);
 
-            // Notification: Delivered to Warehouse
-            \App\Models\Notification::create([
-                'title' => 'Vật tư đã giao',
-                'message' => "Đơn hàng #{$order->order_code} đã về kho",
-                'type' => 'info',
-                'target_role' => 'department',
-                'created_by' => auth()->id(),
-            ]);
+            // Notification: Delivered to Warehouse (Wrapped in try-catch)
+            try {
+                \App\Models\Notification::create([
+                    'title' => 'Vật tư đã giao',
+                    'message' => "Đơn hàng #{$order->order_code} đã về kho",
+                    'type' => 'info',
+                    'target_role' => 'department',
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Notification creation failed for Order #{$order->id}: " . $e->getMessage());
+            }
 
         } elseif ($status == 'ORDERED') {
             // Update ALL items to ORDERED when the whole order is confirmed
             $order->items()->update(['status' => 'ORDERED']);
 
-            // Notification: Order Confirmed by Buyer
-            \App\Models\Notification::create([
-                'title' => 'Đơn hàng đã duyệt',
-                'message' => "Bộ phận mua hàng đã xác nhận đơn #{$order->order_code}",
-                'type' => 'success',
-                'target_role' => 'department',
-                'created_by' => auth()->id(),
-            ]);
+            // Notification: Order Confirmed by Buyer (Wrapped in try-catch)
+            try {
+                \App\Models\Notification::create([
+                    'title' => 'Đơn hàng đã duyệt',
+                    'message' => "Bộ phận mua hàng đã xác nhận đơn #{$order->order_code}",
+                    'type' => 'success',
+                    'target_role' => 'department',
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Notification creation failed for Order #{$order->id}: " . $e->getMessage());
+            }
         } elseif ($status == 'DELIVERING') {
             // Update ALL items to DELIVERING
             $order->items()->update(['status' => 'DELIVERING']);
-            
-            // Notification: Shipping started
-            \App\Models\Notification::create([
-                'title' => 'Đơn hàng đang giao',
-                'message' => "Đơn hàng #{$order->order_code} đang trên đường giao",
-                'type' => 'info',
-                'target_role' => 'department',
-                'created_by' => auth()->id(),
-            ]);
+
+            // Notification: Shipping started (Wrapped in try-catch)
+            try {
+                \App\Models\Notification::create([
+                    'title' => 'Đơn hàng đang giao',
+                    'message' => "Đơn hàng #{$order->order_code} đang trên đường giao",
+                    'type' => 'info',
+                    'target_role' => 'department',
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Notification creation failed for Order #{$order->id}: " . $e->getMessage());
+            }
         }
 
         if ($status == 'PENDING') {
             // Update items to PENDING
             $order->items()->update(['status' => 'PENDING']);
 
-            // Notification: Order Confirmed/Pending by Buyer
-            \App\Models\Notification::create([
-                'title' => 'Đơn hàng chờ xử lý',
-                'message' => "Bộ phận mua hàng đã xác nhận ngày giao cho đơn #{$order->order_code}" . ($order->expected_delivery_date ? ": " . \Carbon\Carbon::parse($order->expected_delivery_date)->format('d/m/Y') : ""),
-                'type' => 'info',
-                'target_role' => 'department',
-                'created_by' => auth()->id(),
-            ]);
+            // Notification: Order Confirmed/Pending by Buyer (Wrapped in try-catch)
+            try {
+                \App\Models\Notification::create([
+                    'title' => 'Đơn hàng chờ xử lý',
+                    'message' => "Bộ phận mua hàng đã xác nhận ngày giao cho đơn #{$order->order_code}" . ($order->expected_delivery_date ? ": " . \Carbon\Carbon::parse($order->expected_delivery_date)->format('d/m/Y') : ""),
+                    'type' => 'info',
+                    'target_role' => 'department',
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Notification creation failed for Order #{$order->id}: " . $e->getMessage());
+            }
         }
 
         if ($status == 'COMPLETED') {
             // Keep items status updated if needed
             $order->items()->update(['status' => 'COMPLETED']);
-            
+
             $purchaseRequest = $order->purchaseRequest;
             if (!$purchaseRequest && $order->purchase_request_id) {
                 $purchaseRequest = \App\Models\PurchaseRequest::find($order->purchase_request_id);
@@ -246,15 +262,19 @@ class DeliveryTrackingController extends Controller
                 $purchaseRequest->status = 'COMPLETED';
                 $purchaseRequest->save();
             }
-            
-            // Notification: Order Completed
-            \App\Models\Notification::create([
-                'title' => 'Đơn hàng hoàn tất',
-                'message' => "Đơn hàng #{$order->order_code} đã hoàn tất quy trình",
-                'type' => 'success',
-                'target_role' => 'department',
-                'created_by' => auth()->id(),
-            ]);
+
+            // Notification: Order Completed (Wrapped in try-catch)
+            try {
+                \App\Models\Notification::create([
+                    'title' => 'Đơn hàng hoàn tất',
+                    'message' => "Đơn hàng #{$order->order_code} đã hoàn tất quy trình",
+                    'type' => 'success',
+                    'target_role' => 'department',
+                    'created_by' => auth()->id(),
+                ]);
+            } catch (\Exception $e) {
+                \Log::error("Notification creation failed for Order #{$order->id}: " . $e->getMessage());
+            }
         }
 
         return true;

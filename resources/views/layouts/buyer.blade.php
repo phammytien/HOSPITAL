@@ -18,10 +18,6 @@
                 display: none !important;
             }
         }
-        /* Ensure notification dropdown displays above all content */
-        #notificationDropdown {
-            z-index: 9999 !important;
-        }
         @keyframes slide-in {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -204,9 +200,9 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col bg-gray-50">
+        <main class="flex-1 flex flex-col bg-gray-50 overflow-hidden">
             <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 d-print-none" style="position: relative; z-index: 1000;">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-10 d-print-none">
 
                 <h1 class="text-xl font-bold text-gray-800">@yield('header_title', 'Dashboard')</h1>
 
@@ -225,7 +221,7 @@
                         Tạo yêu cầu mới
                     </button> -->
 
-                    <div class="relative ml-4" style="z-index: 10000;">
+                    <div class="relative ml-4">
                         <button id="notificationBtn"
                             class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg relative transition-colors duration-200">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,8 +236,7 @@
 
                         <!-- Dropdown -->
                         <div id="notificationDropdown"
-                            class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-[9999] transform origin-top-right transition-all"
-                            style="box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;">
+                            class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 transform origin-top-right transition-all">
 
                             <div class="max-h-[400px] overflow-y-auto">
                                 @if(isset($notifications))
@@ -273,7 +268,7 @@
                                                  <p class="text-xs text-gray-600 leading-snug mb-1 line-clamp-2">
                                                     {!! $notify->message !!}
                                                  </p>
-                                                 <p class="text-[10px] text-gray-400 font-medium">{{ \App\Helpers\TimeHelper::formatNotificationTime($notify->created_at) }}</p>
+                                                 <p class="text-[10px] text-gray-400 font-medium">{{ $notify->created_at->diffForHumans() }}</p>
                                              </div>
                                              
                                              @if(!$notify->is_read)
@@ -308,11 +303,6 @@
                 @yield('content')
             </div>
         </main>
-    </div>
-
-    <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed top-20 right-6 z-[10001] space-y-3" style="max-width: 420px;">
-        <!-- Toasts will be inserted here dynamically -->
     </div>
 
     <!-- Request Detail Modal -->
@@ -486,192 +476,7 @@
         function closeRequestDetailModal() {
             document.getElementById('requestDetailModal').classList.add('hidden');
         }
-        //Vinh3
-         // ===== TOAST NOTIFICATION SYSTEM =====
-        class ToastManager {
-            constructor() {
-                this.container = document.getElementById('toastContainer');
-                this.queue = [];
-                this.isProcessing = false;
-                this.activeToasts = new Set();
-            }
 
-            // Create toast HTML
-            createToastHTML(notification) {
-                const { id, title, message, type } = notification;
-                
-                // Type configurations
-                const typeConfig = {
-                    'info': { 
-                        borderColor: 'border-blue-400', 
-                        bgColor: 'bg-blue-50',
-                        iconBg: 'bg-blue-100',
-                        iconColor: 'text-blue-600',
-                        icon: 'fa-info-circle'
-                    },
-                    'important': { 
-                        borderColor: 'border-purple-400', 
-                        bgColor: 'bg-purple-50',
-                        iconBg: 'bg-purple-100',
-                        iconColor: 'text-purple-600',
-                        icon: 'fa-star'
-                    },
-                    'warning': { 
-                        borderColor: 'border-yellow-400', 
-                        bgColor: 'bg-yellow-50',
-                        iconBg: 'bg-yellow-100',
-                        iconColor: 'text-yellow-600',
-                        icon: 'fa-exclamation-triangle'
-                    },
-                    'error': { 
-                        borderColor: 'border-red-400', 
-                        bgColor: 'bg-red-50',
-                        iconBg: 'bg-red-100',
-                        iconColor: 'text-red-600',
-                        icon: 'fa-exclamation-circle'
-                    }
-                };
-
-                const config = typeConfig[type] || typeConfig['info'];
-                
-                const toastId = `toast-${id}-${Date.now()}`;
-                
-                return `
-                    <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out"
-                         style="transform: translateX(500px); opacity: 0; max-width: 420px;">
-                        <div class="flex items-start gap-4 p-4">
-                            <!-- Icon -->
-                            <div class="flex-shrink-0 w-14 h-14 rounded-full ${config.iconBg} ${config.bgColor} flex items-center justify-center border-2 ${config.borderColor}">
-                                <i class="fas ${config.icon} ${config.iconColor} text-xl"></i>
-                            </div>
-                            
-                            <!-- Content -->
-                            <div class="flex-1 min-w-0">
-                                <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
-                                <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
-                            </div>
-                            
-                            <!-- Close button -->
-                            <button onclick="toastManager.removeToast('${toastId}')" 
-                                    class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- Progress bar -->
-                        <div class="h-1 ${config.bgColor}">
-                            <div class="toast-progress h-full ${config.borderColor.replace('border-', 'bg-')}" 
-                                 style="width: 100%; transition: width 5s linear;"></div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Add toast to queue
-            addToast(notification) {
-                this.queue.push(notification);
-                if (!this.isProcessing) {
-                    this.processQueue();
-                }
-            }
-
-            // Process toast queue
-            async processQueue() {
-                if (this.queue.length === 0) {
-                    this.isProcessing = false;
-                    return;
-                }
-
-                this.isProcessing = true;
-                const notification = this.queue.shift();
-                
-                await this.showToast(notification);
-                
-                // Wait a bit before showing next toast
-                setTimeout(() => {
-                    this.processQueue();
-                }, 800); // 0.8s delay between toasts
-            }
-
-            // Show single toast
-            async showToast(notification) {
-                return new Promise((resolve) => {
-                    const toastHTML = this.createToastHTML(notification);
-                    this.container.insertAdjacentHTML('beforeend', toastHTML);
-                    
-                    const toastId = `toast-${notification.id}-${Date.now()}`;
-                    const toastElement = document.getElementById(toastId);
-                    this.activeToasts.add(toastId);
-                    
-                    // Trigger slide-in animation
-                    setTimeout(() => {
-                        toastElement.style.transform = 'translateX(0)';
-                        toastElement.style.opacity = '1';
-                        
-                        // Start progress bar animation
-                        const progressBar = toastElement.querySelector('.toast-progress');
-                        setTimeout(() => {
-                            progressBar.style.width = '0%';
-                        }, 50);
-                    }, 50);
-                    
-                    // Auto-dismiss after 5 seconds
-                    setTimeout(() => {
-                        this.removeToast(toastId);
-                        resolve();
-                    }, 5000);
-                });
-            }
-
-            // Remove toast
-            removeToast(toastId) {
-                const toast = document.getElementById(toastId);
-                if (!toast) return;
-                
-                // Slide out animation
-                toast.style.transform = 'translateX(500px)';
-                toast.style.opacity = '0';
-                
-                setTimeout(() => {
-                    toast.remove();
-                    this.activeToasts.delete(toastId);
-                }, 300);
-            }
-
-            // Show all unread notifications
-            showUnreadNotifications(notifications) {
-                notifications.forEach(notification => {
-                    this.addToast(notification);
-                });
-            }
-        }
-
-        // Initialize toast manager
-        const toastManager = new ToastManager();
-
-        // Auto-display unread notifications on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            @if(isset($notifications) && $notifications->where('is_read', false)->count() > 0)
-                const unreadNotifications = [
-                    @foreach($notifications->where('is_read', false) as $notify)
-                        {
-                            id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
-                            type: '{{ $notify->type }}'
-                        },
-                    @endforeach
-                ];
-                
-                // Show toasts after a short delay
-                setTimeout(() => {
-                    toastManager.showUnreadNotifications(unreadNotifications);
-                }, 1000);
-            @endif
-        });
-
-        //master
         // Auto-hide flash messages after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             const alerts = document.querySelectorAll('.flash-message');

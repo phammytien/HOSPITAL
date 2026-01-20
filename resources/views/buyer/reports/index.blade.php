@@ -28,11 +28,11 @@
         </div>
 
         <!-- Filters -->
-        <form method="GET" action="{{ route('buyer.reports.index') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form method="GET" action="{{ route('buyer.reports.index') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
             <!-- Department Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Khoa/Phòng</label>
-                <select name="department_id" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select name="department_id" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Tất cả</option>
                     @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ $departmentId == $dept->id ? 'selected' : '' }}>
@@ -45,7 +45,7 @@
             <!-- Status Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Trạng thái</label>
-                <select name="status" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select name="status" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Tất cả</option>
                     @foreach($statuses as $s)
                         <option value="{{ $s }}" {{ $status == $s ? 'selected' : '' }}>
@@ -62,7 +62,7 @@
             <!-- Period Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Kỳ/Quý</label>
-                <select name="period" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select name="period" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">-- Tất cả Kỳ/Quý --</option>
                     @foreach($periods as $p)
                         <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
@@ -70,9 +70,15 @@
                 </select>
             </div>
 
-            <!-- Clear Filter Button -->
-            <div class="flex items-end">
-                <a href="{{ route('buyer.reports.index') }}" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition text-center whitespace-nowrap">
+            <!-- Year Filter (hidden but included) -->
+
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 items-end">
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition whitespace-nowrap">
+                    Lọc
+                </button>
+                <a href="{{ route('buyer.reports.index') }}" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition text-center whitespace-nowrap">
                     Xóa lọc
                 </a>
             </div>

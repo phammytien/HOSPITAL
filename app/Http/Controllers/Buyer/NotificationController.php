@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Buyer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
-use App\Helpers\NotificationHelper;
-use App\Services\DocumentParserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,11 +42,7 @@ class NotificationController extends Controller
             'read' => Notification::where('is_read', true)->count(),
         ];
 
-        // Get notification types from database
-        $notificationTypes = NotificationHelper::getNotificationTypes();
-        $targetRoles = NotificationHelper::getTargetRoles();
-
-        return view('buyer.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'targetRoles'));
+        return view('buyer.notifications.index', compact('notifications', 'stats'));
     }
 
     /**
@@ -65,13 +59,10 @@ class NotificationController extends Controller
      */
     public function store(Request $request)
     {
-        // Get valid types from database
-        $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
-        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => "required|in:$validTypes",
+            'type' => 'required|in:info,success,warning,error',
             'target_role' => 'required|in:ADMIN,DEPARTMENT',
         ]);
 
@@ -96,13 +87,10 @@ class NotificationController extends Controller
      */
     public function update(Request $request, $id)
     {
-        // Get valid types from database
-        $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
-        
         $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => "required|in:$validTypes",
+            'type' => 'required|in:info,success,warning,error',
             'target_role' => 'required|in:ADMIN,DEPARTMENT',
         ]);
 
@@ -162,35 +150,6 @@ class NotificationController extends Controller
             return back()->with('success', 'Xóa thông báo thành công!');
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra!');
-        }
-    }
-
-    /**
-     * Upload document and extract notification data
-     */
-    public function uploadDocument(Request $request)
-    {
-        try {
-            $request->validate([
-                'document' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max
-            ]);
-
-            $file = $request->file('document');
-            $parser = new DocumentParserService();
-            
-            $data = $parser->extractNotificationData($file);
-            
-            return response()->json([
-                'success' => true,
-                'data' => $data,
-                'message' => 'File đã được phân tích thành công'
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không thể phân tích file: ' . $e->getMessage()
-            ], 400);
         }
     }
 }

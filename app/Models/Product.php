@@ -43,12 +43,6 @@ class Product extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
-    public function warehouses()
-    {
-        return $this->belongsToMany(Warehouse::class, 'inventory', 'product_id', 'warehouse_id')
-            ->withPivot('quantity');
-    }
-
     /**
      * Get all images for this product
      */

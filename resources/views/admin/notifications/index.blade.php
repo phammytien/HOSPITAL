@@ -64,175 +64,72 @@
     {{-- Create Form (Hidden by default) --}}
     <div id="createForm" class="hidden bg-white rounded-xl p-8 border border-gray-200">
         <h3 class="text-xl font-bold text-gray-900 mb-6">Tạo thông báo mới</h3>
-        
-        {{-- Tabs --}}
-        <div class="flex border-b border-gray-200 mb-6">
-            <button type="button" onclick="switchTab('manual')" id="manualTab" 
-                    class="tab-button px-6 py-3 font-medium text-blue-600 border-b-2 border-blue-600">
-                <i class="fas fa-edit mr-2"></i>
-                Nhập thủ công
-            </button>
-            <button type="button" onclick="switchTab('upload')" id="uploadTab"
-                    class="tab-button px-6 py-3 font-medium text-gray-500 hover:text-gray-700">
-                <i class="fas fa-cloud-upload-alt mr-2"></i>
-                Upload file
-            </button>
-        </div>
+        <form method="POST" action="{{ route('admin.notifications.store') }}">
+            @csrf
 
-        {{-- Manual Form Tab --}}
-        <div id="manualFormTab">
-            <form method="POST" action="{{ route('admin.notifications.store') }}" id="manualNotificationForm">
-                @csrf
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {{-- Title --}}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Tiêu đề thông báo <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="title" id="manualTitle" required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               placeholder="Nhập tiêu đề thông báo...">
-                    </div>
-
-                    {{-- Message --}}
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Nội dung <span class="text-red-500">*</span>
-                        </label>
-                        <textarea name="message" id="manualMessage" rows="4" required
-                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  placeholder="Nhập nội dung thông báo..."></textarea>
-                    </div>
-
-                    {{-- Type --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Loại thông báo <span class="text-red-500">*</span>
-                        </label>
-                        <select name="type" id="manualType" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($notificationTypes as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Target Role --}}
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Đối tượng nhận <span class="text-red-500">*</span>
-                        </label>
-                        <select name="target_role" id="manualTargetRole" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="ALL">Tất cả người dùng</option>
-                            <option value="BUYER">Nhân viên mua hàng</option>
-                            <option value="DEPARTMENT">Khoa/Phòng</option>
-                        </select>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {{-- Title --}}
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Tiêu đề thông báo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           placeholder="Nhập tiêu đề thông báo...">
                 </div>
 
-                {{-- Actions --}}
-                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="toggleCreateForm()" 
-                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                        Hủy
-                    </button>
-                    <button type="submit" 
-                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-paper-plane mr-2"></i>
-                        Gửi thông báo
-                    </button>
+                {{-- Message --}}
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Nội dung <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="message" rows="4" required
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Nhập nội dung thông báo..."></textarea>
                 </div>
-            </form>
-        </div>
 
-        {{-- Upload File Tab --}}
-        <div id="uploadFormTab" class="hidden">
-            {{-- Upload Zone --}}
-            <div id="uploadZone" class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition cursor-pointer">
-                <input type="file" id="documentFile" accept=".pdf,.doc,.docx" class="hidden">
-                <div id="uploadPrompt">
-                    <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4"></i>
-                    <p class="text-lg font-medium text-gray-700 mb-2">Kéo thả file vào đây hoặc click để chọn</p>
-                    <p class="text-sm text-gray-500">Hỗ trợ: PDF, Word (.doc, .docx) - Tối đa 5MB</p>
+                {{-- Type --}}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Loại thông báo <span class="text-red-500">*</span>
+                    </label>
+                    <select name="type" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="info">Thông tin</option>
+                        <option value="success">Hoàn thành</option>
+                        <option value="warning">Cảnh báo</option>
+                        <option value="error">Lỗi</option>
+                    </select>
                 </div>
-                <div id="uploadProgress" class="hidden">
-                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-3"></i>
-                    <p class="text-gray-700">Đang phân tích file...</p>
+
+                {{-- Target Role --}}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Đối tượng nhận <span class="text-red-500">*</span>
+                    </label>
+                    <select name="target_role" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="ALL">Tất cả người dùng</option>
+                        <option value="BUYER">Nhân viên mua hàng</option>
+                        <option value="DEPARTMENT">Khoa/Phòng</option>
+                    </select>
                 </div>
             </div>
 
-            {{-- Extracted Data Form (Hidden initially) --}}
-            <form method="POST" action="{{ route('admin.notifications.store') }}" id="extractedNotificationForm" class="hidden mt-6">
-                @csrf
-                
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                    <div class="flex items-center gap-2 text-green-700">
-                        <i class="fas fa-check-circle"></i>
-                        <span class="font-medium">File đã được phân tích thành công!</span>
-                    </div>
-                    <p class="text-sm text-green-600 mt-1">Bạn có thể chỉnh sửa nội dung trước khi gửi thông báo.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Tiêu đề thông báo <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="title" id="extractedTitle" required
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Nội dung <span class="text-red-500">*</span>
-                        </label>
-                        <textarea name="message" id="extractedMessage" rows="6" required
-                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Loại thông báo <span class="text-red-500">*</span>
-                        </label>
-                        <select name="type" id="extractedType" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($notificationTypes as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Đối tượng nhận <span class="text-red-500">*</span>
-                        </label>
-                        <select name="target_role" id="extractedTargetRole" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="ALL">Tất cả người dùng</option>
-                            <option value="BUYER">Nhân viên mua hàng</option>
-                            <option value="DEPARTMENT">Khoa/Phòng</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="resetUploadForm()" 
-                            class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                        <i class="fas fa-redo mr-2"></i>
-                        Upload lại
-                    </button>
-                    <button type="submit" 
-                            class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-paper-plane mr-2"></i>
-                        Gửi thông báo
-                    </button>
-                </div>
-            </form>
-        </div>
+            {{-- Actions --}}
+            <div class="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                <button type="button" onclick="toggleCreateForm()" 
+                        class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                    Hủy
+                </button>
+                <button type="submit" 
+                        class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Gửi thông báo
+                </button>
+            </div>
+        </form>
     </div>
-
 
     {{-- Statistics Cards --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -300,10 +197,10 @@
                 <i class="fas fa-times-circle mr-2"></i>
                 Khẩn cấp
             </a>
-            <a href="{{ route('admin.notifications', ['type' => 'important']) }}" 
-               class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'important' ? 'bg-purple-50 text-purple-600 border-b-2 border-purple-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                <i class="fas fa-star mr-2"></i>
-                Quan trọng
+            <a href="{{ route('admin.notifications', ['type' => 'success']) }}" 
+               class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'success' ? 'bg-green-50 text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                <i class="fas fa-check-circle mr-2"></i>
+                Hoàn thành
             </a>
         </div>
     </div>
@@ -335,7 +232,7 @@
                     'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50', 'badge' => 'KHẨN CẤP'],
                     'warning' => ['icon' => 'chart-line', 'color' => 'orange', 'bg' => 'orange-50', 'badge' => 'CẢNH BÁO'],
                     'info' => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50', 'badge' => 'THÔNG TIN'],
-                    'important' => ['icon' => 'star', 'color' => 'purple', 'bg' => 'purple-50', 'badge' => 'QUAN TRỌNG'],
+                    'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'HOÀN THÀNH'],
                 ];
                 $config = $icons[$notification->type] ?? $icons['info'];
             @endphp
@@ -387,7 +284,7 @@
                             </span>
                             <span class="flex items-center gap-1">
                                 <i class="far fa-clock"></i>
-                                {{ \App\Helpers\TimeHelper::formatNotificationTime($notification->created_at) }}
+                                {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
                             </span>
                         </div>
                     </div>
@@ -492,9 +389,10 @@
                         </label>
                         <select id="editType" name="type" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($notificationTypes as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
+                            <option value="info">Thông tin</option>
+                            <option value="success">Hoàn thành</option>
+                            <option value="warning">Cảnh báo</option>
+                            <option value="error">Lỗi</option>
                         </select>
                     </div>
 
@@ -621,134 +519,6 @@ if (document.getElementById('toast')) {
         closeToast();
     }, 3000);
 }
-
-// ===== FILE UPLOAD FUNCTIONALITY =====
-
-// Tab switching
-function switchTab(tab) {
-    const manualTab = document.getElementById('manualTab');
-    const uploadTab = document.getElementById('uploadTab');
-    const manualFormTab = document.getElementById('manualFormTab');
-    const uploadFormTab = document.getElementById('uploadFormTab');
-    
-    if (tab === 'manual') {
-        manualTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-        manualTab.classList.remove('text-gray-500');
-        uploadTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        uploadTab.classList.add('text-gray-500');
-        
-        manualFormTab.classList.remove('hidden');
-        uploadFormTab.classList.add('hidden');
-    } else {
-        uploadTab.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
-        uploadTab.classList.remove('text-gray-500');
-        manualTab.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
-        manualTab.classList.add('text-gray-500');
-        
-        uploadFormTab.classList.remove('hidden');
-        manualFormTab.classList.add('hidden');
-    }
-}
-
-// File upload handling
-const uploadZone = document.getElementById('uploadZone');
-const documentFile = document.getElementById('documentFile');
-
-if (uploadZone && documentFile) {
-    // Click to select file
-    uploadZone.addEventListener('click', () => {
-        documentFile.click();
-    });
-    
-    // Drag and drop
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('border-blue-500', 'bg-blue-50');
-    });
-    
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('border-blue-500', 'bg-blue-50');
-    });
-    
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('border-blue-500', 'bg-blue-50');
-        
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            documentFile.files = files;
-            handleFileUpload(files[0]);
-        }
-    });
-    
-    // File input change
-    documentFile.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFileUpload(e.target.files[0]);
-        }
-    });
-}
-
-function handleFileUpload(file) {
-    // Validate file type
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!allowedTypes.includes(file.type)) {
-        alert('Chỉ hỗ trợ file PDF và Word (.doc, .docx)');
-        return;
-    }
-    
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('File không được lớn hơn 5MB');
-        return;
-    }
-    
-    // Show progress
-    document.getElementById('uploadPrompt').classList.add('hidden');
-    document.getElementById('uploadProgress').classList.remove('hidden');
-    
-    // Upload via AJAX
-    const formData = new FormData();
-    formData.append('document', file);
-    
-    fetch('{{ route("admin.notifications.upload") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Fill form with extracted data
-            document.getElementById('extractedTitle').value = data.data.title;
-            document.getElementById('extractedMessage').value = data.data.message;
-            document.getElementById('extractedType').value = data.data.type;
-            
-            // Show extracted form
-            document.getElementById('uploadZone').classList.add('hidden');
-            document.getElementById('extractedNotificationForm').classList.remove('hidden');
-        } else {
-            alert('Lỗi: ' + data.message);
-            resetUploadForm();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Có lỗi xảy ra khi upload file');
-        resetUploadForm();
-    });
-}
-
-function resetUploadForm() {
-    document.getElementById('uploadZone').classList.remove('hidden');
-    document.getElementById('extractedNotificationForm').classList.add('hidden');
-    document.getElementById('uploadPrompt').classList.remove('hidden');
-    document.getElementById('uploadProgress').classList.add('hidden');
-    document.getElementById('documentFile').value = '';
-}
-
 </script>
 @endpush
 @endsection

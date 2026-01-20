@@ -84,7 +84,7 @@
                         class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Tất cả loại</option>
                     <option value="info" {{ request('type') == 'info' ? 'selected' : '' }}>Thông tin</option>
-                    <option value="important" {{ request('type') == 'important' ? 'selected' : '' }}>Quan trọng</option>
+                    <option value="success" {{ request('type') == 'success' ? 'selected' : '' }}>Thành công</option>
                     <option value="warning" {{ request('type') == 'warning' ? 'selected' : '' }}>Cảnh báo</option>
                     <option value="error" {{ request('type') == 'error' ? 'selected' : '' }}>Lỗi</option>
                 </select>
@@ -106,7 +106,7 @@
                         'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50', 'badge' => 'KHẨN CẤP'],
                         'warning' => ['icon' => 'exclamation-triangle', 'color' => 'orange', 'bg' => 'orange-50', 'badge' => 'CẢNH BÁO'],
                         'info' => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50', 'badge' => 'THÔNG TIN'],
-                        'important' => ['icon' => 'star', 'color' => 'purple', 'bg' => 'purple-50', 'badge' => 'QUAN TRỌNG'],
+                        'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'THÀNH CÔNG'],
                     ];
                     $config = $icons[$notification->type] ?? $icons['info'];
                 @endphp
@@ -147,7 +147,7 @@
                                 </span>
                                 <span class="flex items-center gap-1">
                                     <i class="far fa-clock"></i>
-                                    {{ \App\Helpers\TimeHelper::formatNotificationTime($notification->created_at) }}
+                                    {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
                                 </span>
                             </div>
                         </div>
@@ -208,9 +208,10 @@
                         </label>
                         <select name="type" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($notificationTypes as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
+                            <option value="info">Thông tin</option>
+                            <option value="success">Thành công</option>
+                            <option value="warning">Cảnh báo</option>
+                            <option value="error">Lỗi</option>
                         </select>
                     </div>
 
@@ -278,9 +279,10 @@
                         </label>
                         <select id="editType" name="type" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            @foreach($notificationTypes as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
+                            <option value="info">Thông tin</option>
+                            <option value="success">Thành công</option>
+                            <option value="warning">Cảnh báo</option>
+                            <option value="error">Lỗi</option>
                         </select>
                     </div>
 
@@ -415,7 +417,7 @@ function viewNotificationDetail(id, title, message, type, isRead) {
     
     // Set badge based on type
     const badgeConfig = {
-        'important': { text: 'QUAN TRỌNG', class: 'bg-purple-100 text-purple-700' },
+        'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
         'error': { text: 'LỖI', class: 'bg-red-100 text-red-700' },
         'warning': { text: 'CẢNH BÁO', class: 'bg-yellow-100 text-yellow-700' },
         'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }

@@ -267,13 +267,13 @@
                                                 @php 
                                                     $data = $notify->data ?? [];
                                                     $iconClass = match($notify->type) {
-                                                        'success' => 'bg-green-100 text-green-600',
+                                                        'important' => 'bg-purple-100 text-purple-600',
                                                         'error', 'danger' => 'bg-red-100 text-red-600',
                                                         'warning' => 'bg-yellow-100 text-yellow-600',
                                                         default => 'bg-blue-100 text-blue-600'
                                                     };
                                                     $icon = match($notify->type) {
-                                                        'success' => 'fa-check',
+                                                        'important' => 'fa-star',
                                                         'error', 'danger' => 'fa-times',
                                                         'warning' => 'fa-exclamation-triangle',
                                                         default => 'fa-info'
@@ -509,7 +509,7 @@
             // Set badge
             const badgeEl = document.getElementById('notifyModalBadge');
             const badgeConfig = {
-                'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
+                'important': { text: 'QUAN TRỌNG', class: 'bg-purple-100 text-purple-700' },
                 'error': { text: 'KHẨN CẤP', class: 'bg-red-100 text-red-700' },
                 'warning': { text: 'CẢNH BÁO', class: 'bg-orange-100 text-orange-700' },
                 'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }

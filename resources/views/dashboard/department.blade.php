@@ -158,43 +158,46 @@
                 </div>
 
                 <div class="p-6 space-y-4">
-                    <!-- Admin bình luận -->
-                    <div class="flex space-x-3">
-                        <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-user-shield text-blue-600 text-sm"></i>
+                    @forelse($latestNotifications as $notification)
+                        @php
+                            $config = match($notification->type) {
+                                'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50'],
+                                'warning' => ['icon' => 'exclamation-triangle', 'color' => 'orange', 'bg' => 'orange-50'],
+                                'important' => ['icon' => 'star', 'color' => 'purple', 'bg' => 'purple-50'],
+                                default => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50'],
+                            };
+                        @endphp
+                        <div class="flex space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition" 
+                             onclick="showNotifyModal('{{ $notification->id }}', '{{ addslashes($notification->title) }}', '{{ addslashes(strip_tags($notification->message)) }}', '{{ $notification->type }}', {{ $notification->is_read ? 'true' : 'false' }})">
+                            <div class="w-8 h-8 bg-{{ $config['bg'] }} rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-{{ $config['icon'] }} text-{{ $config['color'] }}-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-sm text-gray-900 truncate">{{ $notification->title }}</h4>
+                                <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ strip_tags($notification->message) }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                            </div>
                         </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-sm text-gray-900">Admin bình luận</h4>
-                            <p class="text-xs text-gray-500 mt-1">Yêu cầu #REQ-001 đã được phê duyệt</p>
-                            <p class="text-xs text-gray-400 mt-1">2 giờ trước</p>
+                    @empty
+                        <div class="text-center py-6 text-gray-500">
+                            <i class="far fa-bell-slash text-2xl mb-2"></i>
+                            <p class="text-xs">Chưa có cập nhật nào</p>
                         </div>
-                    </div>
-
-                    <!-- Đơn hàng đã duyệt -->
-                    <div class="flex space-x-3">
-                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-check text-green-600 text-sm"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-sm text-gray-900">Đơn hàng đã duyệt</h4>
-                            <p class="text-xs text-gray-500 mt-1">Bộ phận mua hàng đã xác nhận đơn</p>
-                            <p class="text-xs text-gray-400 mt-1">5 giờ trước</p>
-                        </div>
-                    </div>
-
-                    <!-- Vật tư đã giao -->
-                    <div class="flex space-x-3">
-                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-truck text-blue-600 text-sm"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-sm text-gray-900">Vật tư đã giao</h4>
-                            <p class="text-xs text-gray-500 mt-1">Đơn hàng #PO-2024-001 đã hoàn thành</p>
-                            <p class="text-xs text-gray-400 mt-1">1 ngày trước</p>
-                        </div>
-                    </div>
+                    @endforelse
                 </div>
+            <!-- Help Card -->
+                    <div class="m-6 p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white">
+                        <h4 class="font-bold mb-2">Cần hỗ trợ gì?</h4>
+                        <p class="text-sm text-teal-50 mb-4">Đội ngũ hỗ trợ luôn sẵn sàng giúp bạn giải đáp mọi thắc mắc.</p>
+                        <button
+                                onclick="openSupportModal()"
+                                class="w-full bg-white text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-50 transition">
+                            Liên hệ ngay
+                        </button>
+                    </div>
             </div>
+
+            
         </div>
 
 
@@ -270,6 +273,95 @@
     </div>
 </div>
 
+<!-- Popup Modal: Liên hệ IT Support -->
+<div id="supportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl max-w-xl w-full max-h-[90vh] overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-500 to-blue-600">
+            <div>
+                <h3 class="text-lg font-bold text-white">Liên hệ bộ phận IT</h3>
+                <p class="text-sm text-blue-100">Gửi yêu cầu hỗ trợ kỹ thuật</p>
+            </div>
+            <button onclick="closeSupportModal()" class="text-white hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
+            <form action="{{ route('support.send') }}" method="POST" class="space-y-5">
+                @csrf
+                
+                <!-- Name & Email -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Họ và tên</label>
+                        <input type="text" name="name" value="{{ Auth::user()->full_name }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Email liên hệ</label>
+                        <input type="email" name="email" value="{{ Auth::user()->email }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50" required>
+                    </div>
+                </div>
+
+                <!-- Department (visible, read-only) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Ban / Khoa / Phòng</label>
+                    <input type="text" value="{{ $department->department_name ?? 'Chưa xác định' }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700 cursor-not-allowed" readonly>
+                    <input type="hidden" name="department_id" value="{{ Auth::user()->department_id }}">
+                </div>
+                
+                <!-- Error Type -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Vấn đề gặp phải</label>
+                    <select name="error_type" id="supportErrorType" onchange="checkSupportErrorType(this)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="">-- Chọn loại lỗi --</option>
+                        <option value="Không thể đăng nhập">Không thể đăng nhập</option>
+                        <option value="Quên mật khẩu nhưng không nhận được email">Quên mật khẩu nhưng không nhận được email</option>
+                        <option value="Lỗi hiển thị giao diện">Lỗi hiển thị giao diện</option>
+                        <option value="Hệ thống chạy chậm">Hệ thống chạy chậm</option>
+                        <option value="Không thể tạo yêu cầu mua hàng">Không thể tạo yêu cầu mua hàng</option>
+                        <option value="new_error">Lỗi mới phát sinh (Nhập tên lỗi mới)</option>
+                        <option value="Khác (Vui lòng mô tả chi tiết)">Khác (Vui lòng mô tả chi tiết)</option>
+                    </select>
+                </div>
+
+                <!-- New Error Input (Hidden by default) -->
+                <div id="supportNewErrorDiv" class="hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Tên lỗi mới</label>
+                    <input type="text" name="new_error_name" id="supportNewErrorName" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                           placeholder="Nhập tên lỗi mới...">
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Mô tả chi tiết</label>
+                    <textarea name="description" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                              placeholder="Mô tả chi tiết sự cố bạn đang gặp phải..." required></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeSupportModal()" 
+                            class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium">
+                        Hủy
+                    </button>
+                    <button type="submit" 
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                        <i class="fas fa-paper-plane mr-2"></i>Gửi yêu cầu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 function openReceivedItemsModal() {
@@ -286,6 +378,36 @@ function closeReceivedItemsModal() {
 document.getElementById('receivedItemsModal')?.addEventListener('click', function(e) {
     if (e.target === this) {
         closeReceivedItemsModal();
+    }
+});
+
+// Support Modal Functions
+function openSupportModal() {
+    document.getElementById('supportModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSupportModal() {
+    document.getElementById('supportModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+function checkSupportErrorType(select) {
+    const newErrorDiv = document.getElementById('supportNewErrorDiv');
+    const newErrorInput = document.getElementById('supportNewErrorName');
+    if (select.value === 'new_error') {
+        newErrorDiv.classList.remove('hidden');
+        newErrorInput.required = true;
+    } else {
+        newErrorDiv.classList.add('hidden');
+        newErrorInput.required = false;
+    }
+}
+
+// Close support modal when clicking outside
+document.getElementById('supportModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSupportModal();
     }
 });
 </script>

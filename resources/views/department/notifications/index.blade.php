@@ -32,7 +32,6 @@
         $typeCounts = [
             'info' => $allDeptNotifications->where('type', 'info')->count(),
             'warning' => $allDeptNotifications->where('type', 'warning')->count(),
-            'success' => $allDeptNotifications->where('type', 'success')->count(),
             'important' => $allDeptNotifications->where('type', 'important')->count(),
         ];
     @endphp
@@ -176,13 +175,6 @@
                     <span
                         class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ $typeCounts['warning'] }}</span>
                 </a>
-                <a href="{{ route('department.notifications.index', ['type' => 'success']) }}"
-                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'success' ? 'bg-green-50 text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Thành công
-                    <span
-                        class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ $typeCounts['success'] }}</span>
-                </a>
                 <a href="{{ route('department.notifications.index', ['type' => 'important']) }}"
                     class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'important' ? 'bg-purple-50 text-purple-600 border-b-2 border-purple-600' : 'text-gray-600 hover:bg-gray-50' }}">
                     <i class="fas fa-star mr-2"></i>
@@ -258,7 +250,7 @@
                         data-notification-url="{{ $modalRedirectUrl }}" onclick="openNotificationModalFromData(this)">
 
                         <!-- <div class="p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 cursor-pointer {{ !$notification->is_read ? 'bg-blue-50' : '' }}"
-                                                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})"> -->
+                                                                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})"> -->
 
                         <div class="flex items-start gap-4">
                             {{-- Icon with blue dot --}}

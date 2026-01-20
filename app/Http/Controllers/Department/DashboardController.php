@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestItem;
 use App\Models\Department as DepartmentModel;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -108,6 +109,17 @@ class DashboardController extends Controller
             ->where('purchase_request_items.is_delete', false)
             ->sum(DB::raw('purchase_request_items.quantity * purchase_request_items.expected_price'));
 
+        // Lấy 3 thông báo mới nhất cho khoa
+        $latestNotifications = Notification::where(function ($q) use ($user) {
+            $role = strtoupper($user->role);
+            $q->whereIn('target_role', [$role, strtolower($role), 'ALL', 'all'])
+                ->orWhereNull('target_role')
+                ->orWhere('created_by', $user->id);
+        })
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
+
         return view('dashboard.department', compact(
             'stats',
             'totalItems',
@@ -115,7 +127,8 @@ class DashboardController extends Controller
             'recentRequests',
             'department',
             'usedBudget',
-            'pendingBudget'
+            'pendingBudget',
+            'latestNotifications'
         ));
     }
 }

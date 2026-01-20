@@ -23,8 +23,8 @@ class NotificationController extends Controller
             $query->where('type', $request->type);
         }
 
-        // Filter by status
-        if ($request->has('is_read') && $request->is_read !== '') {
+        // Filter by status (only filter if a specific value is selected)
+        if ($request->filled('is_read')) {
             $query->where('is_read', $request->is_read);
         }
 
@@ -67,7 +67,7 @@ class NotificationController extends Controller
     {
         // Get valid types from database
         $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
-        
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
@@ -98,7 +98,7 @@ class NotificationController extends Controller
     {
         // Get valid types from database
         $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
-        
+
         $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
@@ -137,10 +137,10 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
-        Notification::where(function($query) {
-                $query->where('target_role', 'BUYER')
-                      ->orWhere('target_role', 'ALL');
-            })
+        Notification::where(function ($query) {
+            $query->where('target_role', 'BUYER')
+                ->orWhere('target_role', 'ALL');
+        })
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
@@ -177,15 +177,15 @@ class NotificationController extends Controller
 
             $file = $request->file('document');
             $parser = new DocumentParserService();
-            
+
             $data = $parser->extractNotificationData($file);
-            
+
             return response()->json([
                 'success' => true,
                 'data' => $data,
                 'message' => 'File đã được phân tích thành công'
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

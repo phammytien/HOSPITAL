@@ -6,52 +6,52 @@
 
 @section('content')
     <div class="space-y-6">
-        <!-- Filter & Actions -->
-        <div class="bg-white rounded-xl p-6 border border-gray-200">
+        <!-- Filter & Search & Actions -->
+        <div class="bg-white rounded-xl p-6 border border-gray-200 space-y-4">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <!-- Filters -->
+                <!-- Status Tabs -->
                 <div class="flex flex-wrap items-center gap-3">
                     @php
                         $baseRoute = isset($activeTab) && $activeTab == 'history' ? 'department.requests.history' : 'department.requests.index';
                     @endphp
 
-                    <a href="{{ route($baseRoute) }}"
-                        class="px-4 py-2 rounded-lg {{ !request('status') ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                    <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => ''])) }}"
+                        class="px-4 py-2 rounded-lg {{ !request('status') ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                         Tất cả
                     </a>
 
                     @if(isset($activeTab) && $activeTab == 'history')
                         {{-- Tabs for History --}}
-                        <a href="{{ route($baseRoute, ['status' => 'COMPLETED']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'COMPLETED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'COMPLETED'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'COMPLETED' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Hoàn thành
                         </a>
-                        <a href="{{ route($baseRoute, ['status' => 'CANCELLED']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'CANCELLED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'CANCELLED'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'CANCELLED' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Đã hủy
                         </a>
-                        <a href="{{ route($baseRoute, ['status' => 'REJECTED']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'REJECTED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'REJECTED'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'REJECTED' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Đã từ chối
                         </a>
                     @else
                         {{-- Tabs for Active Requests --}}
-                        <a href="{{ route($baseRoute, ['status' => 'DRAFT']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'DRAFT' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'DRAFT'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'DRAFT' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Bản nháp
                         </a>
-                        <a href="{{ route($baseRoute, ['status' => 'SUBMITTED']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'SUBMITTED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'SUBMITTED'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'SUBMITTED' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Chờ duyệt
                         </a>
-                        <a href="{{ route($baseRoute, ['status' => 'APPROVED']) }}"
-                            class="px-4 py-2 rounded-lg {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        <a href="{{ route($baseRoute, array_merge(request()->all(), ['status' => 'APPROVED'])) }}"
+                            class="px-4 py-2 rounded-lg {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
                             Đã duyệt
                         </a>
                     @endif
                 </div>
 
-                <!-- Create Button (Only for Active View) -->
+                <!-- Create Button -->
                 @if(!isset($activeTab) || $activeTab != 'history')
                     <a href="{{ route('department.requests.create') }}"
                         class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition flex items-center justify-center space-x-2">
@@ -60,6 +60,38 @@
                     </a>
                 @endif
             </div>
+
+            <!-- Search & Date Filters Form -->
+            <form action="{{ route($baseRoute) }}" method="GET"
+                class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+                <input type="hidden" name="status" value="{{ request('status') }}">
+
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã yêu cầu..."
+                        onchange="this.form.submit()"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                    <input type="month" name="period" value="{{ request('period') }}" onchange="this.form.submit()"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <div class="md:col-span-2">
+                    @if(request()->anyFilled(['search', 'period']))
+                        <a href="{{ route($baseRoute, ['status' => request('status')]) }}"
+                            class="flex items-center justify-center w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition border border-red-200">
+                            <i class="fas fa-times-circle mr-2"></i> Xóa lọc
+                        </a>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <!-- Requests Table -->
@@ -244,10 +276,10 @@
 
                 // Show loading
                 modalContent.innerHTML = `
-                        <div class="flex items-center justify-center py-12">
-                            <i class="fas fa-spinner fa-spin text-blue-600 text-4xl"></i>
-                        </div>
-                    `;
+                                <div class="flex items-center justify-center py-12">
+                                    <i class="fas fa-spinner fa-spin text-blue-600 text-4xl"></i>
+                                </div>
+                            `;
 
                 // Fetch request details
                 fetch(`/department/requests/${requestId}`)
@@ -264,21 +296,21 @@
                             modalContent.innerHTML = content.outerHTML;
                         } else {
                             modalContent.innerHTML = `
-                                    <div class="text-center py-12">
-                                        <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
-                                        <p class="text-gray-600">Không thể tải thông tin yêu cầu</p>
-                                    </div>
-                                `;
+                                            <div class="text-center py-12">
+                                                <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+                                                <p class="text-gray-600">Không thể tải thông tin yêu cầu</p>
+                                            </div>
+                                        `;
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         modalContent.innerHTML = `
-                                <div class="text-center py-12">
-                                    <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
-                                    <p class="text-gray-600">Đã xảy ra lỗi khi tải dữ liệu</p>
-                                </div>
-                            `;
+                                        <div class="text-center py-12">
+                                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                                            <p class="text-gray-600">Đã xảy ra lỗi khi tải dữ liệu</p>
+                                        </div>
+                                    `;
                     });
             }
 

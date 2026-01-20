@@ -369,4 +369,92 @@ class InventoryController extends Controller
             return redirect()->back()->with('info', 'Kho đã được khởi tạo trước đó. Nhấn "Đồng bộ" để cập nhật số liệu.');
         }
     }
+
+    public function getHistory(Request $request)
+    {
+        $user = Auth::user();
+        $departmentId = $user->department_id;
+
+        // 1. Validate & Get Warehouse for THIS Department (Security Check)
+        $warehouse = Warehouse::where('department_id', $departmentId)->first();
+        if (!$warehouse) {
+            return response()->json([], 200);
+        }
+
+        $type = $request->input('type', 'daily'); // 'daily' or 'quarterly'
+        $query = \App\Models\WarehouseInventory::where('warehouse_id', $warehouse->id)
+            ->with('product');
+
+        if ($type === 'daily') {
+            // Filter by Month/Year
+            $month = $request->input('month', date('n'));
+            $year = $request->input('year', date('Y'));
+
+            $query->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
+                ->orderBy('created_at', 'desc');
+
+            $data = $query->get()->map(function ($item) {
+                // Determine Action Type Display
+                $actionType = '';
+                if ($item->transaction_type == 'IMPORT') {
+                    if ($item->related_order_id) {
+                        $actionType = 'import_order'; // Nhập từ đơn hàng
+                    } else {
+                        $actionType = 'return'; // Trả lại
+                    }
+                } else {
+                    $actionType = 'take'; // Lấy dùng
+                }
+
+                return [
+                    'date' => $item->created_at->format('d/m/Y H:i'),
+                    'product_name' => $item->product->product_name ?? 'N/A',
+                    'action_type' => $actionType,
+                    'quantity' => $item->quantity,
+                    'performed_by' => $item->performer ? ($item->performer->full_name . ' (' . ($item->performer->department->department_name ?? 'N/A') . ')') : 'Hệ thống',
+                    'note' => $item->note
+                ];
+            });
+
+            return response()->json(['data' => $data]);
+
+        } else {
+            // Quarterly Summary
+            $quarter = $request->input('quarter', ceil(date('n') / 3));
+            $year = $request->input('year', date('Y'));
+
+            // Calculate start/end months of quarter
+            $startMonth = ($quarter - 1) * 3 + 1;
+            $endMonth = $startMonth + 2;
+
+            $query->whereYear('created_at', $year)
+                ->whereMonth('created_at', '>=', $startMonth)
+                ->whereMonth('created_at', '<=', $endMonth);
+
+            $records = $query->get();
+
+            // Group by Product
+            $summary = [];
+            foreach ($records as $record) {
+                $pId = $record->product_id;
+                if (!isset($summary[$pId])) {
+                    $summary[$pId] = [
+                        'product_name' => $record->product->product_name ?? 'N/A',
+                        'product_unit' => $record->product->unit ?? '',
+                        'total_import' => 0,
+                        'total_export' => 0
+                    ];
+                }
+
+                if ($record->transaction_type === 'IMPORT') {
+                    $summary[$pId]['total_import'] += $record->quantity;
+                } else {
+                    $summary[$pId]['total_export'] += $record->quantity;
+                }
+            }
+
+            return response()->json(['data' => array_values($summary)]);
+        }
+    }
 }

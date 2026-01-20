@@ -65,6 +65,9 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 composer require maatwebsite/excel
 
+## hỗ trợ word, pdf
+composer require phpoffice/phpword
+composer require smalot/pdfparser
 
 
 ## cài composer

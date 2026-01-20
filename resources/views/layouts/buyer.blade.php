@@ -497,7 +497,7 @@
             }
 
             // Create toast HTML
-            createToastHTML(notification) {
+            createToastHTML(notification, uniqueId) {
                 const { id, title, message, type } = notification;
                 
                 // Type configurations
@@ -534,7 +534,7 @@
 
                 const config = typeConfig[type] || typeConfig['info'];
                 
-                const toastId = `toast-${id}-${Date.now()}`;
+                const toastId = uniqueId;
                 
                 return `
                     <div id="${toastId}" onclick="showNotificationDetail(${id}, '${addslashes_js(title)}', '${addslashes_js(message)}', '${type}', false)"
@@ -597,30 +597,36 @@
             // Show single toast
             async showToast(notification) {
                 return new Promise((resolve) => {
-                    const toastHTML = this.createToastHTML(notification);
+                    const uniqueId = `toast-${notification.id}-${Date.now()}`;
+                    const toastHTML = this.createToastHTML(notification, uniqueId);
                     this.container.insertAdjacentHTML('beforeend', toastHTML);
                     
-                    const toastId = `toast-${notification.id}-${Date.now()}`;
-                    const toastElement = document.getElementById(toastId);
-                    this.activeToasts.add(toastId);
-                    
-                    // Trigger slide-in animation
-                    setTimeout(() => {
-                        toastElement.style.transform = 'translateX(0)';
-                        toastElement.style.opacity = '1';
+                    const toastElement = document.getElementById(uniqueId);
+                    if (toastElement) {
+                        this.activeToasts.add(uniqueId);
                         
-                        // Start progress bar animation
-                        const progressBar = toastElement.querySelector('.toast-progress');
+                        // Trigger slide-in animation
                         setTimeout(() => {
-                            progressBar.style.width = '0%';
+                            toastElement.style.transform = 'translateX(0)';
+                            toastElement.style.opacity = '1';
+                            
+                            // Start progress bar animation
+                            const progressBar = toastElement.querySelector('.toast-progress');
+                            if (progressBar) {
+                                setTimeout(() => {
+                                    progressBar.style.width = '0%';
+                                }, 50);
+                            }
                         }, 50);
-                    }, 50);
-                    
-                    // Auto-dismiss after 5 seconds
-                    setTimeout(() => {
-                        this.removeToast(toastId);
+                        
+                        // Auto-dismiss after 5 seconds
+                        setTimeout(() => {
+                            this.removeToast(uniqueId);
+                            resolve();
+                        }, 5000);
+                    } else {
                         resolve();
-                    }, 5000);
+                    }
                 });
             }
 

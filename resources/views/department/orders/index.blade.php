@@ -12,36 +12,67 @@
             </div>
         </div>
 
-        <!-- Filters -->
-        <div
-            class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('department.dept_orders.index', ['status' => 'all']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status', 'all') == 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                    Tất cả
-                </a>
+        <!-- Filters & Search -->
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'all'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status', 'all') == 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                        Tất cả
+                    </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'APPROVED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
-                    Đã duyệt
-                </a>
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'APPROVED'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'bg-blue-50 text-blue-600 hover:bg-blue-100' }}">
+                        Đã duyệt
+                    </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'DELIVERED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'DELIVERED' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
-                    Xác nhận đã nhận hàng
-                </a>
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'DELIVERED'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'DELIVERED' ? 'bg-yellow-600 text-white shadow-md' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100' }}">
+                        Xác nhận đã nhận hàng
+                    </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'COMPLETED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'COMPLETED' ? 'bg-green-600 text-white shadow-md' : 'bg-green-50 text-green-600 hover:bg-green-100' }}">
-                    Hoàn thành
-                </a>
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'COMPLETED'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'COMPLETED' ? 'bg-green-600 text-white shadow-md' : 'bg-green-50 text-green-600 hover:bg-green-100' }}">
+                        Hoàn thành
+                    </a>
 
-                <a href="{{ route('department.dept_orders.index', ['status' => 'REJECTED']) }}"
-                    class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'REJECTED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
-                    Đã từ chối
-                </a>
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'REJECTED'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'REJECTED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
+                        Đã từ chối
+                    </a>
+                </div>
             </div>
 
+            <form action="{{ route('department.dept_orders.index') }}" method="GET"
+                class="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+                <input type="hidden" name="status" value="{{ request('status', 'all') }}">
+
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Tìm mã đơn hàng..."
+                        onchange="this.form.submit()"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-calendar-alt"></i>
+                    </span>
+                    <input type="month" name="period" value="{{ request('period') }}" onchange="this.form.submit()"
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <div class="md:col-span-2">
+                    @if(request()->anyFilled(['search', 'period']))
+                        <a href="{{ route('department.dept_orders.index', ['status' => request('status', 'all')]) }}"
+                            class="flex items-center justify-center w-full px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-semibold hover:bg-red-100 transition border border-red-200">
+                            <i class="fas fa-times-circle mr-2"></i> Xóa lọc
+                        </a>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <!-- Orders Table -->

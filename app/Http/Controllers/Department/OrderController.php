@@ -10,38 +10,55 @@ use App\Models\Notification;
 
 class OrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
-        // Assuming user has department_id or related department
         $departmentId = $user->department_id;
 
-        $orders = PurchaseOrder::with(['purchaseRequest'])
-            ->where('department_id', $departmentId) // Filter by Department
-            ->where('is_delete', 0)
-            ->when(request('status') && request('status') != 'all', function ($query) {
-                $status = request('status');
-                if ($status == 'APPROVED') {
-                    return $query->where('status', '!=', 'DELIVERED')
-                        ->whereHas('purchaseRequest', function ($q) {
-                            $q->where('status', 'APPROVED');
-                        });
-                } elseif ($status == 'DELIVERED') {
-                    return $query->where('status', 'DELIVERED');
-                } elseif ($status == 'COMPLETED') {
-                    return $query->whereHas('purchaseRequest', function ($q) {
-                        $q->where('status', 'COMPLETED');
+        $query = PurchaseOrder::with(['purchaseRequest'])
+            ->where('department_id', $departmentId)
+            ->where('is_delete', 0);
+
+        // Filter by Status
+        if ($request->filled('status') && $request->status != 'all') {
+            $status = $request->status;
+            if ($status == 'APPROVED') {
+                $query->where('status', '!=', 'DELIVERED')
+                    ->whereHas('purchaseRequest', function ($q) {
+                        $q->where('status', 'APPROVED');
                     });
-                } elseif ($status == 'REJECTED') {
-                    return $query->whereHas('purchaseRequest', function ($q) {
-                        $q->where('status', 'REJECTED');
-                    });
-                } else {
-                    return $query->where('status', $status);
-                }
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            } elseif ($status == 'DELIVERED') {
+                $query->where('status', 'DELIVERED');
+            } elseif ($status == 'COMPLETED') {
+                $query->whereHas('purchaseRequest', function ($q) {
+                    $q->where('status', 'COMPLETED');
+                });
+            } elseif ($status == 'REJECTED') {
+                $query->whereHas('purchaseRequest', function ($q) {
+                    $q->where('status', 'REJECTED');
+                });
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        // Search by Order Code
+        if ($request->filled('search')) {
+            $query->where('order_code', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter by Period (YYYY-MM)
+        if ($request->filled('period')) {
+            $parts = explode('-', $request->period);
+            if (count($parts) == 2) {
+                $query->whereYear('created_at', $parts[0])
+                    ->whereMonth('created_at', $parts[1]);
+            }
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('department.orders.index', compact('orders'));
     }

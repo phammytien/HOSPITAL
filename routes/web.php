@@ -245,6 +245,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/inventory/sync', [\App\Http\Controllers\Department\InventoryController::class, 'sync'])->name('inventory.sync');
             Route::post('/inventory/initialize', [\App\Http\Controllers\Department\InventoryController::class, 'initialize'])->name('inventory.initialize');
             Route::post('/inventory/quick-action', [\App\Http\Controllers\Department\InventoryController::class, 'quickAction'])->name('inventory.quick-action');
+            Route::get('/inventory/history-data', [\App\Http\Controllers\Department\InventoryController::class, 'getHistory'])->name('inventory.history_data');
 
             // Order Management
             Route::group(['prefix' => 'orders', 'as' => 'dept_orders.'], function () {

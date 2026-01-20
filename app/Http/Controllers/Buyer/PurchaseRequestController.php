@@ -133,10 +133,10 @@ class PurchaseRequestController extends Controller
     public function approve($id)
     {
         try {
-            $purchaseRequest = PurchaseRequest::findOrFail($id);
-            
+            $purchaseRequest = PurchaseRequest::with(['department', 'items'])->findOrFail($id);
+
             $result = $this->processApproval($purchaseRequest);
-            
+
             if (!$result['success']) {
                 return redirect()->back()->with('error', $result['message']);
             }
@@ -151,7 +151,7 @@ class PurchaseRequestController extends Controller
     public function bulkApprove(Request $request)
     {
         $ids = $request->input('ids', []);
-        
+
         if (empty($ids)) {
             return response()->json([
                 'success' => false,
@@ -164,7 +164,7 @@ class PurchaseRequestController extends Controller
 
         foreach ($ids as $id) {
             try {
-                $purchaseRequest = PurchaseRequest::find($id);
+                $purchaseRequest = PurchaseRequest::with(['department', 'items'])->find($id);
                 if (!$purchaseRequest) {
                     $errors[] = "Không tìm thấy yêu cầu #{$id}";
                     continue;
@@ -258,23 +258,28 @@ class PurchaseRequestController extends Controller
                 }
             }
 
-            // Create Notification
-            Notification::create([
-                'title' => 'Admin phê duyệt',
-                'message' => "Yêu cầu #{$purchaseRequest->request_code} đã được phê duyệt",
-                'type' => 'info',
-                'target_role' => 'department',
-                'created_by' => Auth::id(),
-            ]);
-
-            if ($purchaseOrder) {
+            // Create Notification (Wrapped in try-catch to not block approval)
+            try {
                 Notification::create([
-                    'title' => 'Đơn hàng mới',
-                    'message' => "Đơn hàng #{$purchaseOrder->order_code} đã được tạo cho yêu cầu #{$purchaseRequest->request_code}",
-                    'type' => 'success',
-                    'target_role' => 'department',
+                    'title' => 'Bộ phận mua hàng phê duyệt',
+                    'message' => "Yêu cầu #{$purchaseRequest->request_code} đã được phê duyệt",
+                    'type' => 'info',
+                    'target_role' => 'department', // Ensure this matches DB enum/varchar
                     'created_by' => Auth::id(),
                 ]);
+
+                if ($purchaseOrder) {
+                    Notification::create([
+                        'title' => 'Đơn hàng mới',
+                        'message' => "Đơn hàng #{$purchaseOrder->order_code} đã được tạo cho yêu cầu #{$purchaseRequest->request_code}",
+                        'type' => 'success',
+                        'target_role' => 'department',
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Notification creation failed for Request #{$purchaseRequest->id}: " . $e->getMessage());
+                // Continue without failing the transaction
             }
 
             return ['success' => true];

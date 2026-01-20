@@ -17,6 +17,10 @@
                 @endif
             </div>
             <div class="flex gap-3">
+                <button onclick="openHistoryModal()"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 flex items-center shadow-sm mr-2">
+                    <i class="fas fa-history mr-2"></i> Xem lịch sử
+                </button>
                 <a href="{{ route('department.inventory.export') }}"
                     class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 flex items-center shadow-sm">
                     <i class="fas fa-download mr-2"></i> Xuất báo cáo
@@ -260,6 +264,303 @@
                     console.error('Error:', error);
                     alert('Có lỗi xảy ra khi thực hiện thao tác!');
                 });
+        }
+    </script>
+
+    {{-- INVENTORY HISTORY MODAL --}}
+    <div id="historyModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeHistoryModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Lịch sử Xuất/Nhập Kho
+                                </h3>
+                                <button onclick="closeHistoryModal()" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Filters --}}
+                            <div class="mt-4 flex flex-wrap gap-4 items-end bg-gray-50 p-4 rounded-lg">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Loại xem</label>
+                                    <select id="historyType" onchange="toggleHistoryFilters(); loadHistoryData();"
+                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                        <option value="daily">Chi tiết theo ngày (Tháng)</option>
+                                        <option value="quarterly">Tổng hợp theo Quý</option>
+                                    </select>
+                                </div>
+
+                                {{-- Month Filter (Daily) --}}
+                                <div id="monthFilterGroup">
+                                    <label class="block text-sm font-medium text-gray-700">Tháng</label>
+                                    <select id="historyMonth" onchange="loadHistoryData()"
+                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                        @for($i = 1; $i <= 12; $i++)
+                                            <option value="{{ $i }}" {{ date('n') == $i ? 'selected' : '' }}>Tháng {{ $i }}
+                                            </option>
+                                        @endfor
+                                    </select>
+                                </div>
+
+                                {{-- Quarter Filter (Quarterly) --}}
+                                <div id="quarterFilterGroup" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700">Quý</label>
+                                    <select id="historyQuarter" onchange="loadHistoryData()"
+                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                        <option value="1" {{ ceil(date('n') / 3) == 1 ? 'selected' : '' }}>Quý 1 (T1-T3)
+                                        </option>
+                                        <option value="2" {{ ceil(date('n') / 3) == 2 ? 'selected' : '' }}>Quý 2 (T4-T6)
+                                        </option>
+                                        <option value="3" {{ ceil(date('n') / 3) == 3 ? 'selected' : '' }}>Quý 3 (T7-T9)
+                                        </option>
+                                        <option value="4" {{ ceil(date('n') / 3) == 4 ? 'selected' : '' }}>Quý 4 (T10-T12)
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Năm</label>
+                                    <input type="number" id="historyYear" value="{{ date('Y') }}" min="2020" max="2099"
+                                        onchange="loadHistoryData()"
+                                        class="mt-1 block w-32 pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
+                                </div>
+
+                                <div>
+                                    <button onclick="resetHistoryFilters()"
+                                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                        Xóa lọc
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Data Table --}}
+                            <div class="mt-4 overflow-x-auto min-h-[300px]">
+                                <table class="min-w-full divide-y divide-gray-200" id="historyTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            {{-- Headers injected via JS --}}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="historyTableBody">
+                                        {{-- Data injected via JS --}}
+                                    </tbody>
+                                </table>
+                                <div id="historyLoading" class="hidden text-center py-10">
+                                    <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+                                    <p class="text-gray-500 mt-2">Đang tải dữ liệu...</p>
+                                </div>
+                                <div id="historyEmpty" class="hidden text-center py-10 text-gray-500">
+                                    Không tìm thấy dữ liệu nào.
+                                </div>
+
+                                {{-- Pagination --}}
+                                <div id="historyPagination" class="hidden mt-4 flex justify-between items-center">
+                                    <div class="text-sm text-gray-500">
+                                        Hiển thị <span id="paginationStart">1</span>-<span id="paginationEnd">10</span> /
+                                        <span id="paginationTotal">0</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="changePage(-1)" id="prevPageBtn"
+                                            class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Trước
+                                        </button>
+                                        <button onclick="changePage(1)" id="nextPageBtn"
+                                            class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            Sau
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- History Modal Logic ---
+        let historyFullData = [];
+        let historyCurrentPage = 1;
+        const historyItemsPerPage = 10;
+
+        function openHistoryModal() {
+            document.getElementById('historyModal').classList.remove('hidden');
+            loadHistoryData(); // Load default
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        function toggleHistoryFilters() {
+            const type = document.getElementById('historyType').value;
+            if (type === 'daily') {
+                document.getElementById('monthFilterGroup').classList.remove('hidden');
+                document.getElementById('quarterFilterGroup').classList.add('hidden');
+            } else {
+                document.getElementById('monthFilterGroup').classList.add('hidden');
+                document.getElementById('quarterFilterGroup').classList.remove('hidden');
+            }
+        }
+
+        function resetHistoryFilters() {
+            document.getElementById('historyType').value = 'daily';
+            document.getElementById('historyMonth').value = new Date().getMonth() + 1;
+            document.getElementById('historyQuarter').value = Math.ceil((new Date().getMonth() + 1) / 3);
+            document.getElementById('historyYear').value = new Date().getFullYear();
+            toggleHistoryFilters();
+            loadHistoryData();
+        }
+
+        function loadHistoryData() {
+            historyCurrentPage = 1; // Reset to first page
+            const type = document.getElementById('historyType').value;
+            const month = document.getElementById('historyMonth').value;
+            const quarter = document.getElementById('historyQuarter').value;
+            const year = document.getElementById('historyYear').value;
+
+            // UI Loading
+            document.getElementById('historyLoading').classList.remove('hidden');
+            document.getElementById('historyEmpty').classList.add('hidden');
+            document.getElementById('historyPagination').classList.add('hidden');
+            document.getElementById('historyTableBody').innerHTML = '';
+
+            // Set Headers
+            const thead = document.querySelector('#historyTable thead tr');
+            if (type === 'daily') {
+                thead.innerHTML = `
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày giờ</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số lượng</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người thực hiện</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ghi chú</th>
+                        `;
+            } else {
+                thead.innerHTML = `
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sản phẩm</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Đơn vị</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng Nhập / Trả lại</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng Lấy / Xuất</th>
+                        `;
+            }
+
+            // Fetch Data
+            const params = new URLSearchParams({
+                type: type,
+                month: month,
+                year: year,
+                quarter: quarter
+            });
+
+            fetch(`{{ route('department.inventory.history_data') }}?${params.toString()}`)
+                .then(response => response.json())
+                .then(res => {
+                    historyFullData = res.data || [];
+                    document.getElementById('historyLoading').classList.add('hidden');
+
+                    if (historyFullData.length === 0) {
+                        document.getElementById('historyEmpty').classList.remove('hidden');
+                        return;
+                    }
+
+                    renderHistoryPage();
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('historyLoading').classList.add('hidden');
+                    alert('Lỗi khi tải dữ liệu. Vui lòng thử lại.');
+                });
+        }
+
+        function renderHistoryPage() {
+            const type = document.getElementById('historyType').value;
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+
+            const totalItems = historyFullData.length;
+            const totalPages = Math.ceil(totalItems / historyItemsPerPage);
+            const startIdx = (historyCurrentPage - 1) * historyItemsPerPage;
+            const endIdx = Math.min(startIdx + historyItemsPerPage, totalItems);
+            const pageData = historyFullData.slice(startIdx, endIdx);
+
+            if (type === 'daily') {
+                pageData.forEach(row => {
+                    let badgeClass = '';
+                    let badgeText = '';
+
+                    switch (row.action_type) {
+                        case 'import_order':
+                            badgeClass = 'bg-green-100 text-green-800';
+                            badgeText = 'Nhập kho (Đơn hàng)';
+                            break;
+                        case 'return':
+                            badgeClass = 'bg-yellow-100 text-yellow-800';
+                            badgeText = 'Trả lại';
+                            break;
+                        case 'take':
+                            badgeClass = 'bg-blue-100 text-blue-800';
+                            badgeText = 'Lấy dùng';
+                            break;
+                        default:
+                            badgeClass = 'bg-gray-100 text-gray-800';
+                            badgeText = 'Khác';
+                    }
+
+                    tbody.innerHTML += `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.date}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.product_name}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeClass}">${badgeText}</span></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">${row.quantity}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.performed_by}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="${row.note || ''}">${row.note || '-'}</td>
+                                </tr>
+                            `;
+                });
+            } else {
+                pageData.forEach(row => {
+                    tbody.innerHTML += `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${row.product_name}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${row.product_unit}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">+${row.total_import}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">-${row.total_export}</td>
+                                </tr>
+                            `;
+                });
+            }
+
+            // Update pagination UI
+            document.getElementById('paginationStart').textContent = startIdx + 1;
+            document.getElementById('paginationEnd').textContent = endIdx;
+            document.getElementById('paginationTotal').textContent = totalItems;
+            document.getElementById('historyPagination').classList.remove('hidden');
+
+            // Enable/disable buttons
+            document.getElementById('prevPageBtn').disabled = historyCurrentPage === 1;
+            document.getElementById('nextPageBtn').disabled = historyCurrentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(historyFullData.length / historyItemsPerPage);
+            historyCurrentPage += direction;
+            if (historyCurrentPage < 1) historyCurrentPage = 1;
+            if (historyCurrentPage > totalPages) historyCurrentPage = totalPages;
+            renderHistoryPage();
         }
     </script>
 @endsection

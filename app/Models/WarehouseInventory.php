@@ -43,4 +43,8 @@ class WarehouseInventory extends Model
     {
         return $this->belongsTo(PurchaseRequest::class, 'related_request_id');
     }
+    public function performer()
+    {
+        return $this->belongsTo(User::class, 'performed_by');
+    }
 }

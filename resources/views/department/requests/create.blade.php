@@ -11,9 +11,68 @@
         <!-- Hardcoded Budget Source ID for now, should be dynamic if needed -->
         <input type="hidden" name="budget_source_id" value="1">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main Form -->
-            <div class="lg:col-span-2 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-10 gap-6">
+            <!-- Main Form (6 parts) -->
+            <div class="lg:col-span-6 space-y-6">
+                <!-- Search & Add Product Section -->
+                <div class="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Soạn thảo yêu cầu</h3>
+                    <div class="flex gap-3">
+                        <div class="flex-1 relative">
+                            <div class="relative">
+                                <input type="text" id="productSearch"
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Tìm kiếm sản phẩm theo tên hoặc mã..." onfocus="toggleProductList()">
+                                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            </div>
+                        </div>
+                        <a href="{{ route('department.products.index') }}"
+                            class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 flex items-center space-x-2 whitespace-nowrap transition shadow-sm hover:shadow-md">
+                            <i class="fas fa-th mr-2"></i>
+                            <span>Chọn từ danh mục</span>
+                        </a>
+                    </div>
+
+                    <!-- Product List Dropdown -->
+                    <div id="productListDropdown"
+                        class="hidden mt-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg">
+                        @foreach($products as $product)
+                            @php $img = getProductImage($product->id); @endphp
+                            <div class="p-3 hover:bg-gray-50 cursor-pointer product-item" data-id="{{ $product->id }}"
+                                data-name="{{ $product->product_name }}" data-price="{{ $product->unit_price }}"
+                                data-unit="{{ $product->unit }}"
+                                onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}', '{{ $img }}')">
+                                <div class="flex items-center space-x-3">
+                                    @if($img)
+                                        <img src="{{ $img }}" alt="{{ $product->product_name }}"
+                                            class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                                    @else
+                                        <div
+                                            class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
+                                            {{ substr($product->product_name, 0, 1) }}
+                                        </div>
+                                    @endif
+
+                                    <div class="flex-1 flex items-center justify-between">
+                                        <div>
+                                            <p class="font-medium text-gray-900">{{ $product->product_name }}</p>
+                                            <p class="text-sm text-gray-500">
+                                                {{ $product->category->category_name ?? 'N/A' }} •
+                                                {{ $product->product_code }}
+                                            </p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="font-semibold text-gray-900">
+                                                {{ number_format($product->unit_price, 0, ',', '.') }} đ
+                                            </p>
+                                            <p class="text-sm text-gray-500">{{ $product->unit }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
                 <!-- Nguồn ngân sách -->
                 <div class="bg-white rounded-xl p-6 border border-gray-200">
                     <div class="flex items-center justify-between mb-6">
@@ -46,112 +105,74 @@
                     </div>
 
                     <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
-                        <textarea name="note" rows="3"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="Nhập lý do mua sắm...">{{ old('note') }}</textarea>
-                    </div>
-                </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Lý do chung cho đơn hàng *</label>
 
-                <!-- Soạn thảo yêu cầu -->
-                <div class="bg-white rounded-xl p-6 border border-gray-200">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-bold text-gray-900">Soạn thảo yêu cầu</h3>
-                    </div>
+                        <!-- Predefined Reasons Grid (4 rows x 3 cols) -->
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            @php
+                                $commonReasons = [
+                                    'Bổ sung trang thiết bị',
+                                    'Thay thế thiết bị hỏng',
+                                    'Nâng cấp cơ sở vật chất',
+                                    'Phục vụ điều trị bệnh nhân',
+                                    'Dự trữ vật tư tiêu hao',
+                                    'Mở rộng quy mô hoạt động',
+                                    'Đáp ứng yêu cầu kiểm định',
+                                    'Chuẩn bị cho dự án mới',
+                                    'Thay thế vật tư hết hạn',
+                                    'Tăng cường năng lực khám'
+                                ];
+                            @endphp
 
-                    <!-- Search & Add Product -->
-                    <div class="mb-6">
-                        <div class="flex gap-3">
-                            <div class="flex-1 relative">
-                                <div class="relative">
-                                    <input type="text" id="productSearch"
-                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Tìm kiếm sản phẩm theo tên hoặc mã..." onfocus="toggleProductList()">
-                                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                                </div>
-                            </div>
-                            <a href="{{ route('department.products.index') }}"
-                                class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 flex items-center space-x-2 whitespace-nowrap transition shadow-sm hover:shadow-md">
-                                <i class="fas fa-th mr-2"></i>
-                                <span>Chọn từ danh mục</span>
-                            </a>
-                        </div>
-
-                        <!-- Product List Dropdown -->
-                        <div id="productListDropdown"
-                            class="hidden mt-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg">
-                            @foreach($products as $product)
-                                @php $img = getProductImage($product->id); @endphp
-                                <div class="p-3 hover:bg-gray-50 cursor-pointer product-item" data-id="{{ $product->id }}"
-                                    data-name="{{ $product->product_name }}" data-price="{{ $product->unit_price }}"
-                                    data-unit="{{ $product->unit }}"
-                                    onclick="addProductToCart({{ $product->id }}, '{{ $product->product_name }}', {{ $product->unit_price }}, '{{ $product->unit }}', '{{ $img }}')">
-                                    <div class="flex items-center space-x-3">
-                                        <!-- Image Placeholder -->
-                                        <!-- Image Display -->
-                                        @if($img)
-                                            <img src="{{ $img }}" alt="{{ $product->product_name }}" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
-                                        @else
-                                            <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-400">
-                                                {{ substr($product->product_name, 0, 1) }}
-                                            </div>
-                                        @endif
-
-                                        <div class="flex-1 flex items-center justify-between">
-                                            <div>
-                                                <p class="font-medium text-gray-900">{{ $product->product_name }}</p>
-                                                <p class="text-sm text-gray-500">
-                                                    {{ $product->category->category_name ?? 'N/A' }} •
-                                                    {{ $product->product_code }}
-                                                </p>
-                                            </div>
-                                            <div class="text-right">
-                                                <p class="font-semibold text-gray-900">
-                                                    {{ number_format($product->unit_price, 0, ',', '.') }} đ
-                                                </p>
-                                                <p class="text-sm text-gray-500">{{ $product->unit }}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            @foreach($commonReasons as $index => $reason)
+                                <label
+                                    class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition">
+                                    <input type="radio" name="common_reason_type" value="{{ $reason }}"
+                                        onchange="applyCommonReason('{{ $reason }}')"
+                                        class="mr-2 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-sm text-gray-700">{{ $reason }}</span>
+                                </label>
                             @endforeach
-                        </div>
-                    </div>
 
-                    <!-- Selected Products Table -->
-                    <div class="border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                            <h4 class="font-semibold text-gray-900">Danh sách hàng hóa</h4>
-                            <div class="flex gap-4 text-sm">
-                                <button type="button" class="text-gray-600 hover:text-gray-900">
-                                    <i class="fas fa-list mr-1"></i> Danh sách
-                                </button>
-                                <button type="button" class="text-gray-600 hover:text-gray-900">
-                                    <i class="fas fa-th mr-1"></i> Lưới
-                                </button>
-                            </div>
+                            <!-- Custom Reason Option -->
+                            <label
+                                class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-500 transition">
+                                <input type="radio" name="common_reason_type" value="custom"
+                                    onchange="toggleCustomReason(true)" class="mr-2 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700 font-semibold">Khác...</span>
+                            </label>
                         </div>
 
-                        <div id="selectedProducts" class="divide-y divide-gray-200">
-                            <!-- Products will be added here dynamically -->
+                        <!-- Custom Reason Input -->
+                        <div id="customReasonContainer" class="hidden">
+                            <textarea id="customReasonInput" rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Nhập lý do khác..." onchange="applyCommonReason(this.value)"></textarea>
                         </div>
 
-                        <div id="emptyState" class="p-12 text-center">
-                            <i class="fas fa-box-open text-gray-300 text-5xl mb-4"></i>
-                            <p class="text-gray-500">Chưa có sản phẩm nào được chọn</p>
-                            <p class="text-sm text-gray-400 mt-2">Sử dụng ô tìm kiếm phía trên để thêm sản phẩm</p>
-                        </div>
+                        <input type="hidden" name="note" id="commonReasonValue" value="{{ old('note') }}">
                     </div>
                 </div>
             </div>
 
-            <!-- Summary Sidebar -->
-            <div class="space-y-6">
+            <!-- Summary Sidebar (4 parts) -->
+            <div class="lg:col-span-4">
                 <!-- Chi tiết chi phí -->
                 <div class="bg-white rounded-xl shadow-sm p-6 sticky top-6" id="cost-summary-section">
                     <h3 class="text-lg font-bold text-gray-900 mb-4">Chi tiết chi phí</h3>
 
-                    <div class="space-y-3 mb-6">
+                    <!-- Selected Products List (Scrollable, max 4 items visible) -->
+                    <div class="mb-6">
+                        <div id="sidebarProductList" class="space-y-3 max-h-[400px] overflow-y-auto pr-2 mb-4">
+                            <!-- Products will be rendered here -->
+                        </div>
+                        <div id="sidebarEmptyState" class="py-8 text-center">
+                            <i class="fas fa-shopping-cart text-gray-300 text-3xl mb-2"></i>
+                            <p class="text-gray-500 text-sm">Chưa có sản phẩm</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 mb-6 pt-4 border-t border-gray-200">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Tạm tính (<span id="itemCount">0</span> mục)</span>
                             <span class="font-semibold" id="subtotal">0 đ</span>
@@ -175,8 +196,6 @@
                         class="w-full py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed">
                         Lưu nháp
                     </button>
-
-
                 </div>
             </div>
         </div>
@@ -216,44 +235,33 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const isFromCatalog = urlParams.get('from_catalog');
 
-                if (!isFromCatalog) {
-                    // New Request -> Clear old data
-                    localStorage.removeItem(CART_KEY);
-                    selectedProducts = [];
-                } else {
-                    // Load from LS
-                    const stored = localStorage.getItem(CART_KEY);
-                    if (stored) {
-                        try {
-                            const cartItems = JSON.parse(stored);
-                            // Merge with any prefilled items (though usually empty on create)
-                            // Map simple cart items to full structure if needed, or just push
-                            // Assuming cart saves: {id, name, price, unit, quantity}
-                            
-                            // We need to merge duplicates if any (though LS shouldn't have them if managed right)
-                            cartItems.forEach(item => {
-                                const exists = selectedProducts.find(p => p.id === item.id);
-                                if (!exists) {
-                                    selectedProducts.push({
-                                        id: item.id,
-                                        name: item.name,
-                                        price: item.price,
-                                        unit: item.unit,
-                                        quantity: item.quantity,
-                                        image: item.image || '', // Load image
-                                        reason: ''
-                                    });
-                                } else {
-                                    exists.quantity = item.quantity;
-                                    if (!exists.image && item.image) exists.image = item.image; // Update image if available
-                                }
-                            });
-                        } catch (e) {
-                            console.error('Error parsing cart:', e);
-                        }
+                // Load from LS
+                const stored = localStorage.getItem(CART_KEY);
+                if (stored) {
+                    try {
+                        const cartItems = JSON.parse(stored);
+                        cartItems.forEach(item => {
+                            const exists = selectedProducts.find(p => p.id === item.id);
+                            if (!exists) {
+                                selectedProducts.push({
+                                    id: item.id,
+                                    name: item.name,
+                                    price: item.price,
+                                    unit: item.unit,
+                                    quantity: item.quantity,
+                                    image: item.image || '',
+                                    reason: ''
+                                });
+                            } else {
+                                exists.quantity = item.quantity;
+                                if (!exists.image && item.image) exists.image = item.image;
+                            }
+                        });
+                    } catch (e) {
+                        console.error('Error parsing cart:', e);
                     }
                 }
-                
+
                 renderProducts();
                 updateTotal();
             }
@@ -273,7 +281,7 @@
             function toggleProductList() {
                 const dropdown = document.getElementById('productListDropdown');
                 // ... (Show/Hide logic)
-                 if (dropdown.classList.contains('hidden')) {
+                if (dropdown.classList.contains('hidden')) {
                     dropdown.classList.remove('hidden');
                     const items = document.querySelectorAll('.product-item');
                     items.forEach(item => item.style.display = 'block');
@@ -299,15 +307,15 @@
                         unit: unit,
                         quantity: 1,
                         image: image || '',
-                        reason: ''
+                        reason: currentCommonReason || ''
                     });
                     showToast('Đã thêm sản phẩm vào danh sách', 'success');
                 }
-                
+
                 syncToStorage();
                 renderProducts();
                 updateTotal();
-                
+
                 // Hide dropdown
                 document.getElementById('productListDropdown').classList.add('hidden');
                 document.getElementById('productSearch').value = '';
@@ -318,25 +326,25 @@
                     productItem.innerHTML += '<span class="text-green-600 text-sm ml-2"><i class="fas fa-check"></i> Đã thêm</span>';
                 }
             }
-            
+
             // Override update/remove to sync
             const originalUpdateQuantity = updateQuantity; // Not defined globally yet?
             // Re-defining to include sync:
-            
+
             function updateQuantity(index, quantity) {
                 selectedProducts[index].quantity = parseInt(quantity);
                 syncToStorage();
                 updateTotal();
             }
-            
+
             function removeProduct(index) {
                 const product = selectedProducts[index];
                 selectedProducts.splice(index, 1);
                 syncToStorage();
                 renderProducts();
                 updateTotal();
-                
-                 // Reset UI
+
+                // Reset UI
                 const productItem = document.querySelector(`.product-item[data-id="${product.id}"]`);
                 if (productItem) {
                     productItem.classList.remove('bg-green-50', 'opacity-50');
@@ -344,9 +352,9 @@
                     if (checkMark) checkMark.remove();
                 }
             }
-            
+
             // On Submit Success -> Clear LS
-            document.getElementById('createRequestForm').addEventListener('submit', function() {
+            document.getElementById('createRequestForm').addEventListener('submit', function () {
                 // We clear it assuming submit works. If validation fails, user stays on page.
                 // Ideally clear only on actual success, but standard form submit refreshes page.
                 // If we come back with errors, 'from_catalog' wont be there, so it clears?
@@ -365,93 +373,104 @@
             });
 
             function renderProducts() {
-                const container = document.getElementById('selectedProducts');
-                const emptyState = document.getElementById('emptyState');
-                const costSummary = document.getElementById('cost-summary-section');
-
-                // Toggle visibility
-                // if (selectedProducts.length > 0) {
-                //     costSummary.classList.remove('hidden');
-                // } else {
-                //     costSummary.classList.add('hidden');
-                // }
+                const sidebarContainer = document.getElementById('sidebarProductList');
+                const sidebarEmptyState = document.getElementById('sidebarEmptyState');
 
                 if (selectedProducts.length === 0) {
-                    container.innerHTML = '';
-                    emptyState.classList.remove('hidden');
+                    sidebarContainer.innerHTML = '';
+                    sidebarEmptyState.classList.remove('hidden');
                     return;
                 }
 
-                emptyState.classList.add('hidden');
+                sidebarEmptyState.classList.add('hidden');
 
                 let html = '';
                 selectedProducts.forEach((product, index) => {
                     // Handle image logic
                     let imageHtml = '';
                     if (product.image) {
-                        imageHtml = `<img src="${product.image}" alt="${product.name}" class="w-20 h-20 rounded-lg object-cover border border-gray-200">`;
+                        imageHtml = `<img src="${product.image}" alt="${product.name}" class="w-12 h-12 rounded-lg object-cover border border-gray-200">`;
                     } else {
                         // Placeholder with Initials
                         const initials = product.name.substring(0, 2).toUpperCase();
                         imageHtml = `
-                            <div class="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
-                                <span class="text-xl font-bold text-gray-400 select-none">${initials}</span>
-                            </div>
-                        `;
+                                                                                            <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-200">
+                                                                                                <span class="text-sm font-bold text-gray-400 select-none">${initials}</span>
+                                                                                            </div>
+                                                                                        `;
                     }
 
                     html += `
-                                                                                                                            <div class="p-4">
-                                                                                                                                <div class="flex gap-4">
-                                                                                                                                    ${imageHtml}
-                                                                                                                                    <div class="flex-1">
-                                                                                                                                        <h4 class="font-semibold text-gray-900 mb-1">${product.name}</h4>
-                                                                                                                                        <div class="grid grid-cols-2 gap-3 mt-3">
-                                                                                                                                            <div>
-                                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
-                                                                                                                                                <input type="number" 
-                                                                                                                                                       name="items[${index}][quantity]"
-                                                                                                                                                       value="${product.quantity}"
-                                                                                                                                                       min="1"
-                                                                                                                                                       step="1"
-                                                                                                                                                       onchange="updateQuantity(${index}, this.value)"
-                                                                                                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-center"
-                                                                                                                                                       required>
-                                                                                                                                                <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
-                                                                                                                                            </div>
-                                                                                                                                            <div>
-                                                                                                                                                <label class="text-xs text-gray-500 block mb-1">Đơn giá (${product.unit})</label>
-                                                                                                                                                 <input type="text" 
-                                                                                                                                                        value="${formatMoney(product.price)} đ"
-                                                                                                                                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
-                                                                                                                                                        readonly
-                                                                                                                                                        required>
-                                                                                                                                                 <input type="hidden" name="items[${index}][expected_price]" value="${product.price}">
-                                                                                                                                            </div>
-                                                                                                                                        </div>
-                                                                                                                                        <div class="mt-3">
-                                                                                                                                            <label class="text-xs text-gray-500 block mb-1">Lý do</label>
-                                                                                                                                            <input type="text" 
-                                                                                                                                                   name="items[${index}][reason]"
-                                                                                                                                                   value="${product.reason}"
-                                                                                                                                                   placeholder="Nhập lý do mua..."
-                                                                                                                                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                    <div class="text-right">
-                                                                                                                                        <p class="font-bold text-blue-600 text-lg mb-2">${formatMoney(product.price * product.quantity)} đ</p>
-                                                                                                                                        <button type="button" 
-                                                                                                                                                onclick="removeProduct(${index})"
-                                                                                                                                                class="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors" title="Xóa">
-                                                                                                                                            <i class="fas fa-trash-alt"></i>
-                                                                                                                                        </button>
-                                                                                                                                    </div>
-                                                                                                                                </div>
-                                                                                                                            </div>
-                                                                                                                        `;
+                                                                                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                                                            <div class="flex gap-3 mb-3">
+                                                                                                ${imageHtml}
+                                                                                                <div class="flex-1 min-w-0">
+                                                                                                    <h4 class="font-semibold text-gray-900 text-sm truncate">${product.name}</h4>
+                                                                                                    <p class="text-xs text-gray-500">${product.unit}</p>
+                                                                                                </div>
+                                                                                                <button type="button" 
+                                                                                                    onclick="removeProduct(${index})"
+                                                                                                    class="text-red-500 hover:text-red-700 h-6 w-6" title="Xóa">
+                                                                                                    <i class="fas fa-times"></i>
+                                                                                                </button>
+                                                                                            </div>
+
+                                                                                            <div class="space-y-2">
+                                                                                                <div class="grid grid-cols-2 gap-2">
+                                                                                                    <div>
+                                                                                                        <label class="text-xs text-gray-500 block mb-1">Số lượng</label>
+                                                                                                        <input type="number" 
+                                                                                                               name="items[${index}][quantity]"
+                                                                                                               value="${product.quantity}"
+                                                                                                               min="1"
+                                                                                                               step="1"
+                                                                                                               onchange="updateQuantity(${index}, this.value)"
+                                                                                                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                                                                                                        required>
+                                                                                                        <input type="hidden" name="items[${index}][product_id]" value="${product.id}">
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <label class="text-xs text-gray-500 block mb-1">Đơn giá</label>
+                                                                                                        <input type="text" 
+                                                                                                               value="${formatMoney(product.price)} đ"
+                                                                                                               class="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-gray-600"
+                                                                                                               readonly>
+                                                                                                        <input type="hidden" name="items[${index}][expected_price]" value="${product.price}">
+                                                                                                    </div>
+                                                                                                </div>
+
+                                                                                                <div>
+                                                                                                    <div class="flex items-center justify-between mb-1">
+                                                                                                        <label class="text-xs text-gray-500">Lý do</label>
+                                                                                                        <label class="flex items-center text-xs text-blue-600 cursor-pointer">
+                                                                                                            <input type="checkbox" 
+                                                                                                                   id="customReasonCheck_${index}"
+                                                                                                                   onchange="toggleProductCustomReason(${index})"
+                                                                                                                   class="mr-1 text-blue-600 focus:ring-blue-500">
+                                                                                                            <span>Lý do khác</span>
+                                                                                                        </label>
+                                                                                                    </div>
+                                                                                                    <input type="text" 
+                                                                                                           id="productReason_${index}"
+                                                                                                           name="items[${index}][reason]"
+                                                                                                           value="${product.reason || ''}"
+                                                                                                           placeholder="Sử dụng lý do chung..."
+                                                                                                           readonly
+                                                                                                           class="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-50 text-gray-600 product-reason-input">
+                                                                                                </div>
+
+                                                                                                <div class="pt-2 border-t border-gray-200">
+                                                                                                    <div class="flex justify-between items-center">
+                                                                                                        <span class="text-xs text-gray-500">Thành tiền:</span>
+                                                                                                        <span class="font-bold text-blue-600 text-sm">${formatMoney(product.price * product.quantity)} đ</span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    `;
                 });
 
-                container.innerHTML = html;
+                sidebarContainer.innerHTML = html;
             }
 
             // Previously defined in init scope, but ensuring global scope access for HTML events
@@ -559,6 +578,58 @@
                 return new Intl.NumberFormat('vi-VN').format(amount);
             }
 
+            // Common Reason System
+            let currentCommonReason = '';
+
+            function toggleCustomReason(show) {
+                const container = document.getElementById('customReasonContainer');
+                const input = document.getElementById('customReasonInput');
+
+                if (show) {
+                    container.classList.remove('hidden');
+                    input.focus();
+                } else {
+                    container.classList.add('hidden');
+                    input.value = '';
+                }
+            }
+
+            function applyCommonReason(reason) {
+                currentCommonReason = reason;
+                document.getElementById('commonReasonValue').value = reason;
+
+                // Apply to all products that don't have custom reason
+                const productReasonInputs = document.querySelectorAll('.product-reason-input');
+                productReasonInputs.forEach((input, index) => {
+                    const checkbox = document.getElementById(`customReasonCheck_${index}`);
+                    if (!checkbox || !checkbox.checked) {
+                        input.value = reason;
+                    }
+                });
+            }
+
+            function toggleProductCustomReason(index) {
+                const checkbox = document.getElementById(`customReasonCheck_${index}`);
+                const input = document.getElementById(`productReason_${index}`);
+
+                if (checkbox.checked) {
+                    // Enable custom reason for this product
+                    input.removeAttribute('readonly');
+                    input.classList.remove('bg-gray-50', 'text-gray-600');
+                    input.classList.add('bg-white');
+                    input.placeholder = 'Nhập lý do riêng...';
+                    input.value = '';
+                    input.focus();
+                } else {
+                    // Revert to common reason
+                    input.setAttribute('readonly', true);
+                    input.classList.add('bg-gray-50', 'text-gray-600');
+                    input.classList.remove('bg-white');
+                    input.placeholder = 'Sử dụng lý do chung...';
+                    input.value = currentCommonReason;
+                }
+            }
+
             function saveDraft() {
                 // Change form action to save as draft
                 const form = document.getElementById('createRequestForm');
@@ -626,6 +697,11 @@
             document.addEventListener('DOMContentLoaded', function () {
                 renderProducts();
                 updateTotal();
+            });
+
+            // Clear storage on submit
+            document.getElementById('createRequestForm').addEventListener('submit', function () {
+                localStorage.removeItem(CART_KEY);
             });
         </script>
     @endpush

@@ -311,9 +311,9 @@
     @endif
 
     <!-- Footer -->
-    <div class="footer">
+    <!-- <div class="footer">
         <p>HỆ THỐNG QUẢN LÝ YÊU CẦU MUA HÀNG - V1.0.2</p>
         <p>TRANG 1/1</p>
-    </div>
+    </div> -->
 </body>
 </html>

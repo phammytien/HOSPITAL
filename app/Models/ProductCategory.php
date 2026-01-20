@@ -20,4 +20,10 @@ class ProductCategory extends Model
     {
         return $this->hasMany(Product::class, 'category_id');
     }
+
+    public function suppliers()
+    {
+        return $this->belongsToMany(\App\Models\Supplier::class, 'category_supplier', 'product_category_id', 'supplier_id')
+            ->withTimestamps();
+    }
 }

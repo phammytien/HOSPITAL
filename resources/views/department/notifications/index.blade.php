@@ -86,10 +86,10 @@
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     Cảnh báo
                 </a>
-                <a href="{{ route('department.notifications.index', ['type' => 'success']) }}"
-                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'success' ? 'bg-green-50 text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:bg-gray-50' }}">
-                    <i class="fas fa-check-circle mr-2"></i>
-                    Thành công
+                <a href="{{ route('department.notifications.index', ['type' => 'important']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'important' ? 'bg-purple-50 text-purple-600 border-b-2 border-purple-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-star mr-2"></i>
+                    Quan trọng
                 </a>
             </div>
         </div>
@@ -123,7 +123,7 @@
                             'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50', 'badge' => 'KHẨN CẤP'],
                             'warning' => ['icon' => 'exclamation-triangle', 'color' => 'orange', 'bg' => 'orange-50', 'badge' => 'CẢNH BÁO'],
                             'info' => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50', 'badge' => 'THÔNG TIN'],
-                            'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'THÀNH CÔNG'],
+                            'important' => ['icon' => 'star', 'color' => 'purple', 'bg' => 'purple-50', 'badge' => 'QUAN TRỌNG'],
                         ];
                         $config = $icons[$notification->type] ?? $icons['info'];
                     @endphp
@@ -164,7 +164,7 @@
                                     </span>
                                     <span class="flex items-center gap-1">
                                         <i class="far fa-clock"></i>
-                                        {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
+                                        {{ \App\Helpers\TimeHelper::formatNotificationTime($notification->created_at) }}
                                     </span>
                                 </div>
                             </div>

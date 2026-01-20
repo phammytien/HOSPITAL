@@ -311,7 +311,7 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed top-20 right-6 z-[10001] space-y-3" style="max-width: 420px;">
+    <div id="toastContainer" class="fixed top-20 right-6 z-[10001] space-y-3 pointer-events-none" style="max-width: 420px;">
         <!-- Toasts will be inserted here dynamically -->
     </div>
 
@@ -538,7 +538,7 @@
                 
                 return `
                     <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <!-- Icon -->

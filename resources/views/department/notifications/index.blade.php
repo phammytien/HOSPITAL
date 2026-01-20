@@ -33,6 +33,7 @@
             'info' => $allDeptNotifications->where('type', 'info')->count(),
             'warning' => $allDeptNotifications->where('type', 'warning')->count(),
             'success' => $allDeptNotifications->where('type', 'success')->count(),
+            'important' => $allDeptNotifications->where('type', 'important')->count(),
         ];
     @endphp
     <div class="space-y-6">
@@ -48,6 +49,89 @@
                 <span>Đánh dấu tất cả đã đọc ({{ $filteredUnread }})</span>
             </button>
         </div>
+
+        {{-- Statistics Cards --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {{-- Total Notifications --}}
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Tổng thông báo</p>
+                        <h3 class="text-3xl font-bold text-gray-900">{{ number_format($stats['total']) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-bell text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Unread --}}
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Chưa đọc</p>
+                        <h3 class="text-3xl font-bold text-red-600">{{ number_format($stats['unread']) }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-envelope text-red-600 text-xl"></i>
+                    </div>
+                </div>
+                @if($stats['unread'] > 0)
+                    <p class="text-sm text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        <span>Có thông báo mới</span>
+                    </p>
+                @endif
+            </div>
+
+            {{-- Read --}}
+            <div class="bg-white rounded-xl p-6 border border-gray-200">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">Đã đọc</p>
+                        <h3 class="text-3xl font-bold text-green-600">
+                            {{ number_format($stats['total'] - $stats['unread']) }}
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Status Tabs (Commented out as redundant)
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="flex border-b border-gray-200">
+                <a href="{{ route('department.notifications.index') }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ !request('type') ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-list mr-2"></i>
+                    Tất cả
+                    <span class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ $stats['total'] }}</span>
+                </a>
+                <a href="{{ route('department.notifications.index', ['type' => 'info']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'info' ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Thông tin
+                </a>
+                <a href="{{ route('department.notifications.index', ['type' => 'warning']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'warning' ? 'bg-orange-50 text-orange-600 border-b-2 border-orange-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Cảnh báo
+                </a>
+                <a href="{{ route('department.notifications.index', ['type' => 'success']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'success' ? 'bg-green-50 text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Thành công
+                </a>
+                <a href="{{ route('department.notifications.index', ['type' => 'important']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'important' ? 'bg-purple-50 text-purple-600 border-b-2 border-purple-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-star mr-2"></i>
+                    Quan trọng
+                </a>
+            </div>
+        </div>
+        --}}
 
         {{-- Filters --}}
         <div class="bg-white rounded-xl p-4 border border-gray-200">
@@ -99,6 +183,13 @@
                     <span
                         class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ $typeCounts['success'] }}</span>
                 </a>
+                <a href="{{ route('department.notifications.index', ['type' => 'important']) }}"
+                    class="flex-1 px-6 py-4 text-center font-semibold transition {{ request('type') == 'important' ? 'bg-purple-50 text-purple-600 border-b-2 border-purple-600' : 'text-gray-600 hover:bg-gray-50' }}">
+                    <i class="fas fa-star mr-2"></i>
+                    Quan trọng
+                    <span
+                        class="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ $typeCounts['important'] }}</span>
+                </a>
             </div>
         </div>
 
@@ -118,7 +209,7 @@
                             'error' => ['icon' => 'exclamation-circle', 'color' => 'red', 'bg' => 'red-50', 'badge' => 'KHẨN CẤP'],
                             'warning' => ['icon' => 'exclamation-triangle', 'color' => 'orange', 'bg' => 'orange-50', 'badge' => 'CẢNH BÁO'],
                             'info' => ['icon' => 'info-circle', 'color' => 'blue', 'bg' => 'blue-50', 'badge' => 'THÔNG TIN'],
-                            'success' => ['icon' => 'check-circle', 'color' => 'green', 'bg' => 'green-50', 'badge' => 'THÀNH CÔNG'],
+                            'important' => ['icon' => 'star', 'color' => 'purple', 'bg' => 'purple-50', 'badge' => 'QUAN TRỌNG'],
                         ];
                         $config = $icons[$notification->type] ?? $icons['info'];
                     @endphp
@@ -166,6 +257,9 @@
                         data-notification-read="{{ $notification->is_read ? 'true' : 'false' }}"
                         data-notification-url="{{ $modalRedirectUrl }}" onclick="openNotificationModalFromData(this)">
 
+                        <!-- <div class="p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 cursor-pointer {{ !$notification->is_read ? 'bg-blue-50' : '' }}"
+                                                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})"> -->
+
                         <div class="flex items-start gap-4">
                             {{-- Icon with blue dot --}}
                             <div class="relative flex-shrink-0">
@@ -194,24 +288,29 @@
                                     class="text-gray-600 text-sm mb-3 line-clamp-2 {{ !$notification->is_read ? 'font-medium' : '' }}">
                                     {{ $notification->message }}
                                 </p>
+
+                                @if($isUrgent && $orderId && $order && $order->status == 'DELIVERED')
+                                    <div class="mt-2">
+                                        <a href="{{ route('department.dept_orders.show', $orderId) }}"
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-black rounded-lg hover:bg-blue-700 transition shadow-md uppercase tracking-wider">
+                                            <i class="fas fa-truck-fast"></i>
+                                            Xác nhận đã nhận hàng ngay
+                                        </a>
+                                    </div>
+                                @elseif($isUrgent && $orderId && $order && $order->status == 'COMPLETED')
+                                    <div class="mt-2">
+                                        <span
+                                            class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded border border-green-200 uppercase whitespace-nowrap">
+                                            <i class="fas fa-check-circle"></i> THÀNH CÔNG
+                                        </span>
+                                    </div>
+                                @endif
+
+                                <div class="mt-2 text-[11px] text-gray-500 font-medium">
+                                    <i class="far fa-clock mr-1"></i>
+                                    {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
+                                </div>
                             </div>
-                            @if($isUrgent && $orderId && $order && $order->status == 'DELIVERED')
-                                <div class="mt-4">
-                                    <a href="{{ route('department.dept_orders.show', $orderId) }}"
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-xs font-black rounded-lg hover:bg-blue-700 transition shadow-md uppercase tracking-wider">
-                                        <i class="fas fa-truck-fast"></i>
-                                        Xác nhận đã nhận hàng ngay
-                                    </a>
-                                </div>
-                            @elseif($isUrgent && $orderId && $order && $order->status == 'COMPLETED')
-                                <div class="mt-4">
-                                    <span
-                                        class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 text-xs font-bold rounded-lg border border-green-200">
-                                        <i class="fas fa-check-circle"></i>
-                                        THÀNH CÔNG
-                                    </span>
-                                </div>
-                            @endif
                         </div>
                     </div>
                 @empty

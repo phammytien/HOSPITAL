@@ -261,8 +261,8 @@
                                                 default => 'fa-info'
                                             };
                                         @endphp
-                                        <div onclick="showNotificationDetail({{ $notify->id }}, '{{ addslashes($notify->title) }}', '{{ addslashes($notify->message) }}', '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
-                                             class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
+                                        <div onclick="showNotificationDetail({{ $notify->id }}, {{ Js::from($notify->title) }}, {{ Js::from(strip_tags($notify->message)) }}, '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
+                                              class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
                                              
                                              <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
                                                  <i class="fas {{ $icon }}"></i>
@@ -537,8 +537,8 @@
                 const toastId = `toast-${id}-${Date.now()}`;
                 
                 return `
-                    <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
+                    <div id="${toastId}" onclick="showNotificationDetail(${id}, '${addslashes_js(title)}', '${addslashes_js(message)}', '${type}', false)"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <!-- Icon -->
@@ -553,7 +553,7 @@
                             </div>
                             
                             <!-- Close button -->
-                            <button onclick="toastManager.removeToast('${toastId}')" 
+                            <button onclick="event.stopPropagation(); toastManager.removeToast('${toastId}')" 
                                     class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -657,8 +657,8 @@
                     @foreach($notifications->where('is_read', false) as $notify)
                         {
                             id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
+                            title: {{ Js::from($notify->title) }},
+                            message: {{ Js::from(strip_tags($notify->message)) }},
                             type: '{{ $notify->type }}'
                         },
                     @endforeach
@@ -683,6 +683,10 @@
                 }, 5000);
             });
         });
+
+        function addslashes_js(str) {
+            return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        }
     </script>
     @stack('scripts')
 

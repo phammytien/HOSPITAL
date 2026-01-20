@@ -85,7 +85,7 @@
                         <div id="adminNotificationDropdown" class="hidden absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 transform origin-top-right transition-all">
                             <div class="px-4 py-3 border-b border-gray-50 flex justify-between items-center bg-white">
                                 <h3 class="font-bold text-gray-800 text-base">Thông báo</h3>
-                                <button class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
+                                <button onclick="markAllNotificationsAsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">Đánh dấu tất cả đã đọc</button>
                             </div>
                             
                             <div class="max-h-[400px] overflow-y-auto">
@@ -106,7 +106,8 @@
                                                 default => 'fa-info'
                                             };
                                         @endphp
-                                        <div class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->read_at ? 'opacity-70' : '' }}">
+                                        <div onclick="showNotificationDetail({{ $notify->id }}, {{ Js::from($notify->title) }}, {{ Js::from(strip_tags($notify->message)) }}, '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
+                                             class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->read_at ? 'opacity-70' : '' }}">
                                              <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
                                                  <i class="fas {{ $icon }}"></i>
                                              </div>
@@ -302,6 +303,33 @@
         <!-- Toasts will be inserted here dynamically -->
     </div>
 
+    <!-- Notification Detail Modal -->
+    <div id="notificationDetailModal" class="fixed inset-0 bg-black/50 z-[10002] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-in fade-in zoom-in duration-300">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 class="font-bold text-gray-800 text-lg flex items-center">
+                    <i class="fas fa-bell mr-2 text-blue-600"></i> Chi tiết thông báo
+                </h3>
+                <button onclick="closeNotificationDetailModal()" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-8">
+                <div id="notificationBadge" class="inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase mb-4"></div>
+                <h4 id="notificationTitle" class="text-xl font-bold text-gray-900 mb-4 leading-tight"></h4>
+                <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                    <p id="notificationMessage" class="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm"></p>
+                </div>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+                <button onclick="closeNotificationDetailModal()"
+                    class="px-6 py-2 bg-gray-800 text-white rounded-xl hover:bg-gray-900 font-bold transition-all shadow-lg active:scale-95 text-sm">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <!-- <footer class="bg-white border-t border-gray-200">
         <div class="px-6 py-8">
@@ -384,6 +412,55 @@
             menu.classList.toggle('hidden');
         }
 
+        function showNotificationDetail(id, title, message, type, isRead) {
+            const modal = document.getElementById('notificationDetailModal');
+            document.getElementById('notificationTitle').textContent = title;
+            document.getElementById('notificationMessage').textContent = message;
+            
+            const badge = document.getElementById('notificationBadge');
+            const configs = {
+                'success': { text: 'Thành công', class: 'bg-green-100 text-green-700' },
+                'error': { text: 'Lỗi', class: 'bg-red-100 text-red-700' },
+                'warning': { text: 'Cảnh báo', class: 'bg-yellow-100 text-yellow-700' },
+                'important': { text: 'Quan trọng', class: 'bg-purple-100 text-purple-700' },
+                'info': { text: 'Thông tin', class: 'bg-blue-100 text-blue-700' }
+            };
+            const config = configs[type] || configs.info;
+            badge.textContent = config.text;
+            badge.className = `inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase mb-4 ${config.class}`;
+            
+            modal.classList.remove('hidden');
+            document.getElementById('adminNotificationDropdown').classList.add('hidden');
+
+            if (!isRead) {
+                fetch(`/admin/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                }).then(() => {
+                    setTimeout(() => window.location.reload(), 500);
+                });
+            }
+        }
+
+        function closeNotificationDetailModal() {
+            document.getElementById('notificationDetailModal').classList.add('hidden');
+        }
+
+        function markAllNotificationsAsRead() {
+            fetch('/admin/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => res.json()).then(data => {
+                if (data.success) window.location.reload();
+            });
+        }
+
         // Close menu when clicking outside
         document.addEventListener('click', function(event) {
             const userMenu = document.getElementById('userMenu');
@@ -423,8 +500,8 @@
                 const toastId = `toast-${id}-${Date.now()}`;
                 
                 return `
-                    <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
+                    <div id="${toastId}" onclick="showNotificationDetail(${id}, '${addslashes_js(title)}', '${addslashes_js(message)}', '${type}', false)"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <div class="flex-shrink-0 w-14 h-14 rounded-full ${config.iconBg} ${config.bgColor} flex items-center justify-center border-2 ${config.borderColor}">
@@ -434,7 +511,7 @@
                                 <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
                             </div>
-                            <button onclick="toastManager.removeToast('${toastId}')" 
+                            <button onclick="event.stopPropagation(); toastManager.removeToast('${toastId}')" 
                                     class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -523,8 +600,8 @@
                     @foreach($notifications->where('is_read', false) as $notify)
                         {
                             id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
+                            title: {{ Js::from($notify->title) }},
+                            message: {{ Js::from(strip_tags($notify->message)) }},
                             type: '{{ $notify->type }}'
                         },
                     @endforeach
@@ -535,6 +612,10 @@
                 }, 1000);
             @endif
         });
+
+        function addslashes_js(str) {
+            return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        }
     </script>
 
     @stack('scripts')

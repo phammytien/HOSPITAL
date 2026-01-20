@@ -254,7 +254,7 @@
                                                         $redirectUrl = '/department/requests/' . $data['request_id'];
                                                     }
                                                 @endphp
-                                                <div onclick="showNotifyModal({{ $notify->id }}, '{{ addslashes($notify->title) }}', '{{ addslashes($notify->message) }}', '{{ $notify->type }}', '{{ $notify->created_at->diffForHumans() }}', '{{ $redirectUrl }}')" 
+                                                <div onclick="showNotifyModal({{ $notify->id }}, {{ Js::from($notify->title) }}, {{ Js::from(strip_tags($notify->message)) }}, '{{ $notify->type }}', '{{ $notify->created_at->diffForHumans() }}', '{{ $redirectUrl }}', {{ $notify->is_read ? 'true' : 'false' }})" 
                                                      class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
                                                      
                                                      <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
@@ -464,7 +464,7 @@
         let currentNotifyId = null;
         let currentNotifyRedirectUrl = null;
 
-        function showNotifyModal(id, title, message, type, time, redirectUrl) {
+        function showNotifyModal(id, title, message, type, time, redirectUrl, isRead) {
             currentNotifyId = id;
             currentNotifyRedirectUrl = redirectUrl;
 
@@ -507,13 +507,15 @@
             document.body.style.overflow = 'hidden';
 
             // Mark as read
-            fetch(`/department/notifications/${id}/read`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            });
+            if (!isRead) {
+                fetch(`/department/notifications/${id}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
         }
 
         function closeNotifyModal() {
@@ -564,8 +566,8 @@
                 const toastId = `toast-${id}-${Date.now()}`;
                 
                 return `
-                    <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
+                    <div id="${toastId}" onclick="showNotifyModal(${id}, '${addslashes(title)}', '${addslashes(message)}', '${type}', 'Vừa xong', '')"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <div class="flex-shrink-0 w-14 h-14 rounded-full ${config.iconBg} ${config.bgColor} flex items-center justify-center border-2 ${config.borderColor}">
@@ -575,7 +577,7 @@
                                 <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
                                 <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
                             </div>
-                            <button onclick="toastManager.removeToast('${toastId}')" 
+                            <button onclick="event.stopPropagation(); toastManager.removeToast('${toastId}')" 
                                     class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -664,8 +666,8 @@
                     @foreach($notifications->where('is_read', false) as $notify)
                         {
                             id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
+                            title: {{ Js::from($notify->title) }},
+                            message: {{ Js::from(strip_tags($notify->message)) }},
                             type: '{{ $notify->type }}'
                         },
                     @endforeach
@@ -676,6 +678,10 @@
                 }, 1000);
             @endif
         });
+
+        function addslashes(str) {
+            return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        }
     </script>
 
     @stack('scripts')

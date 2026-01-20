@@ -128,7 +128,7 @@
                         $config = $icons[$notification->type] ?? $icons['info'];
                     @endphp
                     <div class="p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 cursor-pointer {{ !$notification->is_read ? 'bg-blue-50' : '' }}"
-                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})">
+                        onclick="openNotificationModal({{ $notification->id }}, {{ Js::from($notification->title) }}, {{ Js::from($notification->message) }}, {{ Js::from($config['badge']) }}, {{ Js::from($config['color']) }}, {{ $notification->is_read ? 'true' : 'false' }})">
 
                         <div class="flex items-start gap-4">
                             {{-- Icon with blue dot --}}

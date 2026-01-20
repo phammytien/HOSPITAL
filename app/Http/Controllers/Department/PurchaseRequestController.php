@@ -88,14 +88,25 @@ class PurchaseRequestController extends Controller
         }
 
         // Search
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('request_code', 'like', '%' . $request->search . '%')
                     ->orWhere('note', 'like', '%' . $request->search . '%');
             });
         }
 
-        $requests = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Filter by Period (YYYY-MM)
+        if ($request->filled('period')) {
+            $parts = explode('-', $request->period);
+            if (count($parts) == 2) {
+                $query->whereYear('created_at', $parts[0])
+                    ->whereMonth('created_at', $parts[1]);
+            }
+        }
+
+        $requests = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
         $pageTitle = 'Lịch sử yêu cầu';
         $activeTab = 'history';
 

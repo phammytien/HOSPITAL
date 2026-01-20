@@ -316,6 +316,28 @@
                     <div class="p-6">
                         @if($request->workflows->count() > 0)
                             <div class="space-y-4">
+                                @php
+                                    $statusMap = [
+                                        'DRAFT' => 'Nháp',
+                                        'SUBMITTED' => 'Đã gửi yêu cầu',
+                                        'PENDING' => 'Chờ xử lý',
+                                        'APPROVED' => 'Đã duyệt',
+                                        'REJECTED' => 'Đã từ chối',
+                                        'COMPLETED' => 'Hoàn thành',
+                                        'CANCELLED' => 'Đã hủy',
+                                        'ORDERED' => 'Đã đặt hàng',
+                                        'DELIVERING' => 'Đang giao hàng',
+                                        'DELIVERED' => 'Đã nhận hàng',
+                                        'created' => 'Mới tạo', // Cover lowercase just in case
+                                        'draft' => 'Nháp',
+                                        'submitted' => 'Đã gửi yêu cầu',
+                                        'pending' => 'Chờ xử lý',
+                                        'approved' => 'Đã duyệt',
+                                        'rejected' => 'Đã từ chối',
+                                        'completed' => 'Hoàn thành',
+                                        'cancelled' => 'Đã hủy',
+                                    ];
+                                @endphp
                                 @foreach($request->workflows as $workflow)
                                     <div class="flex items-start space-x-4">
                                         <div
@@ -330,8 +352,8 @@
                                                     class="text-sm text-gray-500">{{ $workflow->action_time->format('d/m/Y H:i') }}</span>
                                             </div>
                                             <p class="text-sm text-gray-600">
-                                                Chuyển trạng thái từ <span class="font-semibold">{{ $workflow->from_status }}</span>
-                                                sang <span class="font-semibold">{{ $workflow->to_status }}</span>
+                                                Chuyển trạng thái từ <span class="font-semibold">{{ $statusMap[$workflow->from_status] ?? $workflow->from_status }}</span>
+                                                sang <span class="font-semibold">{{ $statusMap[$workflow->to_status] ?? $workflow->to_status }}</span>
                                             </p>
                                             @if($workflow->action_note)
                                                 <p class="text-sm text-gray-500 mt-2 p-3 bg-gray-50 rounded-lg">

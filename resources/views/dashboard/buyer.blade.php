@@ -230,9 +230,9 @@
                             <div class="flex items-start gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 border border-transparent hover:border-blue-100 transition duration-150 group"
                                  onclick='showQuickViewDetail(@json($notification), "notification")'>
                                 <div class="flex-shrink-0 mt-1">
-                                    @if($notification->type == 'success')
-                                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200">
-                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    @if($notification->type == 'important')
+                                        <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center group-hover:bg-purple-200">
+                                            <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                         </div>
                                     @elseif($notification->type == 'error')
                                         <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center group-hover:bg-red-200">
@@ -251,7 +251,7 @@
                                 <div class="flex-1">
                                     <h4 class="text-sm font-semibold text-gray-800 transition group-hover:text-blue-700">{{ $notification->title }}</h4>
                                     <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $notification->message }}</p>
-                                    <p class="text-[10px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    <p class="text-[10px] text-gray-400 mt-1">{{ \App\Helpers\TimeHelper::formatNotificationTime($notification->created_at) }}</p>
                                 </div>
                                 <div class="self-center opacity-0 group-hover:opacity-100 transition">
                                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -406,7 +406,7 @@
                 
                 badge.className = 'px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ';
                 switch(data.type) {
-                    case 'success': badge.innerText = 'Thành công'; badge.classList.add('bg-green-50', 'text-green-600', 'border', 'border-green-100'); break;
+                    case 'important': badge.innerText = 'Quan trọng'; badge.classList.add('bg-purple-50', 'text-purple-600', 'border', 'border-purple-100'); break;
                     case 'error': badge.innerText = 'Lỗi hệ thống'; badge.classList.add('bg-red-50', 'text-red-600', 'border', 'border-red-100'); break;
                     case 'warning': badge.innerText = 'Cảnh báo'; badge.classList.add('bg-yellow-50', 'text-yellow-600', 'border', 'border-yellow-100'); break;
                     default: badge.innerText = 'Thông tin'; badge.classList.add('bg-blue-50', 'text-blue-600', 'border', 'border-blue-100'); break;

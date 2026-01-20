@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Helpers\NotificationHelper;
+use App\Services\DocumentParserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -68,7 +70,11 @@ class NotificationController extends Controller
             })->where('is_read', true)->count(),
         ];
 
-        return view('admin.notifications.index', compact('notifications', 'stats'));
+        // Get notification types from database
+        $notificationTypes = NotificationHelper::getNotificationTypes();
+        $targetRoles = NotificationHelper::getTargetRoles();
+
+        return view('admin.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'targetRoles'));
     }
 
     /**
@@ -84,10 +90,13 @@ class NotificationController extends Controller
      */
     public function store(Request $request)
     {
+        // Get valid types from database
+        $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
+        
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => 'required|in:info,success,warning,error',
+            'type' => "required|in:$validTypes",
             'target_role' => 'nullable|string',
         ]);
 
@@ -100,23 +109,9 @@ class NotificationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // Helpers for message construction
-            $types = [
-                'info' => 'Thông tin',
-                'success' => 'Thành công',
-                'warning' => 'Cảnh báo',
-                'error' => 'Khẩn cấp'
-            ];
-            $roles = [
-                'ALL' => 'tất cả người dùng',
-                'ADMIN' => 'quản trị viên',
-                'BUYER' => 'nhân viên mua hàng',
-                'DEPARTMENT' => 'khoa/phòng',
-                null => 'tất cả người dùng'
-            ];
-
-            $typeLabel = $types[$validated['type']] ?? 'Thông tin';
-            $roleLabel = $roles[$validated['target_role'] ?? 'ALL'] ?? 'người dùng';
+            // Get labels from helper
+            $typeLabel = NotificationHelper::getTypeLabel($validated['type']);
+            $roleLabel = NotificationHelper::getRoleLabel($validated['target_role'] ?? 'ALL');
             $title = $validated['title'];
 
             $msg = "Đã tạo thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
@@ -132,10 +127,13 @@ class NotificationController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Get valid types from database
+        $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
+        
         $request->validate([
             'title' => 'required|string|max:255',
             'message' => 'required|string',
-            'type' => 'required|in:info,success,warning,error',
+            'type' => "required|in:$validTypes",
             'target_role' => 'required|string',
         ]);
 
@@ -147,22 +145,9 @@ class NotificationController extends Controller
             'target_role' => $request->target_role,
         ]);
 
-        // Helpers for message construction
-        $types = [
-            'info' => 'Thông tin',
-            'success' => 'Thành công',
-            'warning' => 'Cảnh báo',
-            'error' => 'Khẩn cấp'
-        ];
-        $roles = [
-            'ALL' => 'tất cả người dùng',
-            'ADMIN' => 'quản trị viên',
-            'BUYER' => 'nhân viên mua hàng',
-            'DEPARTMENT' => 'khoa/phòng'
-        ];
-
-        $typeLabel = $types[$request->type] ?? 'Thông tin';
-        $roleLabel = $roles[$request->target_role] ?? 'người dùng';
+        // Get labels from helper
+        $typeLabel = NotificationHelper::getTypeLabel($request->type);
+        $roleLabel = NotificationHelper::getRoleLabel($request->target_role);
         $title = $request->title;
 
         $msg = "Đã cập nhật thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
@@ -199,27 +184,43 @@ class NotificationController extends Controller
 
             $notification->delete();
 
-            $types = [
-                'info' => 'Thông tin',
-                'success' => 'Thành công',
-                'warning' => 'Cảnh báo',
-                'error' => 'Khẩn cấp'
-            ];
-            $roles = [
-                'ALL' => 'tất cả người dùng',
-                'ADMIN' => 'quản trị viên',
-                'BUYER' => 'nhân viên mua hàng',
-                'DEPARTMENT' => 'khoa/phòng',
-                null => 'tất cả người dùng'
-            ];
-
-            $roleLabel = $roles[$role] ?? 'người dùng';
+            // Get label from helper
+            $roleLabel = NotificationHelper::getRoleLabel($role);
 
             $msg = "Đã xóa thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
 
             return back()->with('success', $msg);
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra!');
+        }
+    }
+
+    /**
+     * Upload document and extract notification data
+     */
+    public function uploadDocument(Request $request)
+    {
+        try {
+            $request->validate([
+                'document' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max
+            ]);
+
+            $file = $request->file('document');
+            $parser = new DocumentParserService();
+            
+            $data = $parser->extractNotificationData($file);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'message' => 'File đã được phân tích thành công'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể phân tích file: ' . $e->getMessage()
+            ], 400);
         }
     }
 }

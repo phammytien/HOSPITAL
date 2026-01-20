@@ -183,6 +183,17 @@ function openModal(mode, id = null) {
         el.disabled = false;
         el.classList.remove('bg-gray-100');
     });
+    
+    // Reset categories
+    document.querySelectorAll('input[name="categories[]"]').forEach(el => {
+        el.checked = false;
+        el.disabled = false;
+    });
+    // Reset category list visibility and arrow
+    document.getElementById('category-list').classList.remove('hidden');
+    document.getElementById('category-chevron').classList.remove('rotate-180');
+    
+    updateCategoryCount();
 
     // Make supplier_code readonly again
     document.getElementById('supplier_code').setAttribute('readonly', true);
@@ -214,6 +225,15 @@ function openModal(mode, id = null) {
 
                 form.dataset.id = id;
 
+                // Set categories
+                if (data.categories) {
+                    const categoryIds = data.categories.map(c => c.id);
+                    document.querySelectorAll('input[name="categories[]"]').forEach(el => {
+                        el.checked = categoryIds.includes(parseInt(el.value));
+                    });
+                    updateCategoryCount();
+                }
+
                 if (mode === 'edit') {
                     modalTitle.textContent = 'Chỉnh sửa nhà cung cấp';
                     submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Lưu thay đổi';
@@ -237,6 +257,11 @@ function openModal(mode, id = null) {
                     form.querySelectorAll('input, select, textarea').forEach(el => {
                         el.disabled = true;
                         el.classList.add('bg-gray-100');
+                    });
+                    
+                    // Disable categories
+                    document.querySelectorAll('input[name="categories[]"]').forEach(el => {
+                        el.disabled = true;
                     });
                 }
             });
@@ -474,6 +499,30 @@ function renderProducts(supplierId, products) {
     html += '</div>';
     contentDiv.innerHTML = html;
 }
+
+function toggleCategoryList() {
+    const list = document.getElementById('category-list');
+    const chevron = document.getElementById('category-chevron');
+    
+    if (list.classList.contains('hidden')) {
+        list.classList.remove('hidden');
+        chevron.classList.remove('rotate-180');
+    } else {
+        list.classList.add('hidden');
+        chevron.classList.add('rotate-180');
+    }
+}
+
+function updateCategoryCount() {
+    setTimeout(() => {
+        const checkedCount = document.querySelectorAll('#category-list input[type="checkbox"]:checked').length;
+        const countSpan = document.getElementById('category-count');
+        
+        if (countSpan) {
+            countSpan.textContent = checkedCount > 0 ? `(${checkedCount} đã chọn)` : '';
+        }
+    }, 0);
+}
 </script>
 @endpush
 
@@ -566,6 +615,39 @@ function renderProducts(supplierId, products) {
                             <textarea name="address" id="address" rows="2" placeholder="Nhập địa chỉ đầy đủ..."
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                             <p class="mt-1 text-xs text-red-600 error-feedback hidden" data-field="address"></p>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+
+                <!-- Capabilities -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2">
+                        <i class="fas fa-boxes text-blue-600"></i>
+                        Khả năng cung ứng
+                    </h4>
+                    <p class="text-xs text-gray-500 mb-4">Chọn các loại sản phẩm mà nhà cung cấp này có thể cung cấp.</p>
+                    
+                    <div class="space-y-3">
+                        <div class="w-full px-4 py-3 border-2 border-blue-500 rounded-lg flex justify-between items-center cursor-pointer bg-white" onclick="toggleCategoryList()">
+                             <span class="text-sm font-medium text-gray-700">
+                                 Chọn danh mục cung cấp 
+                                 <span id="category-count" class="text-blue-600 font-bold ml-1"></span>
+                             </span>
+                             <i id="category-chevron" class="fas fa-chevron-up text-blue-500 transition-transform"></i>
+                        </div>
+                        
+                        <div id="category-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach($categories as $category)
+                            <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition select-none">
+                                <input type="checkbox" name="categories[]" value="{{ $category->id }}" 
+                                       class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                       onchange="updateCategoryCount()">
+                                <span class="text-sm text-gray-700">{{ $category->category_name }}</span>
+                            </label>
+                            @endforeach
                         </div>
                     </div>
                 </div>

@@ -193,15 +193,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Help Card -->
-                <div class="m-6 p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white">
-                    <h4 class="font-bold mb-2">Cần hỗ trợ gì?</h4>
-                    <p class="text-sm text-teal-50 mb-4">Đội ngũ hỗ trợ luôn sẵn sàng giúp bạn giải đáp mọi thắc mắc.</p>
-                    <button class="w-full bg-white text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-50 transition">
-                        Liên hệ ngay
-                    </button>
-                </div>
             </div>
         </div>
 

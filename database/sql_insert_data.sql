@@ -215,13 +215,13 @@ INSERT INTO `system_settings` (`id`, `key`, `value`, `description`, `created_at`
 -- 14. Notifications
 INSERT INTO `notifications` (`id`, `title`, `message`, `type`, `target_role`, `data`, `is_read`, `created_by`, `created_at`, `updated_at`) VALUES
 (1, 'Yêu cầu mới', 'Có yêu cầu mua hàng mới từ Khoa Cấp Cứu', 'info', 'buyer', NULL, 0, 4, NOW(), NOW()),
-(2, 'Duyệt đơn hàng', 'Đơn hàng PO001 đã được duyệt', 'success', 'buyer', NULL, 0, 1, NOW(), NOW()),
+(2, 'Duyệt đơn hàng', 'Đơn hàng PO001 đã được duyệt', 'important', 'buyer', NULL, 0, 1, NOW(), NOW()),
 (3, 'Hết hàng', 'Sản phẩm Paracetamol sắp hết hàng', 'warning', 'warehouse_keeper', NULL, 0, NULL, NOW(), NOW()),
 (4, 'Lỗi hệ thống', 'Không gửi được email', 'error', 'admin', NULL, 0, NULL, NOW(), NOW()),
 (5, 'Thông báo chung', 'Họp giao ban thứ 2', 'info', 'all', NULL, 0, 1, NOW(), NOW()),
 (6, 'Cập nhật giá', 'Nhà cung cấp DHG cập nhật bảng giá', 'info', 'buyer', NULL, 0, NULL, NOW(), NOW()),
 (7, 'Yêu cầu bị từ chối', 'Yêu cầu REQ005 đã bị từ chối', 'error', 'department_head', NULL, 0, 1, NOW(), NOW()),
-(8, 'Hàng về', 'Đơn hàng PO002 đã về kho', 'success', 'department_head', NULL, 0, 10, NOW(), NOW()),
+(8, 'Hàng về', 'Đơn hàng PO002 đã về kho', 'important', 'department_head', NULL, 0, 10, NOW(), NOW()),
 (9, 'Bảo trì', 'Hệ thống bảo trì lúc 22h', 'warning', 'all', NULL, 0, 1, NOW(), NOW()),
 (10, 'Chào mừng', 'Chào mừng nhân viên mới', 'info', 'staff', NULL, 0, 1, NOW(), NOW());
 

@@ -128,26 +128,40 @@ class PurchaseRequestController extends Controller
             ->orderBy('category_name')
             ->get();
 
-        // Calculate Budget Stats
+        // Calculate Budget Stats (Quarterly)
         $user = Auth::user();
         $department = $user->department;
         $budgetTotal = $department->budget_amount ?? 500000000;
 
+        // Determine current Quarter
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $quarterStartMonth = floor(($currentMonth - 1) / 3) * 3 + 1;
+        $quarterStartDate = \Carbon\Carbon::create($currentYear, $quarterStartMonth, 1)->startOfDay();
+        $quarterEndDate = $quarterStartDate->copy()->addMonths(3)->subDay()->endOfDay();
+
         $usedBudget = DB::table('purchase_requests')
             ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_requests.department_id', $user->department_id)
-            ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED'])
+            ->whereIn('purchase_requests.status', ['APPROVED', 'COMPLETED', 'PAID'])
             ->where('purchase_requests.is_delete', 0)
             ->where('purchase_request_items.is_delete', 0)
+            ->whereBetween('purchase_requests.created_at', [$quarterStartDate, $quarterEndDate])
             ->sum(DB::raw('purchase_request_items.quantity * purchase_request_items.expected_price'));
 
         $pendingBudget = DB::table('purchase_requests')
             ->join('purchase_request_items', 'purchase_requests.id', '=', 'purchase_request_items.purchase_request_id')
             ->where('purchase_requests.department_id', $user->department_id)
-            ->where('purchase_requests.is_submitted', true)
-            ->whereNull('purchase_requests.status') // Or whereNotIn('Approved' etc) if we want "Pending Approval" specifically
+            ->where(function ($q) {
+                $q->where('purchase_requests.status', 'SUBMITTED')
+                    ->orWhere('purchase_requests.status', 'PENDING')
+                    ->orWhere(function ($sq) {
+                        $sq->whereNull('purchase_requests.status')->where('purchase_requests.is_submitted', true);
+                    });
+            })
             ->where('purchase_requests.is_delete', 0)
             ->where('purchase_request_items.is_delete', 0)
+            ->whereBetween('purchase_requests.created_at', [$quarterStartDate, $quarterEndDate])
             ->sum(DB::raw('purchase_request_items.quantity * purchase_request_items.expected_price'));
 
         // Check for session draft items (from Product Catalog)

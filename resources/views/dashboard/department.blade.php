@@ -66,12 +66,13 @@
                     </span>
                 </div>
                 <h3 class="text-gray-600 text-sm font-medium mb-1">Đã sử dụng</h3>
-                <div class="flex items-baseline space-x-1">
-                    <p class="text-xl font-bold text-gray-900">
+                <div class="flex flex-col">
+                    <p class="text-xl font-bold text-gray-900 leading-tight">
                         {{ number_format($usedBudget, 0, ',', '.') }}đ
                     </p>
-                    <span class="text-xs text-gray-500">/
-                        {{ $department ? number_format($department->budget_amount, 0, ',', '.') : 0 }}đ</span>
+                    <p class="text-[11px] text-gray-500 mt-1">
+                        / {{ $department ? number_format($department->budget_amount, 0, ',', '.') : 0 }}đ
+                    </p>
                 </div>
                 @if($pendingBudget > 0)
                     <div class="mt-2 text-xs text-orange-500 font-medium">

@@ -296,12 +296,12 @@
             <div class="signature-box">
                 <p class="title">NGƯỜI LẬP BIỂU</p>
                 <p class="subtitle">(Ký, ghi rõ họ tên)</p>
-                <p class="name">Nguyễn Văn A</p>
+                <p class="name">{{ auth()->user()->full_name ?? auth()->user()->name }}</p>
             </div>
             <div class="signature-box">
                 <p class="title">KẾ TOÁN TRƯỞNG</p>
                 <p class="subtitle">(Ký, ghi rõ họ tên)</p>
-                <p class="name">Trần Thị B</p>
+                <p class="name" style="color: white">.</p>
             </div>
         </div>
     @else
@@ -311,9 +311,9 @@
     @endif
 
     <!-- Footer -->
-    <div class="footer">
+    <!-- <div class="footer">
         <p>HỆ THỐNG QUẢN LÝ YÊU CẦU MUA HÀNG - V1.0.2</p>
         <p>TRANG 1/1</p>
-    </div>
+    </div> -->
 </body>
 </html>

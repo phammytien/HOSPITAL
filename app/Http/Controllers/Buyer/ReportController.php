@@ -30,6 +30,14 @@ class ReportController extends Controller
         $query = PurchaseOrder::with(['department', 'purchaseRequest'])
             ->where('is_delete', false)
             ->whereIn('status', ['COMPLETED', 'CANCELLED']);
+
+        // Filter duplicates: Keep only the latest order for each request
+        $latestIds = PurchaseOrder::select(DB::raw('MAX(id)'))
+            ->where('is_delete', false)
+            ->whereNotNull('purchase_request_id')
+            ->groupBy('purchase_request_id');
+            
+        $query->whereIn('id', $latestIds);
         
         // Filter by period (Join with purchase_requests) - only if provided
         if ($selectedPeriod) {
@@ -75,6 +83,14 @@ class ReportController extends Controller
     {
         $query = PurchaseOrder::where('is_delete', false);
 
+        // Filter duplicates: Keep only the latest order for each request
+        $latestIds = PurchaseOrder::select(DB::raw('MAX(id)'))
+            ->where('is_delete', false)
+            ->whereNotNull('purchase_request_id')
+            ->groupBy('purchase_request_id');
+            
+        $query->whereIn('id', $latestIds);
+
         if ($period) {
             $query->whereHas('purchaseRequest', function($q) use ($period) {
                 $q->where('period', $period);
@@ -86,17 +102,18 @@ class ReportController extends Controller
         }
 
         $totalOrders = (clone $query)->count();
+        $approvedOrders = (clone $query)->where('status', 'APPROVED')->count();
         $completedOrders = (clone $query)->where('status', 'COMPLETED')->count();
         $cancelledOrders = (clone $query)->where('status', 'CANCELLED')->count();
         $totalAmount = (clone $query)->where('status', 'COMPLETED')->sum('total_amount');
 
         return [
-            'total_requests' => $totalOrders, // Keeping key names to match view
-            'pending_requests' => (clone $query)->whereNotIn('status', ['COMPLETED', 'CANCELLED'])->count(),
-            'approved_requests' => $completedOrders,
-            'rejected_requests' => $cancelledOrders,
+            'total_requests' => $totalOrders,
+            'approved_requests' => $approvedOrders,
+            'completed_requests' => $completedOrders,
+            'cancelled_requests' => $cancelledOrders,
             'total_budget' => $totalAmount,
-            'approval_rate' => $totalOrders > 0 ? round(($completedOrders / $totalOrders) * 100, 1) : 0,
+            'completion_rate' => $totalOrders > 0 ? round(($completedOrders / $totalOrders) * 100, 1) : 0,
         ];
     }
     
@@ -255,6 +272,9 @@ class ReportController extends Controller
         
         $orders = $query->orderBy('department_id')->orderBy('order_date', 'desc')->get();
         
+        // Filter duplicate orders for the same request
+        $orders = $orders->unique('purchase_request_id');
+        
         // Group by department
         $ordersByDepartment = $orders->groupBy('department_id');
         
@@ -293,6 +313,9 @@ class ReportController extends Controller
         }
         
         $orders = $query->orderBy('department_id')->orderBy('order_date', 'desc')->get();
+
+        // Filter duplicate orders for the same request
+        $orders = $orders->unique('purchase_request_id');
         
         // Group by department
         $ordersByDepartment = $orders->groupBy('department_id');

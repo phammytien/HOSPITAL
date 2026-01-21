@@ -1,93 +1,102 @@
 @extends('layouts.buyer')
 
 @section('title', 'Báo cáo')
-@section('header_title', 'Danh sách Yêu cầu Mua hàng')
+@section('header_title', '')
 
 @section('content')
 <div class="space-y-6">
     <!-- Page Header with Logo -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-end mb-6">
-            <!-- Export Buttons -->
-            <div class="flex gap-2">
+    <!-- Header & Tools Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Báo cáo & Thống kê</h2>
+                <p class="text-sm text-gray-500 mt-1">Xem và xuất báo cáo mua hàng theo kỳ/quý</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
                 <a href="{{ route('buyer.reports.export', array_filter(['period' => $selectedPeriod, 'department_id' => $departmentId, 'status' => $status])) }}" 
-                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-medium transition-colors border border-emerald-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    Xuất Excel
+                    <span>Xuất Excel</span>
                 </a>
                 <a href="{{ route('buyer.reports.export-pdf', array_filter(['period' => $selectedPeriod, 'department_id' => $departmentId, 'status' => $status])) }}" 
-                   class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition flex items-center gap-2">
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg font-medium transition-colors border border-rose-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                     </svg>
-                    Xuất PDF
+                    <span>Xuất PDF</span>
                 </a>
             </div>
         </div>
 
-        <!-- Filters -->
-        <form method="GET" action="{{ route('buyer.reports.index') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- Department Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Khoa/Phòng</label>
-                <select name="department_id" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">Tất cả</option>
-                    @foreach($departments as $dept)
-                        <option value="{{ $dept->id }}" {{ $departmentId == $dept->id ? 'selected' : '' }}>
-                            {{ $dept->department_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+        <div class="px-6 pb-6 bg-white">
+            <form method="GET" action="{{ route('buyer.reports.index') }}" id="filterForm" class="flex flex-col md:flex-row md:items-center gap-3">
+                <div class="text-sm font-bold text-gray-400 uppercase whitespace-nowrap mr-2">LỌC:</div>
+                
+                <!-- Department Filter -->
+                <div class="w-full md:w-auto min-w-[200px]">
+                    <select name="department_id" onchange="document.getElementById('filterForm').submit()" class="bg-white border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm border">
+                        <option value="">-- Tất cả Khoa/Phòng --</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ $departmentId == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->department_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Status Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Trạng thái</label>
-                <select name="status" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">Tất cả</option>
-                    @foreach($statuses as $s)
-                        <option value="{{ $s }}" {{ $status == $s ? 'selected' : '' }}>
-                            {{ match($s) {
-                                'COMPLETED' => 'Hoàn thành',
-                                'CANCELLED' => 'Đã hủy',
-                                default => $s
-                            } }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
+                <!-- Status Filter -->
+                <div class="w-full md:w-auto min-w-[200px]">
+                    <select name="status" onchange="document.getElementById('filterForm').submit()" class="bg-white border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm border">
+                        <option value="">-- Tất cả Trạng thái --</option>
+                        @foreach($statuses as $s)
+                            <option value="{{ $s }}" {{ $status == $s ? 'selected' : '' }}>
+                                {{ match($s) {
+                                    'COMPLETED' => 'Hoàn thành',
+                                    'CANCELLED' => 'Đã hủy',
+                                    default => $s
+                                } }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Period Filter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Tất cả Kỳ/Quý</label>
-                <select name="period" onchange="document.getElementById('filterForm').submit()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">-- Tất cả Kỳ/Quý --</option>
-                    @foreach($periods as $p)
-                        <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
-                    @endforeach
-                </select>
-            </div>
+                <!-- Period Filter -->
+                <div class="w-full md:w-auto min-w-[200px]">
+                    <select name="period" onchange="document.getElementById('filterForm').submit()" class="bg-white border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 shadow-sm border">
+                        <option value="">-- Tất cả Kỳ/Quý --</option>
+                        @foreach($periods as $p)
+                            <option value="{{ $p }}" {{ request('period') == $p ? 'selected' : '' }}>{{ $p }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-            <!-- Clear Filter Button -->
-            <div class="flex items-end">
-                <a href="{{ route('buyer.reports.index') }}" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition text-center whitespace-nowrap">
-                    Xóa lọc
-                </a>
-            </div>
-        </form>
+                <!-- Clear Filter Button -->
+                <div>
+                    <a href="{{ route('buyer.reports.index') }}" class="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors whitespace-nowrap shadow-sm">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Xóa lọc
+                    </a>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Total Requests -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs text-gray-600 mb-1">Tổng yêu cầu</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $stats['total_requests'] }}</p>
                 </div>
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -95,53 +104,42 @@
             </div>
         </div>
 
+        <!-- Completed -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-600 mb-1">Chờ duyệt</p>
-                    <p class="text-2xl font-bold text-orange-600">{{ $stats['pending_requests'] }}</p>
-                </div>
-                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs text-gray-600 mb-1">Đã duyệt</p>
-                    <p class="text-2xl font-bold text-green-600">{{ $stats['approved_requests'] }}</p>
+                    <p class="text-xs text-gray-600 mb-1">Hoàn thành</p>
+                    <p class="text-2xl font-bold text-green-600">{{ $stats['completed_requests'] }}</p>
                 </div>
                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
                 </div>
             </div>
         </div>
 
+        <!-- Cancelled -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-600 mb-1">Từ chối</p>
-                    <p class="text-2xl font-bold text-red-600">{{ $stats['rejected_requests'] }}</p>
+                    <p class="text-xs text-gray-600 mb-1">Đã hủy</p>
+                    <p class="text-2xl font-bold text-red-600">{{ $stats['cancelled_requests'] }}</p>
                 </div>
                 <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </div>
             </div>
         </div>
 
+        <!-- Completion Rate -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-600 mb-1">Tỷ lệ duyệt</p>
-                    <p class="text-2xl font-bold text-purple-600">{{ $stats['approval_rate'] }}%</p>
+                    <p class="text-xs text-gray-600 mb-1">Tỷ lệ hoàn thành</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ $stats['completion_rate'] }}%</p>
                 </div>
                 <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,28 +157,27 @@
             <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">STT</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16">STT</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Mã yêu cầu</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Khoa/Phòng</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kỳ/Quý</th>
-                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Số lượng</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Đơn giá</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Thành tiền</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Số mặt hàng</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Tổng thành tiền</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ngày đặt</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Trạng thái</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-10"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200" id="reportTableBody">
                     @php 
                         $sttCounter = 1;
-                        // Group all items by request_code
                         $groupedByRequest = collect();
                         foreach($requests as $order) {
-                            if($order->purchaseRequest && $order->purchaseRequest->items && $order->purchaseRequest->items->count() > 0) {
+                            if($order->purchaseRequest) {
                                 $requestCode = $order->purchaseRequest->request_code ?? 'N/A';
                                 if (!$groupedByRequest->has($requestCode)) {
                                     $groupedByRequest[$requestCode] = [
+                                        'id' => $order->id,
                                         'request' => $order->purchaseRequest,
                                         'department' => $order->department,
                                         'order_date' => $order->order_date,
@@ -188,70 +185,123 @@
                                         'items' => collect()
                                     ];
                                 }
-                                // Add all items from this order to the group
-                                foreach($order->purchaseRequest->items as $item) {
-                                    $groupedByRequest[$requestCode]['items']->push($item);
+                                if ($order->purchaseRequest->items) {
+                                    foreach($order->purchaseRequest->items as $item) {
+                                        $groupedByRequest[$requestCode]['items']->push($item);
+                                    }
                                 }
                             }
                         }
                     @endphp
                     
                     @forelse($groupedByRequest as $requestCode => $group)
-                        @foreach($group['items'] as $itemIndex => $item)
-                            @php
-                                $unitPrice = $item->product->unit_price ?? 0;
-                                $quantity = $item->quantity ?? 0;
-                                $subtotal = $unitPrice * $quantity;
-                            @endphp
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $sttCounter++ }}</td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm font-medium text-blue-600">{{ $requestCode }}</span>
-                                    </td>
-                                @endif
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->product->product_name ?? 'N/A' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $item->product->product_code ?? '' }}</div>
-                                </td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-900">{{ $group['department']->department_name ?? 'N/A' }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-700 font-medium">{{ $group['request']->period ?? 'N/A' }}</span>
-                                    </td>
-                                @endif
-                                <td class="px-6 py-4 text-center whitespace-nowrap">
-                                    <span class="text-sm font-semibold text-gray-900">{{ $quantity }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <span class="text-sm text-gray-900">{{ number_format($unitPrice, 0, ',', '.') }} ₫</span>
-                                </td>
-                                <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <span class="text-sm font-bold text-gray-900">{{ number_format($subtotal, 0, ',', '.') }} ₫</span>
-                                </td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-600">{{ $group['order_date'] ? $group['order_date']->format('d/m/Y') : 'N/A' }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($group['status']) }}">
-                                            {{ get_status_label($group['status']) }}
-                                        </span>
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
+                        @php
+                            $totalAmount = 0;
+                            $totalQuantity = 0;
+                            foreach($group['items'] as $item) {
+                                $totalAmount += ($item->product->unit_price ?? 0) * ($item->quantity ?? 0);
+                                $totalQuantity += ($item->quantity ?? 0);
+                            }
+                            $itemCount = $group['items']->count();
+                            $targetId = 'details-' . str_replace(['/', ' ', '.'], '-', $requestCode);
+                        @endphp
+                        
+                        <!-- Master Row -->
+                        <tr class="master-row cursor-pointer hover:bg-blue-50/50 transition-colors group" onclick="toggleAccordion('{{ $targetId }}', this)">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ $sttCounter++ }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm font-bold text-blue-600">{{ $requestCode }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm text-gray-700">{{ $group['department']->department_name ?? 'N/A' }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ $group['request']->period ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold">{{ $itemCount }} mặt hàng</span>
+                            </td>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <span class="text-sm font-black text-gray-900">{{ number_format($totalAmount, 0, ',', '.') }} ₫</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ $group['order_date'] ? $group['order_date']->format('d/m/Y') : 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase {{ get_status_class($group['status']) }}">
+                                    {{ get_status_label($group['status']) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-transform duration-300 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- Details Row (Accordion Content) -->
+                        <tr id="{{ $targetId }}" class="details-row hidden bg-gray-50/80 border-l-4 border-blue-500">
+                            <td colspan="9" class="p-0">
+                                <div class="overflow-hidden">
+                                    <div class="px-6 py-4">
+                                        <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
+                                            <table class="w-full text-sm">
+                                                <thead>
+                                                    <tr class="bg-blue-50/50 border-b border-blue-100">
+                                                        <th class="px-4 py-3 text-left text-xs font-bold text-blue-800 uppercase tracking-tighter">Sản phẩm</th>
+                                                        <th class="px-4 py-3 text-center text-xs font-bold text-blue-800 uppercase tracking-tighter w-24">Số lượng</th>
+                                                        <th class="px-4 py-3 text-right text-xs font-bold text-blue-800 uppercase tracking-tighter w-32">Đơn giá</th>
+                                                        <th class="px-4 py-3 text-right text-xs font-bold text-blue-800 uppercase tracking-tighter w-40">Thành tiền</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100">
+                                                    @foreach($group['items'] as $item)
+                                                        @php
+                                                            $uPrice = $item->product->unit_price ?? 0;
+                                                            $qty = $item->quantity ?? 0;
+                                                            $sTotal = $uPrice * $qty;
+                                                        @endphp
+                                                        <tr class="hover:bg-blue-50/30 transition-colors">
+                                                            <td class="px-4 py-3">
+                                                                <div class="font-bold text-gray-800">{{ $item->product->product_name ?? 'N/A' }}</div>
+                                                                <div class="text-[10px] text-gray-500 tracking-wider">{{ $item->product->product_code ?? '' }}</div>
+                                                            </td>
+                                                            <td class="px-4 py-3 text-center">
+                                                                <span class="font-bold text-gray-900">{{ number_format($qty, 0, '.', ',') }}</span>
+                                                            </td>
+                                                            <td class="px-4 py-3 text-right text-gray-600">
+                                                                {{ number_format($uPrice, 0, '.', ',') }} ₫
+                                                            </td>
+                                                            <td class="px-4 py-3 text-right">
+                                                                <span class="font-bold text-gray-900">{{ number_format($sTotal, 0, '.', ',') }} ₫</span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                                <tfoot class="bg-blue-50/20 border-t border-blue-100 italic">
+                                                    <tr>
+                                                        <td colspan="3" class="px-4 py-2 text-right text-xs font-bold text-blue-900 mr-2 uppercase">Cộng tổng:</td>
+                                                        <td class="px-4 py-2 text-right text-sm font-black text-blue-600">
+                                                            {{ number_format($totalAmount, 0, '.', ',') }} ₫
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center">
+                            <td colspan="9" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    <p class="text-gray-600 text-lg font-medium">Không tìm thấy đơn hàng nào</p>
-                                    <p class="text-gray-500 text-sm mt-1">Vui lòng thử điều chỉnh bộ lọc của bạn</p>
+                                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-gray-500 font-medium">Không tìm thấy báo cáo nào phù hợp</p>
                                 </div>
                             </td>
                         </tr>
@@ -292,6 +342,42 @@
 </div>
 
 <script>
+function toggleAccordion(targetId, masterRow) {
+    const detailsRow = document.getElementById(targetId);
+    const icon = masterRow.querySelector('.accordion-icon');
+    const isHidden = detailsRow.classList.contains('hidden');
+
+    // Close all other rows
+    document.querySelectorAll('.details-row').forEach(row => {
+        if (row.id !== targetId) {
+            row.classList.add('hidden');
+        }
+    });
+    
+    document.querySelectorAll('.accordion-icon').forEach(i => {
+        if (i !== icon) {
+            i.style.transform = 'rotate(0deg)';
+        }
+    });
+    
+    document.querySelectorAll('.master-row').forEach(row => {
+        if (row !== masterRow) {
+            row.classList.remove('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+        }
+    });
+
+    // Toggle target row
+    if (isHidden) {
+        detailsRow.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+        masterRow.classList.add('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+    } else {
+        detailsRow.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+        masterRow.classList.remove('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+    }
+}
+
 function viewOrderDetails(orderId) {
     document.getElementById('orderModal').classList.remove('hidden');
     document.getElementById('modalContent').innerHTML = `

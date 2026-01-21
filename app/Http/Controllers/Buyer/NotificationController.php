@@ -16,56 +16,39 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
-        $userId = Auth::id();
-        $tab = $request->get('tab', 'received');
-
-        $query = Notification::with(['createdBy', 'attachment']);
-
-        if ($tab === 'sent') {
-            $query->where('created_by', $userId);
-        } else {
-            // Received: role matches AND not created by me
-            $query->where(function ($q) {
-                $q->whereRaw('UPPER(target_role) IN (?, ?)', ['BUYER', 'ALL'])
-                    ->orWhereNull('target_role');
-            })->where('created_by', '!=', $userId);
-        }
-
-        $type = $request->get('type');
-        $isRead = $request->get('is_read');
+        $query = Notification::query();
 
         // Filter by type
-        if ($type != '') {
-            $query->whereRaw('TRIM(type) = ?', [$type]);
+        if ($request->has('type') && $request->type != '') {
+            $query->where('type', $request->type);
         }
 
-        // Filter by status (only applies to received)
-        if ($tab === 'received' && $isRead !== '' && $isRead !== null) {
-            $query->where('is_read', (bool) $isRead);
+        // Filter by status (only filter if a specific value is selected)
+        if ($request->filled('is_read')) {
+            $query->where('is_read', $request->is_read);
         }
 
-        $notifications = $query->orderBy('id', 'desc')->paginate(10);
+        // Search
+        if ($request->has('search') && $request->search != '') {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                    ->orWhere('message', 'like', '%' . $request->search . '%');
+            });
+        }
 
-        // Stats for the view
-        $receivedQuery = Notification::where(function ($q) {
-            $q->whereRaw('UPPER(target_role) IN (?, ?)', ['BUYER', 'ALL'])
-                ->orWhereNull('target_role');
-        })->where('created_by', '!=', $userId);
-
-        $sentQuery = Notification::where('created_by', $userId);
+        $notifications = $query->orderBy('id', 'desc')->paginate(5);
 
         $stats = [
-            'received_total' => (clone $receivedQuery)->count(),
-            'received_unread' => (clone $receivedQuery)->where('is_read', false)->count(),
-            'sent_total' => (clone $sentQuery)->count(),
+            'total' => Notification::count(),
+            'unread' => Notification::where('is_read', false)->count(),
+            'read' => Notification::where('is_read', true)->count(),
         ];
-        $stats['received_read'] = $stats['received_total'] - $stats['received_unread'];
 
         // Get notification types from database
         $notificationTypes = NotificationHelper::getNotificationTypes();
         $targetRoles = NotificationHelper::getTargetRoles();
 
-        return view('buyer.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'targetRoles', 'tab'));
+        return view('buyer.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'targetRoles'));
     }
 
     /**
@@ -93,7 +76,7 @@ class NotificationController extends Controller
         ]);
 
         try {
-            $notification = Notification::create([
+            Notification::create([
                 'title' => $validated['title'],
                 'message' => $validated['message'],
                 'type' => $validated['type'],
@@ -101,25 +84,7 @@ class NotificationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // Handle file upload
-            if ($request->hasFile('attachment')) {
-                $file = $request->file('attachment');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $path = $file->storeAs('notifications', $fileName, 'public');
-
-                \App\Models\File::create([
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_path' => 'storage/' . $path,
-                    'file_type' => $file->getClientMimeType(),
-                    'related_table' => 'notifications',
-                    'related_id' => $notification->id,
-                    'uploaded_by' => Auth::id(),
-                    'uploaded_at' => now(),
-                    'is_delete' => false
-                ]);
-            }
-
-            return redirect()->route('buyer.notifications.index', ['tab' => 'sent'])->with('success', 'Tạo thông báo thành công!');
+            return back()->with('success', 'Tạo thông báo thành công!');
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra khi tạo thông báo!');
         }
@@ -131,10 +96,6 @@ class NotificationController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $notification = Notification::where('id', $id)
-            ->where('created_by', Auth::id())
-            ->firstOrFail();
-
         // Get valid types from database
         $validTypes = implode(',', array_keys(NotificationHelper::getNotificationTypes()));
 
@@ -142,9 +103,10 @@ class NotificationController extends Controller
             'title' => 'required|string|max:255',
             'message' => 'required|string',
             'type' => "required|in:$validTypes",
-            'target_role' => 'required|in:ADMIN,DEPARTMENT,ALL',
+            'target_role' => 'required|in:ADMIN,DEPARTMENT',
         ]);
 
+        $notification = Notification::findOrFail($id);
         $notification->update([
             'title' => $request->title,
             'message' => $request->message,
@@ -152,30 +114,7 @@ class NotificationController extends Controller
             'target_role' => $request->target_role,
         ]);
 
-        // Handle file update
-        if ($request->hasFile('attachment')) {
-            // Soft delete old file
-            \App\Models\File::where('related_table', 'notifications')
-                ->where('related_id', $id)
-                ->update(['is_delete' => true]);
-
-            $file = $request->file('attachment');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('notifications', $fileName, 'public');
-
-            \App\Models\File::create([
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => 'storage/' . $path,
-                'file_type' => $file->getClientMimeType(),
-                'related_table' => 'notifications',
-                'related_id' => $notification->id,
-                'uploaded_by' => Auth::id(),
-                'uploaded_at' => now(),
-                'is_delete' => false
-            ]);
-        }
-
-        return redirect()->route('buyer.notifications.index', ['tab' => 'sent'])->with('success', 'Cập nhật thông báo thành công!');
+        return redirect()->route('buyer.notifications.index')->with('success', 'Cập nhật thông báo thành công!');
     }
 
     /**
@@ -198,12 +137,10 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
-        $userId = Auth::id();
         Notification::where(function ($query) {
-            $query->whereRaw('UPPER(target_role) IN (?, ?)', ['BUYER', 'ALL'])
-                ->orWhereNull('target_role');
+            $query->where('target_role', 'BUYER')
+                ->orWhere('target_role', 'ALL');
         })
-            ->where('created_by', '!=', $userId)
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
@@ -219,20 +156,12 @@ class NotificationController extends Controller
     public function destroy($id)
     {
         try {
-            $notification = Notification::where('id', $id)
-                ->where('created_by', Auth::id())
-                ->firstOrFail();
-
-            // Soft delete attached file
-            \App\Models\File::where('related_table', 'notifications')
-                ->where('related_id', $id)
-                ->update(['is_delete' => true]);
-
+            $notification = Notification::findOrFail($id);
             $notification->delete();
 
-            return redirect()->route('buyer.notifications.index', ['tab' => 'sent'])->with('success', 'Xóa thông báo thành công!');
+            return back()->with('success', 'Xóa thông báo thành công!');
         } catch (\Exception $e) {
-            return back()->with('error', 'Có lỗi xảy ra hoặc bạn không có quyền xóa thông báo này!');
+            return back()->with('error', 'Có lỗi xảy ra!');
         }
     }
 

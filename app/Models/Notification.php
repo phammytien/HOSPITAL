@@ -46,11 +46,4 @@ class Notification extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-
-    public function attachment()
-    {
-        return $this->hasOne(File::class, 'related_id')
-                    ->where('related_table', 'notifications')
-                    ->where('is_delete', false);
-    }
 }

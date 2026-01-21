@@ -21,36 +21,29 @@ class NotificationHelper
             preg_match("/^enum\(\'(.*)\'\)$/", $type, $matches);
             $enum = explode("','", $matches[1]);
             
-            // Map to Vietnamese labels according to user preference
+            // Map to Vietnamese labels
             $labels = [
-                'info' => 'THÔNG TIN',
-                'success' => 'QUAN TRỌNG',
-                'warning' => 'CẢNH BÁO',
-                'error' => 'KHẨN CẤP',
+                'info' => 'Thông tin',
+                'important' => 'Quan trọng',
+                'warning' => 'Cảnh báo',
+                'error' => 'Lỗi',
+                // Legacy support
+                'success' => 'Hoàn thành',
             ];
             
             $result = [];
             foreach ($enum as $value) {
-                $trimmedValue = trim($value);
-                // Map to Vietnamese labels according to user preference
-                if (isset($labels[$trimmedValue])) {
-                    $result[$trimmedValue] = $labels[$trimmedValue];
-                }
-            }
-            
-            // Ensure we at least have the core types if enum extraction is weird or empty
-            if (empty($result)) {
-                $result = $labels;
+                $result[$value] = $labels[$value] ?? ucfirst($value);
             }
             
             return $result;
         } catch (\Exception $e) {
             // Fallback to default types
             return [
-                'info' => 'THÔNG TIN',
-                'success' => 'QUAN TRỌNG',
-                'warning' => 'CẢNH BÁO',
-                'error' => 'KHẨN CẤP',
+                'info' => 'Thông tin',
+                'important' => 'Quan trọng',
+                'warning' => 'Cảnh báo',
+                'error' => 'Lỗi',
             ];
         }
     }
@@ -91,7 +84,6 @@ class NotificationHelper
     public static function getRoleLabel($role)
     {
         $roles = self::getTargetRoles();
-        $roleUpper = strtoupper($role ?? '');
-        return $roles[$roleUpper] ?? ($roles[$role] ?? $roles['ALL']);
+        return $roles[$role] ?? $roles['ALL'];
     }
 }

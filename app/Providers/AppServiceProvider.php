@@ -29,7 +29,6 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer(['layouts.department', 'layouts.buyer', 'layouts.admin'], function ($view) {
             $notifications = [];
             $unreadCount = 0;
-            $latestUnread = null;
 
             if (\Illuminate\Support\Facades\Auth::check()) {
                 $user = \Illuminate\Support\Facades\Auth::user();
@@ -38,33 +37,18 @@ class AppServiceProvider extends ServiceProvider
                 $roleLower = strtolower($role);
                 $userId = $user->id;
 
-                $baseQuery = \App\Models\Notification::where(function ($q) use ($role, $roleLower) {
+                $baseQuery = \App\Models\Notification::where(function ($q) use ($role, $roleLower, $userId) {
                     $q->whereIn('target_role', [$role, $roleLower, 'ALL', 'all'])
-                        ->orWhereNull('target_role');
-                })->where(function ($q) use ($userId) {
-                    $q->where('created_by', '!=', $userId)
-                        ->orWhereNull('created_by');
+                        ->orWhereNull('target_role')
+                        ->orWhere('created_by', $userId);
                 });
 
                 $unreadCount = (clone $baseQuery)->where('is_read', false)->count();
                 $notifications = $baseQuery->orderBy('created_at', 'desc')->take(10)->get();
-                
-                // Get the single latest unread notification for toast
-                $latestUnread = \App\Models\Notification::where(function ($q) use ($role, $roleLower) {
-                        $q->whereIn('target_role', [$role, $roleLower, 'ALL', 'all'])
-                            ->orWhereNull('target_role');
-                    })->where(function ($q) use ($userId) {
-                        $q->where('created_by', '!=', $userId)
-                            ->orWhereNull('created_by');
-                    })
-                    ->where('is_read', false)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
             }
 
             $view->with('notifications', $notifications)
-                ->with('unreadCount', $unreadCount)
-                ->with('latestUnreadNotification', $latestUnread);
+                ->with('unreadCount', $unreadCount);
         });
     }
 }

@@ -296,12 +296,12 @@
             <div class="signature-box">
                 <p class="title">NGƯỜI LẬP BIỂU</p>
                 <p class="subtitle">(Ký, ghi rõ họ tên)</p>
-                <p class="name">Nguyễn Văn A</p>
+                <p class="name">{{ auth()->user()->full_name ?? auth()->user()->name }}</p>
             </div>
             <div class="signature-box">
                 <p class="title">KẾ TOÁN TRƯỞNG</p>
                 <p class="subtitle">(Ký, ghi rõ họ tên)</p>
-                <p class="name">Trần Thị B</p>
+                <p class="name" style="color: white">.</p>
             </div>
         </div>
     @else

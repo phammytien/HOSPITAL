@@ -1,7 +1,7 @@
 @extends('layouts.buyer')
 
 @section('title', 'Báo cáo')
-@section('header_title', 'Danh sách Yêu cầu Mua hàng')
+@section('header_title', '')
 
 @section('content')
 <div class="space-y-6">
@@ -157,28 +157,27 @@
             <table class="w-full">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">STT</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-16">STT</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Mã yêu cầu</th>
-                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Sản phẩm</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Khoa/Phòng</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Kỳ/Quý</th>
-                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Số lượng</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Đơn giá</th>
-                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Thành tiền</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">Số mặt hàng</th>
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Tổng thành tiền</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Ngày đặt</th>
                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Trạng thái</th>
+                        <th class="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider w-10"></th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200" id="reportTableBody">
                     @php 
                         $sttCounter = 1;
-                        // Group all items by request_code
                         $groupedByRequest = collect();
                         foreach($requests as $order) {
-                            if($order->purchaseRequest && $order->purchaseRequest->items && $order->purchaseRequest->items->count() > 0) {
+                            if($order->purchaseRequest) {
                                 $requestCode = $order->purchaseRequest->request_code ?? 'N/A';
                                 if (!$groupedByRequest->has($requestCode)) {
                                     $groupedByRequest[$requestCode] = [
+                                        'id' => $order->id,
                                         'request' => $order->purchaseRequest,
                                         'department' => $order->department,
                                         'order_date' => $order->order_date,
@@ -186,70 +185,123 @@
                                         'items' => collect()
                                     ];
                                 }
-                                // Add all items from this order to the group
-                                foreach($order->purchaseRequest->items as $item) {
-                                    $groupedByRequest[$requestCode]['items']->push($item);
+                                if ($order->purchaseRequest->items) {
+                                    foreach($order->purchaseRequest->items as $item) {
+                                        $groupedByRequest[$requestCode]['items']->push($item);
+                                    }
                                 }
                             }
                         }
                     @endphp
                     
                     @forelse($groupedByRequest as $requestCode => $group)
-                        @foreach($group['items'] as $itemIndex => $item)
-                            @php
-                                $unitPrice = $item->product->unit_price ?? 0;
-                                $quantity = $item->quantity ?? 0;
-                                $subtotal = $unitPrice * $quantity;
-                            @endphp
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $sttCounter++ }}</td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm font-medium text-blue-600">{{ $requestCode }}</span>
-                                    </td>
-                                @endif
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $item->product->product_name ?? 'N/A' }}</div>
-                                    <div class="text-xs text-gray-500">{{ $item->product->product_code ?? '' }}</div>
-                                </td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-900">{{ $group['department']->department_name ?? 'N/A' }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-700 font-medium">{{ $group['request']->period ?? 'N/A' }}</span>
-                                    </td>
-                                @endif
-                                <td class="px-6 py-4 text-center whitespace-nowrap">
-                                    <span class="text-sm font-semibold text-gray-900">{{ $quantity }}</span>
-                                </td>
-                                <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <span class="text-sm text-gray-900">{{ number_format($unitPrice, 0, ',', '.') }} ₫</span>
-                                </td>
-                                <td class="px-6 py-4 text-right whitespace-nowrap">
-                                    <span class="text-sm font-bold text-gray-900">{{ number_format($subtotal, 0, ',', '.') }} ₫</span>
-                                </td>
-                                @if($itemIndex === 0)
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="text-sm text-gray-600">{{ $group['order_date'] ? $group['order_date']->format('d/m/Y') : 'N/A' }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap" rowspan="{{ $group['items']->count() }}">
-                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium {{ get_status_class($group['status']) }}">
-                                            {{ get_status_label($group['status']) }}
-                                        </span>
-                                    </td>
-                                @endif
-                            </tr>
-                        @endforeach
+                        @php
+                            $totalAmount = 0;
+                            $totalQuantity = 0;
+                            foreach($group['items'] as $item) {
+                                $totalAmount += ($item->product->unit_price ?? 0) * ($item->quantity ?? 0);
+                                $totalQuantity += ($item->quantity ?? 0);
+                            }
+                            $itemCount = $group['items']->count();
+                            $targetId = 'details-' . str_replace(['/', ' ', '.'], '-', $requestCode);
+                        @endphp
+                        
+                        <!-- Master Row -->
+                        <tr class="master-row cursor-pointer hover:bg-blue-50/50 transition-colors group" onclick="toggleAccordion('{{ $targetId }}', this)">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{{ $sttCounter++ }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm font-bold text-blue-600">{{ $requestCode }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm text-gray-700">{{ $group['department']->department_name ?? 'N/A' }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ $group['request']->period ?? 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 text-center whitespace-nowrap">
+                                <span class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold">{{ $itemCount }} mặt hàng</span>
+                            </td>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <span class="text-sm font-black text-gray-900">{{ number_format($totalAmount, 0, ',', '.') }} ₫</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ $group['order_date'] ? $group['order_date']->format('d/m/Y') : 'N/A' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase {{ get_status_class($group['status']) }}">
+                                    {{ get_status_label($group['status']) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-transform duration-300 accordion-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </td>
+                        </tr>
+
+                        <!-- Details Row (Accordion Content) -->
+                        <tr id="{{ $targetId }}" class="details-row hidden bg-gray-50/80 border-l-4 border-blue-500">
+                            <td colspan="9" class="p-0">
+                                <div class="overflow-hidden">
+                                    <div class="px-6 py-4">
+                                        <div class="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden">
+                                            <table class="w-full text-sm">
+                                                <thead>
+                                                    <tr class="bg-blue-50/50 border-b border-blue-100">
+                                                        <th class="px-4 py-3 text-left text-xs font-bold text-blue-800 uppercase tracking-tighter">Sản phẩm</th>
+                                                        <th class="px-4 py-3 text-center text-xs font-bold text-blue-800 uppercase tracking-tighter w-24">Số lượng</th>
+                                                        <th class="px-4 py-3 text-right text-xs font-bold text-blue-800 uppercase tracking-tighter w-32">Đơn giá</th>
+                                                        <th class="px-4 py-3 text-right text-xs font-bold text-blue-800 uppercase tracking-tighter w-40">Thành tiền</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100">
+                                                    @foreach($group['items'] as $item)
+                                                        @php
+                                                            $uPrice = $item->product->unit_price ?? 0;
+                                                            $qty = $item->quantity ?? 0;
+                                                            $sTotal = $uPrice * $qty;
+                                                        @endphp
+                                                        <tr class="hover:bg-blue-50/30 transition-colors">
+                                                            <td class="px-4 py-3">
+                                                                <div class="font-bold text-gray-800">{{ $item->product->product_name ?? 'N/A' }}</div>
+                                                                <div class="text-[10px] text-gray-500 tracking-wider">{{ $item->product->product_code ?? '' }}</div>
+                                                            </td>
+                                                            <td class="px-4 py-3 text-center">
+                                                                <span class="font-bold text-gray-900">{{ number_format($qty, 0, '.', ',') }}</span>
+                                                            </td>
+                                                            <td class="px-4 py-3 text-right text-gray-600">
+                                                                {{ number_format($uPrice, 0, '.', ',') }} ₫
+                                                            </td>
+                                                            <td class="px-4 py-3 text-right">
+                                                                <span class="font-bold text-gray-900">{{ number_format($sTotal, 0, '.', ',') }} ₫</span>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                                <tfoot class="bg-blue-50/20 border-t border-blue-100 italic">
+                                                    <tr>
+                                                        <td colspan="3" class="px-4 py-2 text-right text-xs font-bold text-blue-900 mr-2 uppercase">Cộng tổng:</td>
+                                                        <td class="px-4 py-2 text-right text-sm font-black text-blue-600">
+                                                            {{ number_format($totalAmount, 0, '.', ',') }} ₫
+                                                        </td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center">
+                            <td colspan="9" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    <p class="text-gray-600 text-lg font-medium">Không tìm thấy đơn hàng nào</p>
-                                    <p class="text-gray-500 text-sm mt-1">Vui lòng thử điều chỉnh bộ lọc của bạn</p>
+                                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-gray-500 font-medium">Không tìm thấy báo cáo nào phù hợp</p>
                                 </div>
                             </td>
                         </tr>
@@ -290,6 +342,42 @@
 </div>
 
 <script>
+function toggleAccordion(targetId, masterRow) {
+    const detailsRow = document.getElementById(targetId);
+    const icon = masterRow.querySelector('.accordion-icon');
+    const isHidden = detailsRow.classList.contains('hidden');
+
+    // Close all other rows
+    document.querySelectorAll('.details-row').forEach(row => {
+        if (row.id !== targetId) {
+            row.classList.add('hidden');
+        }
+    });
+    
+    document.querySelectorAll('.accordion-icon').forEach(i => {
+        if (i !== icon) {
+            i.style.transform = 'rotate(0deg)';
+        }
+    });
+    
+    document.querySelectorAll('.master-row').forEach(row => {
+        if (row !== masterRow) {
+            row.classList.remove('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+        }
+    });
+
+    // Toggle target row
+    if (isHidden) {
+        detailsRow.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+        masterRow.classList.add('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+    } else {
+        detailsRow.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+        masterRow.classList.remove('bg-blue-50/80', 'border-l-4', 'border-blue-500');
+    }
+}
+
 function viewOrderDetails(orderId) {
     document.getElementById('orderModal').classList.remove('hidden');
     document.getElementById('modalContent').innerHTML = `

@@ -599,4 +599,76 @@ class SystemSettingsController extends Controller
 
         return round($bytes, $precision) . ' ' . $units[$i];
     }
+
+    /**
+     * Get audit logs with filtering
+     */
+    public function getAuditLogs(Request $request)
+    {
+        try {
+            $query = DB::table('audit_logs')
+                ->join('users', 'audit_logs.user_id', '=', 'users.id')
+                ->select(
+                    'audit_logs.*',
+                    'users.full_name',
+                    'users.username',
+                    'users.role'
+                )
+                ->orderBy('audit_logs.created_at', 'desc');
+
+            // Filter by role
+            if ($request->has('role') && $request->role != '') {
+                $query->where('users.role', $request->role);
+            }
+
+            // Filter by action
+            if ($request->has('action') && $request->action != '') {
+                $query->where('audit_logs.action', 'like', '%' . $request->action . '%');
+            }
+
+            // Filter by date range
+            if ($request->has('date_from') && $request->date_from != '') {
+                $query->whereDate('audit_logs.created_at', '>=', $request->date_from);
+            }
+            if ($request->has('date_to') && $request->date_to != '') {
+                $query->whereDate('audit_logs.created_at', '<=', $request->date_to);
+            }
+
+            // Filter by user
+            if ($request->has('user_id') && $request->user_id != '') {
+                $query->where('audit_logs.user_id', $request->user_id);
+            }
+
+            $perPage = $request->get('per_page', 20);
+            $logs = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'logs' => $logs
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get all users for filter dropdown
+     */
+    public function getUsers()
+    {
+        try {
+            $users = DB::table('users')
+                ->where('is_delete', false)
+                ->select('id', 'full_name', 'username', 'role')
+                ->orderBy('full_name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'users' => $users
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Lỗi: ' . $e->getMessage()], 500);
+        }
+    }
 }

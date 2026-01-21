@@ -141,6 +141,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/restore', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreItem'])->name('settings.restore');
         Route::post('/settings/restore-bulk', [App\Http\Controllers\Admin\SystemSettingsController::class, 'restoreBulk'])->name('settings.restore-bulk');
         Route::delete('/settings/permanent-delete', [App\Http\Controllers\Admin\SystemSettingsController::class, 'permanentDelete'])->name('settings.permanent-delete');
+
+        // Audit Logs
+        Route::get('/settings/audit-logs', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getAuditLogs'])->name('settings.audit-logs');
+        Route::get('/settings/users', [App\Http\Controllers\Admin\SystemSettingsController::class, 'getUsers'])->name('settings.users');
     });
 
     // Buyer routes

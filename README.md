@@ -114,3 +114,8 @@ git checkout -b <tên_branch> (Tạo nhánh mới từ master)
 git stash -u (cất code chưa commit để pull push không bị báo lỗi)
 
 git stash pop (lấy code chưa commit đã cất từ lênh git stash -u, đổi nhánh rồi stash pop cũng được)
+
+## Việc kiểm tra lưu 1 session khi đăng nhập có 2 chỗ
+1. trong database: trong file .env "SESSION_DRIVER=database" => KIỂM TRA TRONG MYSQL bảng "session" để kiểm tra (1 trình duyệt chỉ lưu 1 tài khoản, nếu đăng nhập tài khoản khác sẽ đổi id)
+
+2. trong file .env "SESSION_DRIVER=file" => KIỂM TRA TRONG THƯ MỤC storage/framework/sessions (1 trình duyệt chỉ lưu 1 tài khoản, nếu đăng nhập tài khoản khác sẽ tên file [text](storage/framework/sessions/MIXCyjthTxnzQL2eOf2ObLgXaThVw6h0w4jd5Wd2) <=> [text](storage/framework/sessions/fzTAXtTcN68lZVjRVAoMQNbG7AWzsozq4IyHUs0y))

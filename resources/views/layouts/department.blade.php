@@ -779,20 +779,18 @@
         const toastManager = new ToastManager();
 
         document.addEventListener('DOMContentLoaded', () => {
-            @if(isset($notifications) && $notifications->where('is_read', false)->count() > 0)
-                const unreadNotifications = [
-                    @foreach($notifications->where('is_read', false) as $notify)
-                        {
-                            id: {{ $notify->id }},
-                            title: {{ Js::from($notify->title) }},
-                            message: {{ Js::from(strip_tags($notify->message)) }},
-                            type: '{{ $notify->type }}'
-                        },
-                    @endforeach
-                ];
+            @if($latestUnreadNotification && !session('toast_shown_' . $latestUnreadNotification->id))
+                @php session()->put('toast_shown_' . $latestUnreadNotification->id, true); @endphp
+                const latestNotification = {
+                    id: {{ $latestUnreadNotification->id }},
+                    title: `{{ addslashes($latestUnreadNotification->title) }}`,
+                    message: `{!! addslashes(strip_tags($latestUnreadNotification->message)) !!}`,
+                    type: '{{ $latestUnreadNotification->type }}'
+                };
                 
+                // Show toast after a short delay
                 setTimeout(() => {
-                    toastManager.showUnreadNotifications(unreadNotifications);
+                    toastManager.addToast(latestNotification);
                 }, 1000);
             @endif
         });

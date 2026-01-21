@@ -563,9 +563,14 @@
                 const config = typeConfig[type] || typeConfig['info'];
                 const toastId = `toast-${id}-${Date.now()}`;
                 
+                // Escape quotes for safe transmission to onclick
+                const safeTitle = title.replace(/'/g, "\\'");
+                const safeMessage = message.replace(/'/g, "\\'");
+
                 return `
                     <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
+                         onclick="toastManager.handleToastClick(${id}, '${safeTitle}', '${safeMessage}', '${type}', '${toastId}')"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer hover:scale-[1.02]"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <div class="flex-shrink-0 w-14 h-14 rounded-full ${config.iconBg} ${config.bgColor} flex items-center justify-center border-2 ${config.borderColor}">
@@ -573,9 +578,9 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
-                                <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
+                                <p class="text-sm text-gray-700 leading-relaxed break-words line-clamp-2">${message}</p>
                             </div>
-                            <button onclick="toastManager.removeToast('${toastId}')" 
+                            <button onclick="event.stopPropagation(); toastManager.removeToast('${toastId}')" 
                                     class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -586,6 +591,14 @@
                         </div>
                     </div>
                 `;
+            }
+
+            // Handle clicking on toast
+            handleToastClick(id, title, message, type, toastId) {
+                // Open detail modal directly
+                showNotifyModal(id, title, message, type, 'Vừa xong', '');
+                // Remove toast
+                this.removeToast(toastId);
             }
 
             addToast(notification) {
@@ -659,20 +672,18 @@
         const toastManager = new ToastManager();
 
         document.addEventListener('DOMContentLoaded', () => {
-            @if(isset($notifications) && $notifications->where('is_read', false)->count() > 0)
-                const unreadNotifications = [
-                    @foreach($notifications->where('is_read', false) as $notify)
-                        {
-                            id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
-                            type: '{{ $notify->type }}'
-                        },
-                    @endforeach
-                ];
+            @if($latestUnreadNotification && !session('toast_shown_' . $latestUnreadNotification->id))
+                @php session()->put('toast_shown_' . $latestUnreadNotification->id, true); @endphp
+                const latestNotification = {
+                    id: {{ $latestUnreadNotification->id }},
+                    title: `{{ addslashes($latestUnreadNotification->title) }}`,
+                    message: `{!! addslashes(strip_tags($latestUnreadNotification->message)) !!}`,
+                    type: '{{ $latestUnreadNotification->type }}'
+                };
                 
+                // Show toast after a short delay
                 setTimeout(() => {
-                    toastManager.showUnreadNotifications(unreadNotifications);
+                    toastManager.addToast(latestNotification);
                 }, 1000);
             @endif
         });

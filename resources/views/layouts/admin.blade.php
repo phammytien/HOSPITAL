@@ -302,83 +302,71 @@
         <!-- Toasts will be inserted here dynamically -->
     </div>
 
+    <!-- Notification Detail Modal -->
+    <div id="notificationDetailModal" class="hidden fixed inset-0 bg-black/50 z-[10002] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                <h3 class="font-bold text-gray-900">Chi tiết thông báo</h3>
+                <button onclick="closeNotificationModal()" class="text-gray-400 hover:text-gray-600 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <span id="modalBadge" class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase"></span>
+                </div>
+                <h4 id="modalNotificationTitle" class="text-lg font-bold text-gray-900 mb-2"></h4>
+                <div id="modalMessage" class="text-gray-600 leading-relaxed text-sm"></div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                <button onclick="closeNotificationModal()" class="px-6 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
-    <!-- <footer class="bg-white border-t border-gray-200">
-        <div class="px-6 py-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8"> -->
-                <!-- Logo & Info -->
-                <!-- <div>
-                    <div class="flex items-center space-x-3 mb-4">
-                        <img src="https://bvtamtricaolanh.com.vn/vnt_upload/weblink/logo-tam-tri-02.png" alt="Logo" class="h-14 w-14 object-contain">
-
-                        <div>
-                            <h3 class="font-bold text-blue-600">TÂM TRÍ</h3>
-                            <p class="text-xs text-gray-600">Tư vấn chăm sóc khỏe toàn diện</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-600 leading-relaxed">
-                        Bệnh viện Đa khoa Tâm Trí Cao Lãnh - Đồng Tháp
-                    </p>
-                </div> -->
-
-                <!-- Thông tin liên hệ -->
-                <!-- <div>
-                    <h4 class="font-semibold text-gray-800 mb-4">BỆNH VIỆN ĐA KHOA TÂM TRÍ CAO LÃNH</h4>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li><i class="fas fa-map-marker-alt text-blue-500 w-5"></i> Địa chỉ: Cao Lãnh, Đồng Tháp</li>
-                        <li><i class="fas fa-phone text-blue-500 w-5"></i> Điện thoại: 02773.878.115</li>
-                        <li><i class="fas fa-fax text-blue-500 w-5"></i> Fax: 02773.762.115</li>
-                        <li><i class="fas fa-envelope text-blue-500 w-5"></i> Email: caolanhospital@gmail.com</li>
-                    </ul>
-                </div> -->
-
-                <!-- Hệ thống bệnh viện -->
-                <!-- <div>
-                    <h4 class="font-semibold text-gray-800 mb-4">HỆ THỐNG BỆNH VIỆN</h4>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li><a href="#" class="hover:text-blue-600">Bệnh Viện Đa Khoa Tâm Trí Cao Lãnh</a></li>
-                        <li><a href="#" class="hover:text-blue-600">Bệnh Viện Quận 10 Tâm Trí Sài Gòn</a></li>
-                        <li><a href="#" class="hover:text-blue-600">Bệnh Viện Đa Khoa Tâm Trí Vĩnh Long</a></li>
-                        <li><a href="#" class="hover:text-blue-600">Bệnh Viện Đa Khoa Tâm Trí Sài Gòn</a></li>
-                    </ul>
-                </div> -->
-
-                <!-- Kết nối -->
-                <!-- <div>
-                    <h4 class="font-semibold text-gray-800 mb-4">KẾT NỐI VỚI CHÚNG TÔI</h4>
-                    <div class="flex space-x-3 mb-4">
-                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white hover:bg-blue-700">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center text-white hover:bg-blue-500">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                    </div>
-                    <p class="text-sm text-gray-600">
-                        <a href="#" class="text-blue-600 hover:underline">Bản quyền bảo hộ Mobifone</a>
-                    </p>
-                </div>
-            </div>
-        </div> -->
-
-        <!-- Copyright -->
-        <!-- <div class="bg-blue-600 py-3">
-            <div class="px-6">
-                <div class="flex flex-col md:flex-row justify-between items-center text-white text-sm">
-                    <p>Copyright © 2025 - Bệnh Viện Đa Khoa Tâm Trí Cao Lãnh</p>
-                    <div class="flex space-x-4 mt-2 md:mt-0">
-                        <a href="#" class="hover:underline">Chính sách bảo mật</a>
-                        <a href="#" class="hover:underline">Điều khoản sử dụng</a>
-                    </div>
-                </div>
-            </div>
-        </div> -->
-    <!-- </footer> -->
+    <!-- ... existing commented out footer ... -->
 
     <script>
+        function showNotificationDetail(id, title, message, type) {
+            const modal = document.getElementById('notificationDetailModal');
+            const titleEl = document.getElementById('modalNotificationTitle');
+            const messageEl = document.getElementById('modalMessage');
+            const badgeEl = document.getElementById('modalBadge');
+            
+            titleEl.textContent = title;
+            messageEl.innerHTML = message;
+            
+            const badgeConfig = {
+                'success': { text: 'QUAN TRỌNG', class: 'bg-purple-100 text-purple-700' },
+                'error': { text: 'KHẨN CẤP', class: 'bg-red-100 text-red-700' },
+                'warning': { text: 'CẢNH BÁO', class: 'bg-orange-100 text-orange-700' },
+                'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
+            };
+            const config = badgeConfig[type] || badgeConfig['info'];
+            badgeEl.textContent = config.text;
+            badgeEl.className = `px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${config.class}`;
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+
+            // Mark as read
+            fetch(`/admin/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            });
+        }
+
+        function closeNotificationModal() {
+            document.getElementById('notificationDetailModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
         function toggleUserMenu() {
             const menu = document.getElementById('userMenu');
             menu.classList.toggle('hidden');
@@ -422,9 +410,14 @@
                 const config = typeConfig[type] || typeConfig['info'];
                 const toastId = `toast-${id}-${Date.now()}`;
                 
+                // Escape quotes for safe transmission to onclick
+                const safeTitle = title.replace(/'/g, "\\'");
+                const safeMessage = message.replace(/'/g, "\\'");
+
                 return `
                     <div id="${toastId}" 
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto"
+                         onclick="toastManager.handleToastClick(${id}, '${safeTitle}', '${safeMessage}', '${type}', '${toastId}')"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer hover:scale-[1.02]"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <div class="flex-shrink-0 w-14 h-14 rounded-full ${config.iconBg} ${config.bgColor} flex items-center justify-center border-2 ${config.borderColor}">
@@ -432,9 +425,9 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
-                                <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
+                                <p class="text-sm text-gray-700 leading-relaxed break-words line-clamp-2">${message}</p>
                             </div>
-                            <button onclick="toastManager.removeToast('${toastId}')" 
+                            <button onclick="event.stopPropagation(); toastManager.removeToast('${toastId}')" 
                                     class="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <i class="fas fa-times"></i>
                             </button>
@@ -445,6 +438,14 @@
                         </div>
                     </div>
                 `;
+            }
+
+            // Handle clicking on toast
+            handleToastClick(id, title, message, type, toastId) {
+                // Open detail modal directly
+                showNotificationDetail(id, title, message, type);
+                // Remove toast
+                this.removeToast(toastId);
             }
 
             addToast(notification) {
@@ -517,21 +518,20 @@
 
         const toastManager = new ToastManager();
 
+        // Auto-display unread notifications on page load
         document.addEventListener('DOMContentLoaded', () => {
-            @if(isset($notifications) && $notifications->where('is_read', false)->count() > 0)
-                const unreadNotifications = [
-                    @foreach($notifications->where('is_read', false) as $notify)
-                        {
-                            id: {{ $notify->id }},
-                            title: `{{ addslashes($notify->title) }}`,
-                            message: `{!! addslashes(strip_tags($notify->message)) !!}`,
-                            type: '{{ $notify->type }}'
-                        },
-                    @endforeach
-                ];
+            @if($latestUnreadNotification && !session('toast_shown_' . $latestUnreadNotification->id))
+                @php session()->put('toast_shown_' . $latestUnreadNotification->id, true); @endphp
+                const latestNotification = {
+                    id: {{ $latestUnreadNotification->id }},
+                    title: `{{ addslashes($latestUnreadNotification->title) }}`,
+                    message: `{!! addslashes(strip_tags($latestUnreadNotification->message)) !!}`,
+                    type: '{{ $latestUnreadNotification->type }}'
+                };
                 
+                // Show toast after a short delay
                 setTimeout(() => {
-                    toastManager.showUnreadNotifications(unreadNotifications);
+                    toastManager.addToast(latestNotification);
                 }, 1000);
             @endif
         });

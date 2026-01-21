@@ -223,7 +223,7 @@ INSERT INTO `notifications` (`id`, `title`, `message`, `type`, `target_role`, `d
 (7, 'Yêu cầu bị từ chối', 'Yêu cầu REQ005 đã bị từ chối', 'error', 'department_head', NULL, 0, 1, NOW(), NOW()),
 (8, 'Hàng về', 'Đơn hàng PO002 đã về kho', 'important', 'department_head', NULL, 0, 10, NOW(), NOW()),
 (9, 'Bảo trì', 'Hệ thống bảo trì lúc 22h', 'warning', 'all', NULL, 0, 1, NOW(), NOW()),
-(10, 'Chào mừng', 'Chào mừng nhân viên mới', 'info', 'staff', NULL, 0, 1, NOW(), NOW());
+(10, 'Chào mừng', 'Chào mừng nhân viên mới', 'info', 'all', NULL, 0, 1, NOW(), NOW());
 
 -- 15. Audit Logs
 INSERT INTO `audit_logs` (`id`, `user_id`, `action`, `description`, `old_values`, `new_values`, `ip_address`, `device_agent`, `created_at`, `updated_at`) VALUES

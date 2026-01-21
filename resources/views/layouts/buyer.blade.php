@@ -206,7 +206,7 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col bg-gray-50">
             <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 d-print-none" style="position: relative; z-index: 1000;">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 d-print-none" style="position: relative; z-index: 50;">
 
                 <h1 class="text-xl font-bold text-gray-800">@yield('header_title', 'Dashboard')</h1>
 
@@ -225,7 +225,7 @@
                         Tạo yêu cầu mới
                     </button> -->
 
-                    <div class="relative ml-4" style="z-index: 10000;">
+                    <div class="relative ml-4" style="z-index: 60;">
                         <button id="notificationBtn"
                             class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg relative transition-colors duration-200">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,20 +249,21 @@
                                         @php 
                                             $data = $notify->data ?? [];
                                             $iconClass = match($notify->type) {
-                                                'success' => 'bg-green-100 text-green-600',
+                                                'success' => 'bg-purple-100 text-purple-600',
                                                 'error', 'danger' => 'bg-red-100 text-red-600',
-                                                'warning' => 'bg-yellow-100 text-yellow-600',
+                                                'warning' => 'bg-orange-100 text-orange-600',
                                                 default => 'bg-blue-100 text-blue-600'
                                             };
                                             $icon = match($notify->type) {
-                                                'success' => 'fa-check',
-                                                'error', 'danger' => 'fa-times',
+                                                'success' => 'fa-star',
+                                                'error', 'danger' => 'fa-exclamation-circle',
                                                 'warning' => 'fa-exclamation-triangle',
                                                 default => 'fa-info'
                                             };
                                         @endphp
-                                        <div onclick="showNotificationDetail({{ $notify->id }}, {{ Js::from($notify->title) }}, {{ Js::from(strip_tags($notify->message)) }}, '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
-                                              class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
+                                        <div id="notify-item-{{ $notify->id }}" 
+                                             onclick="showNotificationDetail({{ $notify->id }}, '{{ addslashes($notify->title) }}', '{{ addslashes($notify->message) }}', '{{ $notify->type }}', {{ $notify->is_read ? 'true' : 'false' }})" 
+                                             class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition cursor-pointer relative group flex gap-4 {{ $notify->is_read ? 'opacity-70' : '' }}">
                                              
                                              <div class="flex-shrink-0 w-10 h-10 rounded-full {{ $iconClass }} flex items-center justify-center">
                                                  <i class="fas {{ $icon }}"></i>
@@ -277,7 +278,7 @@
                                              </div>
                                              
                                              @if(!$notify->is_read)
-                                                <div class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <div id="notify-dot-{{ $notify->id }}" class="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full"></div>
                                              @endif
                                         </div>
                                     @empty
@@ -317,7 +318,7 @@
 
     <!-- Request Detail Modal -->
     <div id="requestDetailModal"
-        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black bg-opacity-50 z-[10050] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
                 <h3 class="font-bold text-gray-800 text-lg flex items-center">
@@ -347,7 +348,7 @@
 
     <!-- Notification Detail Modal -->
     <div id="notificationDetailModal"
-        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black bg-opacity-50 z-[10050] hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
                 <h3 class="font-bold text-gray-800 text-lg flex items-center">
@@ -403,15 +404,15 @@
             messageEl.textContent = message;
 
             // Set badge based on type
-            const badgeConfig = {
-                'success': { text: 'THÀNH CÔNG', class: 'bg-green-100 text-green-700' },
-                'error': { text: 'LỖI', class: 'bg-red-100 text-red-700' },
-                'warning': { text: 'CẢNH BÁO', class: 'bg-yellow-100 text-yellow-700' },
-                'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
-            };
-            const config = badgeConfig[type] || badgeConfig['info'];
-            badgeEl.textContent = config.text;
-            badgeEl.className = `px-3 py-1 rounded-full text-xs font-semibold ${config.class}`;
+                                            const badgeConfig = {
+                                                'success': { text: 'QUAN TRỌNG', class: 'bg-purple-100 text-purple-700' },
+                                                'error': { text: 'KHẨN CẤP', class: 'bg-red-100 text-red-700' },
+                                                'warning': { text: 'CẢNH BÁO', class: 'bg-orange-100 text-orange-700' },
+                                                'info': { text: 'THÔNG TIN', class: 'bg-blue-100 text-blue-700' }
+                                            };
+                                            const config = badgeConfig[type] || badgeConfig['info'];
+                                            badgeEl.textContent = config.text;
+                                            badgeEl.className = `px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${config.class}`;
 
             // Show modal
             modal.classList.remove('hidden');
@@ -419,6 +420,16 @@
 
             // Mark as read if unread
             if (!isRead) {
+                // Update UI immediately for better UX
+                const item = document.getElementById('notify-item-' + id);
+                const dot = document.getElementById('notify-dot-' + id);
+                const mainBadge = document.querySelector('#notificationBtn span');
+                
+                if (item) item.classList.add('opacity-70');
+                if (dot) dot.remove();
+                
+                // If main badge exists, we might want to reload or leave it until refresh
+                // But let's try to update the server
                 fetch(`/buyer/notifications/${id}/read`, {
                     method: 'POST',
                     headers: {
@@ -426,10 +437,7 @@
                         'Content-Type': 'application/json'
                     }
                 }).then(() => {
-                    // Reload page after a short delay to update UI
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                    // Success silently
                 });
             }
         }
@@ -497,7 +505,7 @@
             }
 
             // Create toast HTML
-            createToastHTML(notification, uniqueId) {
+            createToastHTML(notification) {
                 const { id, title, message, type } = notification;
                 
                 // Type configurations
@@ -534,11 +542,16 @@
 
                 const config = typeConfig[type] || typeConfig['info'];
                 
-                const toastId = uniqueId;
+                const toastId = `toast-${id}-${Date.now()}`;
                 
+                // Escape quotes for safe transmission to onclick
+                const safeTitle = title.replace(/'/g, "\\'");
+                const safeMessage = message.replace(/'/g, "\\'");
+
                 return `
-                    <div id="${toastId}" onclick="showNotificationDetail(${id}, '${addslashes_js(title)}', '${addslashes_js(message)}', '${type}', false)"
-                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer"
+                    <div id="${toastId}" 
+                         onclick="toastManager.handleToastClick(${id}, '${safeTitle}', '${safeMessage}', '${type}', '${toastId}')"
+                         class="toast-item bg-white rounded-xl border-2 ${config.borderColor} shadow-2xl overflow-hidden transition-all duration-500 ease-out pointer-events-auto cursor-pointer hover:scale-[1.02]"
                          style="transform: translateX(500px); opacity: 0; max-width: 420px;">
                         <div class="flex items-start gap-4 p-4">
                             <!-- Icon -->
@@ -549,7 +562,7 @@
                             <!-- Content -->
                             <div class="flex-1 min-w-0">
                                 <h4 class="text-base font-bold text-gray-900 mb-1 leading-tight">${title}</h4>
-                                <p class="text-sm text-gray-700 leading-relaxed break-words">${message}</p>
+                                <p class="text-sm text-gray-700 leading-relaxed break-words line-clamp-2">${message}</p>
                             </div>
                             
                             <!-- Close button -->
@@ -566,6 +579,14 @@
                         </div>
                     </div>
                 `;
+            }
+
+            // Handle clicking on toast
+            handleToastClick(id, title, message, type, toastId) {
+                // Open detail modal
+                showNotificationDetail(id, title, message, type, false);
+                // Remove toast
+                this.removeToast(toastId);
             }
 
             // Add toast to queue
@@ -597,36 +618,30 @@
             // Show single toast
             async showToast(notification) {
                 return new Promise((resolve) => {
-                    const uniqueId = `toast-${notification.id}-${Date.now()}`;
-                    const toastHTML = this.createToastHTML(notification, uniqueId);
+                    const toastHTML = this.createToastHTML(notification);
                     this.container.insertAdjacentHTML('beforeend', toastHTML);
                     
-                    const toastElement = document.getElementById(uniqueId);
-                    if (toastElement) {
-                        this.activeToasts.add(uniqueId);
+                    const toastId = `toast-${notification.id}-${Date.now()}`;
+                    const toastElement = document.getElementById(toastId);
+                    this.activeToasts.add(toastId);
+                    
+                    // Trigger slide-in animation
+                    setTimeout(() => {
+                        toastElement.style.transform = 'translateX(0)';
+                        toastElement.style.opacity = '1';
                         
-                        // Trigger slide-in animation
+                        // Start progress bar animation
+                        const progressBar = toastElement.querySelector('.toast-progress');
                         setTimeout(() => {
-                            toastElement.style.transform = 'translateX(0)';
-                            toastElement.style.opacity = '1';
-                            
-                            // Start progress bar animation
-                            const progressBar = toastElement.querySelector('.toast-progress');
-                            if (progressBar) {
-                                setTimeout(() => {
-                                    progressBar.style.width = '0%';
-                                }, 50);
-                            }
+                            progressBar.style.width = '0%';
                         }, 50);
-                        
-                        // Auto-dismiss after 5 seconds
-                        setTimeout(() => {
-                            this.removeToast(uniqueId);
-                            resolve();
-                        }, 5000);
-                    } else {
+                    }, 50);
+                    
+                    // Auto-dismiss after 5 seconds
+                    setTimeout(() => {
+                        this.removeToast(toastId);
                         resolve();
-                    }
+                    }, 5000);
                 });
             }
 
@@ -658,21 +673,18 @@
 
         // Auto-display unread notifications on page load
         document.addEventListener('DOMContentLoaded', () => {
-            @if(isset($notifications) && $notifications->where('is_read', false)->count() > 0)
-                const unreadNotifications = [
-                    @foreach($notifications->where('is_read', false) as $notify)
-                        {
-                            id: {{ $notify->id }},
-                            title: {{ Js::from($notify->title) }},
-                            message: {{ Js::from(strip_tags($notify->message)) }},
-                            type: '{{ $notify->type }}'
-                        },
-                    @endforeach
-                ];
+            @if($latestUnreadNotification && !session('toast_shown_' . $latestUnreadNotification->id))
+                @php session()->put('toast_shown_' . $latestUnreadNotification->id, true); @endphp
+                const latestNotification = {
+                    id: {{ $latestUnreadNotification->id }},
+                    title: `{{ addslashes($latestUnreadNotification->title) }}`,
+                    message: `{!! addslashes(strip_tags($latestUnreadNotification->message)) !!}`,
+                    type: '{{ $latestUnreadNotification->type }}'
+                };
                 
-                // Show toasts after a short delay
+                // Show toast after a short delay
                 setTimeout(() => {
-                    toastManager.showUnreadNotifications(unreadNotifications);
+                    toastManager.addToast(latestNotification);
                 }, 1000);
             @endif
         });
@@ -689,10 +701,6 @@
                 }, 5000);
             });
         });
-
-        function addslashes_js(str) {
-            return (str + '').replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-        }
     </script>
     @stack('scripts')
 

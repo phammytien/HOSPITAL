@@ -30,12 +30,12 @@ class DepartmentController extends Controller
                     }
                 ])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(6);
 
         // Calculate statistics
-        $totalDepartments = $departments->count();
+        $totalDepartments = Department::where('is_delete', false)->count();
         $totalEmployees = $users->count();
-        $totalBudget = $departments->sum('budget_amount');
+        $totalBudget = Department::where('is_delete', false)->sum('budget_amount');
 
         // Add calculated fields to departments
         $departments->each(function ($dept) {

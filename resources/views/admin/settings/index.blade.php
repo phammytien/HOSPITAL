@@ -18,6 +18,9 @@
                 <button onclick="switchTab('backup')" id="tab-backup" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                     <i class="fas fa-database mr-2"></i>Backup Database
                 </button>
+                <button onclick="switchTab('audit')" id="tab-audit" class="tab-button px-6 py-4 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                    <i class="fas fa-history mr-2"></i>Nhật ký hoạt động
+                </button>
             </nav>
         </div>
 
@@ -126,6 +129,85 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Audit Logs Tab -->
+            <div id="content-audit" class="tab-content hidden">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Nhật ký hoạt động</h3>
+                            <p class="text-sm text-gray-600">Theo dõi mọi hoạt động của người dùng trong hệ thống</p>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <!-- Role Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Quyền</label>
+                            <select id="roleFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả quyền</option>
+                                <option value="ADMIN">Admin</option>
+                                <option value="BUYER">Buyer</option>
+                                <option value="DEPARTMENT">Department</option>
+                            </select>
+                        </div>
+
+                        <!-- User Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Người dùng</label>
+                            <select id="userFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Tất cả người dùng</option>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Action Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hành động</label>
+                            <input type="text" id="actionFilter" onchange="loadAuditLogs()" placeholder="Tìm kiếm hành động..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <!-- Date From -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+                            <input type="date" id="dateFromFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+
+                        <!-- Date To -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+                            <input type="date" id="dateToFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+
+                    <!-- Audit Logs Table -->
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người dùng</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quyền</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditLogsBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Audit logs will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="auditLogsPagination" class="flex items-center justify-between">
+                        <!-- Pagination will be loaded here -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -152,6 +234,9 @@ function switchTab(tab) {
     // Load data for the active tab
     if (tab === 'backup') {
         loadBackupList();
+    } else if (tab === 'audit') {
+        loadUsers();
+        loadAuditLogs();
     }
 }
 
@@ -605,6 +690,216 @@ function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN') + ' ' + date.toLocaleTimeString('vi-VN');
+}
+
+// ========== AUDIT LOGS FUNCTIONS ==========
+
+let currentPage = 1;
+
+function loadAuditLogs(page = 1) {
+    currentPage = page;
+    
+    const role = document.getElementById('roleFilter').value;
+    const userId = document.getElementById('userFilter').value;
+    const action = document.getElementById('actionFilter').value;
+    const dateFrom = document.getElementById('dateFromFilter').value;
+    const dateTo = document.getElementById('dateToFilter').value;
+
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 20
+    });
+
+    if (role) params.append('role', role);
+    if (userId) params.append('user_id', userId);
+    if (action) params.append('action', action);
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+
+    fetch(`/admin/settings/audit-logs?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                displayAuditLogs(data.logs);
+            } else {
+                Swal.fire('Lỗi', data.message, 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Lỗi', 'Không thể tải nhật ký hoạt động', 'error');
+        });
+}
+
+function loadUsers() {
+    fetch('/admin/settings/users')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const userFilter = document.getElementById('userFilter');
+                userFilter.innerHTML = '<option value="">Tất cả người dùng</option>';
+                
+                data.users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.full_name} (${user.username})`;
+                    userFilter.appendChild(option);
+                });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+function displayAuditLogs(logsData) {
+    const tbody = document.getElementById('auditLogsBody');
+    tbody.innerHTML = '';
+
+    if (logsData.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Không có nhật ký hoạt động</td></tr>';
+        document.getElementById('auditLogsPagination').innerHTML = '';
+        return;
+    }
+
+    logsData.data.forEach(log => {
+        const row = document.createElement('tr');
+        row.classList.add('hover:bg-gray-50');
+        
+        row.innerHTML = `
+            <td class="px-6 py-4 text-sm text-gray-900">
+                <div>${formatDateTime(log.created_at)}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">${log.full_name || 'N/A'}</div>
+                <div class="text-xs text-gray-500">${log.username || 'N/A'}</div>
+            </td>
+            <td class="px-6 py-4">
+                ${getRoleBadge(log.role)}
+            </td>
+            <td class="px-6 py-4">
+                ${getActionBadge(log.action)}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-600">
+                ${log.description || 'N/A'}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500">
+                ${log.ip_address || 'N/A'}
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+
+    // Display pagination
+    displayPagination(logsData);
+}
+
+function displayPagination(logsData) {
+    const paginationDiv = document.getElementById('auditLogsPagination');
+    
+    if (logsData.last_page <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+
+    let paginationHTML = `
+        <div class="flex items-center justify-between w-full">
+            <div class="text-sm text-gray-600">
+                Hiển thị ${logsData.from} đến ${logsData.to} trong ${logsData.total} kết quả
+            </div>
+            <div class="flex gap-2">
+    `;
+
+    // Previous button
+    if (logsData.current_page > 1) {
+        paginationHTML += `
+            <button onclick="loadAuditLogs(${logsData.current_page - 1})" 
+                    class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+    }
+
+    // Page numbers
+    for (let i = 1; i <= logsData.last_page; i++) {
+        if (i === logsData.current_page) {
+            paginationHTML += `
+                <button class="px-3 py-1 bg-blue-500 text-white rounded-lg">
+                    ${i}
+                </button>
+            `;
+        } else if (i === 1 || i === logsData.last_page || (i >= logsData.current_page - 2 && i <= logsData.current_page + 2)) {
+            paginationHTML += `
+                <button onclick="loadAuditLogs(${i})" 
+                        class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    ${i}
+                </button>
+            `;
+        } else if (i === logsData.current_page - 3 || i === logsData.current_page + 3) {
+            paginationHTML += `<span class="px-2">...</span>`;
+        }
+    }
+
+    // Next button
+    if (logsData.current_page < logsData.last_page) {
+        paginationHTML += `
+            <button onclick="loadAuditLogs(${logsData.current_page + 1})" 
+                    class="px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    }
+
+    paginationHTML += `
+            </div>
+        </div>
+    `;
+
+    paginationDiv.innerHTML = paginationHTML;
+}
+
+function getRoleBadge(role) {
+    const badges = {
+        'ADMIN': '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">Admin</span>',
+        'BUYER': '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">Buyer</span>',
+        'DEPARTMENT': '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">Department</span>'
+    };
+    return badges[role] || '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">' + role + '</span>';
+}
+
+function getActionBadge(action) {
+    const colors = {
+        'LOGIN': 'bg-green-100 text-green-700',
+        'LOGOUT': 'bg-gray-100 text-gray-700',
+        'CREATE': 'bg-blue-100 text-blue-700',
+        'UPDATE': 'bg-yellow-100 text-yellow-700',
+        'DELETE': 'bg-red-100 text-red-700',
+        'APPROVE': 'bg-green-100 text-green-700',
+        'REJECT': 'bg-red-100 text-red-700'
+    };
+    
+    let color = 'bg-gray-100 text-gray-700';
+    for (const key in colors) {
+        if (action.includes(key)) {
+            color = colors[key];
+            break;
+        }
+    }
+    
+    return `<span class="px-2 py-1 ${color} rounded-full text-xs font-semibold">${action}</span>`;
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 // Load backup list on page load

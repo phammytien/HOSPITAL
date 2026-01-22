@@ -17,9 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
         ]);
         
-        // Apply maintenance mode check to all web routes except login/logout
+        // Apply maintenance mode check and audit logging to all web routes
         $middleware->web(append: [
             \App\Http\Middleware\CheckMaintenanceMode::class,
+            \App\Http\Middleware\AuditLogMiddleware::class,
         ]);
     })
     ->withSchedule(function (Schedule $schedule): void {

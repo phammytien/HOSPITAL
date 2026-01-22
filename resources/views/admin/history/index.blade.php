@@ -86,12 +86,10 @@
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Tất cả trạng thái</option>
                     <option value="PENDING" {{ request('status') == 'PENDING' ? 'selected' : '' }}>Chờ xử lý</option>
-                    <option value="SUBMITTED" {{ request('status') == 'SUBMITTED' ? 'selected' : '' }}>Đã gửi</option>
                     <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Đã duyệt</option>
-                    <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Từ chối</option>
+                    <option value="REJECTED" {{ request('status') == 'REJECTED' ? 'selected' : '' }}>Đã từ chối</option>
                     <option value="CANCELLED" {{ request('status') == 'CANCELLED' ? 'selected' : '' }}>Đã hủy</option>
                     <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Hoàn thành</option>
-                    <option value="PAID" {{ request('status') == 'PAID' ? 'selected' : '' }}>Đã thanh toán</option>
                 </select>
             </div>
 

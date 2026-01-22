@@ -130,6 +130,44 @@
             <p class="text-sm text-gray-400 group-hover:text-blue-400">Khởi tạo đơn vị quản lý mới cho bệnh viện</p>
         </button>
     </div>
+
+    <!-- Pagination -->
+    @if($departments->hasPages())
+    <div class="mt-8 flex justify-center">
+        <div class="flex items-center gap-2">
+            {{-- Previous Button --}}
+            @if ($departments->onFirstPage())
+                <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-chevron-left mr-1"></i>Trước
+                </span>
+            @else
+                <a href="{{ $departments->previousPageUrl() }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-left mr-1"></i>Trước
+                </a>
+            @endif
+
+            {{-- Page Numbers --}}
+            @foreach ($departments->getUrlRange(1, $departments->lastPage()) as $page => $url)
+                @if ($page == $departments->currentPage())
+                    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">{{ $page }}</span>
+                @else
+                    <a href="{{ $url }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            {{-- Next Button --}}
+            @if ($departments->hasMorePages())
+                <a href="{{ $departments->nextPageUrl() }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Sau<i class="fas fa-chevron-right ml-1"></i>
+                </a>
+            @else
+                <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                    Sau<i class="fas fa-chevron-right ml-1"></i>
+                </span>
+            @endif
+        </div>
+    </div>
+    @endif
 </div>
 
 <!-- Employee List Modal -->
@@ -278,61 +316,77 @@
 
 <!-- User Detail Modal (Audit Logs) -->
 <div id="userDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] backdrop-blur-sm transition-opacity">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] flex flex-col transform transition-all scale-100 overflow-hidden font-sans">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] flex flex-col transform transition-all scale-100 overflow-hidden font-sans">
         <!-- Header -->
-        <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
-            <div>
-                <h3 class="text-2xl font-bold text-gray-900" id="userModalTitle">Chi tiết nhật ký hoạt động</h3>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide bg-blue-50 text-blue-700" id="userModalRole">USER</span>
-                    <span class="text-gray-500 text-sm" id="userModalEmail">email@example.com</span>
+        <div class="px-8 py-5 border-b border-gray-100 bg-white flex justify-between items-start">
+            <div class="flex flex-col">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-2xl font-bold text-gray-900" id="userModalTitle">Chi tiết nhật ký hoạt động</h3>
+                </div>
+                 <div class="flex items-center gap-3 mt-2">
+                    <span id="userModalRole" class="px-3 py-1 rounded text-xs font-bold uppercase tracking-wide bg-gray-100 text-gray-600">ROLE</span>
+                    <span id="userModalEmail" class="text-gray-500 text-sm">email@example.com</span>
                 </div>
             </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="relative">
-                    <input type="text" placeholder="Tìm kiếm hành động, IP..." class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <div class="flex items-center gap-3">
+                 <div class="relative">
+                    <input type="text" placeholder="Tìm kiếm hành động, IP..." class="pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-100 w-64 transition-all hover:bg-gray-100">
                     <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
-                <button onclick="closeUserDetailModal()" class="h-9 w-9 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                <!-- Theme Toggle (Mock) -->
+                <button class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="far fa-moon text-lg"></i>
+                </button>
+                <button onclick="closeUserDetailModal()" class="h-10 w-10 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
         </div>
+
+        <!-- Filters -->
+         <div class="px-8 py-0 border-b border-gray-100 bg-white flex justify-between items-center text-sm sticky top-0 z-10">
+            <div class="flex space-x-8 font-bold text-gray-500 pt-4">
+                <button class="text-blue-600 border-b-2 border-blue-600 pb-3 font-extrabold cursor-default">TẤT CẢ HOẠT ĐỘNG</button>
+                <!-- <button class="hover:text-blue-600 transition-colors pb-3 border-b-2 border-transparent hover:border-blue-100">ĐĂNG NHẬP</button>
+                <button class="hover:text-blue-600 transition-colors pb-3 border-b-2 border-transparent hover:border-blue-100">THAY ĐỔI DỮ LIỆU</button>
+                <button class="hover:text-blue-600 transition-colors pb-3 border-b-2 border-transparent hover:border-blue-100">BÁO CÁO</button> -->
+            </div>
+            <div class="flex items-center gap-3 py-2">
+                 <span class="text-gray-400">Thời gian:</span>
+                 <div class="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700 font-bold cursor-pointer hover:bg-gray-100 transition-colors">
+                    {{ date('d/m/Y') }} - {{ date('d/m/Y') }}
+                 </div>
+            </div>
+        </div>
         
         <!-- Body -->
-        <div class="p-8 overflow-y-auto custom-scrollbar bg-gray-50/30 flex-1">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50/50">
-                        <tr>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Thời gian</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Hành động</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Chi tiết thay đổi</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Địa chỉ IP</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Thiết bị</th>
-                        </tr>
-                    </thead>
-                    <tbody id="auditLogTableBody" class="divide-y divide-gray-100">
-                        <!-- Logs will be loaded here -->
-                        <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-3"></i>
-                                <p>Đang tải dữ liệu...</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <div class="p-8 overflow-y-auto custom-scrollbar bg-gray-50/50 flex-1">
+            <!-- Headers -->
+            <div class="flex items-center justify-between px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 mb-2">
+                <div class="flex items-center gap-6 flex-1">
+                    <div class="min-w-[100px]">Thời gian</div>
+                    <div class="min-w-[180px]">Hành động</div>
+                    <div class="flex-1">Chi tiết thay đổi</div>
+                </div>
+                <div class="flex items-center gap-8">
+                    <div class="w-[100px] text-right">Địa chỉ IP</div>
+                    <div class="w-[250px] text-right">Thiết bị</div>
+                </div>
             </div>
-            <!-- Pagination (Mock UI) -->
-            <div class="mt-6 flex justify-between items-center text-sm text-gray-500">
+
+            <div id="auditLogList" class="space-y-4">
+                <!-- Logs will be loaded here -->
+                <div class="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-3 text-blue-500"></i>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="mt-8 flex justify-between items-center text-sm text-gray-500 border-t pt-4 border-gray-100" id="paginationContainer">
                 <span id="logCountText">Hiển thị 0 kết quả</span>
                 <div id="paginationControls" class="flex gap-2">
-                    <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50" disabled><i class="fas fa-chevron-left"></i></button>
-                    <button class="px-3 py-1 bg-blue-600 text-white rounded font-bold shadow-sm">1</button>
-                    <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">2</button>
-                    <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50">3</button>
-                    <button class="px-3 py-1 border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-50"><i class="fas fa-chevron-right"></i></button>
+                    <!-- Controls -->
                 </div>
             </div>
         </div>
@@ -692,6 +746,7 @@ function openUserDetailModal(userId) {
     currentUserId = userId;
 
     // Update Header Info
+    // Update Header Info
     document.getElementById('userModalTitle').innerHTML = `Chi tiết nhật ký hoạt động <span class="text-gray-400 font-normal text-lg ml-2">#${user.id}</span>`;
     document.getElementById('userModalEmail').textContent = user.email;
     
@@ -713,14 +768,12 @@ function closeUserDetailModal() {
 }
 
 function fetchAuditLogs(userId, page = 1) {
-    const tbody = document.getElementById('auditLogTableBody');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-3"></i>
-                <p>Đang tải dữ liệu...</p>
-            </td>
-        </tr>
+    const listContainer = document.getElementById('auditLogList');
+    listContainer.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+            <i class="fas fa-spinner fa-spin text-3xl mb-3 text-blue-500"></i>
+            <p>Đang tải dữ liệu...</p>
+        </div>
     `;
 
     fetch(`/admin/users/${userId}/audit-logs?page=${page}`)
@@ -729,13 +782,14 @@ function fetchAuditLogs(userId, page = 1) {
             if (data.success && data.data.length > 0) {
                 renderAuditLogs(data.data, data.pagination);
             } else {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <i class="far fa-clipboard text-4xl text-gray-300 mb-3"></i>
-                            <p>Chưa có nhật ký hoạt động nào.</p>
-                        </td>
-                    </tr>
+                listContainer.innerHTML = `
+                   <div class="flex flex-col items-center justify-center py-16 text-center">
+                        <div class="h-24 w-24 bg-gray-100/50 rounded-full flex items-center justify-center mb-4 shadow-inner">
+                            <i class="far fa-clipboard text-4xl text-gray-300"></i>
+                        </div>
+                        <h4 class="text-gray-900 font-bold text-lg">Không có dữ liệu</h4>
+                        <p class="text-gray-500 mt-1 max-w-xs text-sm">Chưa có nhật ký hoạt động nào được ghi nhận cho người dùng này.</p>
+                    </div>
                 `;
                 document.getElementById('logCountText').textContent = 'Hiển thị 0 kết quả';
                 renderPagination(null);
@@ -743,20 +797,18 @@ function fetchAuditLogs(userId, page = 1) {
         })
         .catch(err => {
             console.error(err);
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="px-6 py-12 text-center text-red-500">
-                        <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
-                        <p>Không thể tải dữ liệu.</p>
-                    </td>
-                </tr>
+            listContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-12 text-center text-red-500">
+                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
+                    <p>Không thể tải dữ liệu.</p>
+                </div>
             `;
             renderPagination(null);
         });
 }
 
 function renderAuditLogs(logs, pagination) {
-    const tbody = document.getElementById('auditLogTableBody');
+    const listContainer = document.getElementById('auditLogList');
     
     // Update count text with pagination info
     if (pagination) {
@@ -765,52 +817,96 @@ function renderAuditLogs(logs, pagination) {
         document.getElementById('logCountText').textContent = `Hiển thị ${logs.length} kết quả`;
     }
     
-    tbody.innerHTML = logs.map(log => {
-        let actionClass = 'bg-gray-100 text-gray-700';
+    listContainer.innerHTML = logs.map(log => {
+        let actionClass = 'bg-gray-100 text-gray-600 border border-gray-200';
         let icon = 'fa-info-circle';
+        let actionText = log.action;
 
-        if (log.action.includes('thành công')) {
-            actionClass = 'bg-green-50 text-green-700';
+        if (log.action.includes('Đăng nhập thành công') || log.action.includes('Login')) {
+            actionClass = 'bg-green-50 text-green-700 border border-green-100';
             icon = 'fa-check-circle';
-        } else if (log.action.includes('thất bại')) {
-            actionClass = 'bg-red-50 text-red-700';
-            icon = 'fa-times-circle';
-        } else if (log.action.includes('Cập nhật')) {
-            actionClass = 'bg-blue-50 text-blue-700';
+            actionText = 'Đăng nhập thành công';
+        } else if (log.action.includes('thất bại') || log.action.includes('error') || log.action.includes('Sai mật khẩu')) {
+            actionClass = 'bg-red-50 text-red-700 border border-red-100';
+            icon = 'fa-exclamation-triangle';
+        } else if (log.action.includes('Truy cập') || log.action.includes('Xem')) {
+            actionClass = 'bg-blue-50 text-blue-700 border border-blue-100';
+            icon = 'fa-eye';
+            if (log.action.includes('hồ sơ')) actionText = 'Truy cập hồ sơ';
+        } else if (log.action.includes('Chỉnh sửa') || log.action.includes('Cập nhật')) {
+            actionClass = 'bg-yellow-50 text-yellow-700 border border-yellow-100';
             icon = 'fa-pen';
-        } else if (log.action.includes('Phê duyệt')) {
-            actionClass = 'bg-yellow-50 text-yellow-700';
-            icon = 'fa-clipboard-check';
+             if (log.action.includes('bệnh án')) actionText = 'Chỉnh sửa bệnh án';
         } else if (log.action.includes('Xuất')) {
-            actionClass = 'bg-purple-50 text-purple-700';
+            actionClass = 'bg-gray-100 text-gray-700 border border-gray-200';
             icon = 'fa-file-export';
+            actionText = 'Xuất báo cáo';
+        }
+
+        let date = log.created_at || '';
+        let time = '';
+
+        // Manually parse YYYY-MM-DD HH:mm:ss to avoid Invalid Date
+        try {
+            if (log.created_at && log.created_at.includes(' ')) {
+                const parts = log.created_at.split(' ');
+                if (parts.length === 2) {
+                    // Convert YYYY-MM-DD to dd/mm/yyyy
+                    const dateParts = parts[0].split('-');
+                    if (dateParts.length === 3) {
+                        date = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                    } else {
+                        date = parts[0];
+                    }
+                    time = parts[1];
+                }
+            } else {
+                // Fallback for other formats
+                 const d = new Date(log.created_at);
+                 if (!isNaN(d.getTime())) {
+                     date = d.toLocaleDateString('vi-VN');
+                     time = d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                 }
+            }
+        } catch (e) {
+            console.error(e);
         }
 
         return `
-            <tr class="hover:bg-gray-50 transition-colors group">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-bold text-gray-900">${log.created_at.split(' ')[0]}</div>
-                    <div class="text-xs text-gray-500">${log.created_at.split(' ')[1]}</div>
-                </td>
-                <td class="px-6 py-4">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${actionClass}">
-                        <i class="fas ${icon} mr-1.5"></i> ${log.action}
-                    </span>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
-                    ${log.description || '-'}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-800">
-                    ${log.ip_address || 'N/A'}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    ${log.device_agent || 'Unknown'}
-                </td>
-            </tr>
+            <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center justify-between group">
+                <div class="flex items-center gap-6 flex-1">
+                    <!-- Time -->
+                    <div class="min-w-[100px]">
+                        <div class="font-bold text-gray-900">${date}</div>
+                        <div class="text-sm text-gray-400 mt-0.5">${time}</div>
+                    </div>
+                    
+                    <!-- Badge -->
+                    <div class="min-w-[180px]">
+                         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${actionClass}">
+                            <i class="fas ${icon}"></i> ${actionText}
+                        </span>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="text-gray-600 text-sm font-medium line-clamp-1 flex-1 pr-4" title="${log.description}">
+                        ${log.description || 'Không có mô tả chi tiết'}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-8 text-sm">
+                    <!-- IP -->
+                    <div class="font-bold text-gray-800 font-mono w-[100px] text-right">${log.ip_address || 'N/A'}</div>
+                    <!-- User Agent -->
+                    <div class="text-gray-400 text-xs text-right w-[250px] leading-tight line-clamp-2" title="${log.device_agent}">
+                        ${log.device_agent || 'Unknown Agent'}
+                    </div>
+                </div>
+            </div>
         `;
     }).join('');
     
-    // Render pagination controls
+    // Render pagination controls (same function as before, just ensuring it's called)
     renderPagination(pagination);
 }
 

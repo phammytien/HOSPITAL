@@ -34,6 +34,8 @@ class LogSuccessfulLogin
      */
     public function handle(Login $event)
     {
+        // Logging is now handled by AuditLogMiddleware
+        /*
         $user = $event->user;
         
         AuditLog::create([
@@ -43,5 +45,6 @@ class LogSuccessfulLogin
             'ip_address' => $this->request->ip(),
             'device_agent' => $this->request->userAgent(),
         ]);
+        */
     }
 }

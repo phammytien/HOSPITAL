@@ -130,6 +130,44 @@
             <p class="text-sm text-gray-400 group-hover:text-blue-400">Khởi tạo đơn vị quản lý mới cho bệnh viện</p>
         </button>
     </div>
+
+    <!-- Pagination -->
+    @if($departments->hasPages())
+    <div class="mt-8 flex justify-center">
+        <div class="flex items-center gap-2">
+            {{-- Previous Button --}}
+            @if ($departments->onFirstPage())
+                <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                    <i class="fas fa-chevron-left mr-1"></i>Trước
+                </span>
+            @else
+                <a href="{{ $departments->previousPageUrl() }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chevron-left mr-1"></i>Trước
+                </a>
+            @endif
+
+            {{-- Page Numbers --}}
+            @foreach ($departments->getUrlRange(1, $departments->lastPage()) as $page => $url)
+                @if ($page == $departments->currentPage())
+                    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">{{ $page }}</span>
+                @else
+                    <a href="{{ $url }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            {{-- Next Button --}}
+            @if ($departments->hasMorePages())
+                <a href="{{ $departments->nextPageUrl() }}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Sau<i class="fas fa-chevron-right ml-1"></i>
+                </a>
+            @else
+                <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed">
+                    Sau<i class="fas fa-chevron-right ml-1"></i>
+                </span>
+            @endif
+        </div>
+    </div>
+    @endif
 </div>
 
 <!-- Employee List Modal -->

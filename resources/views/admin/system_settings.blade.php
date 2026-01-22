@@ -287,26 +287,35 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-800">Nhật ký hoạt động</h3>
-                            <p class="text-sm text-gray-600">Theo dõi mọi hoạt động của người dùng trong hệ thống</p>
+                            <p class="text-sm text-gray-600">Theo dổi lịch sử truy cập và thay đổi dữ liệu</p>
+                        </div>
+                    </div>
+
+                    <!-- Role Tabs -->
+                    <div class="bg-white rounded-lg border border-gray-200 mb-4">
+                        <div class="flex border-b border-gray-200">
+                            <button onclick="switchAuditTab('')" id="audit-tab-all" class="audit-tab-button active px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600">
+                                Tất cả
+                            </button>
+                            <button onclick="switchAuditTab('ADMIN')" id="audit-tab-admin" class="audit-tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Quản trị
+                            </button>
+                            <button onclick="switchAuditTab('DEPARTMENT')" id="audit-tab-department" class="audit-tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Khoa phòng
+                            </button>
+                            <button onclick="switchAuditTab('BUYER')" id="audit-tab-buyer" class="audit-tab-button px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Người mua
+                            </button>
                         </div>
                     </div>
 
                     <!-- Filters -->
-                    <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <!-- Role Filter -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Quyền</label>
-                            <select id="roleFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Tất cả quyền</option>
-                                <option value="ADMIN">Admin</option>
-                                <option value="BUYER">Buyer</option>
-                                <option value="DEPARTMENT">Department</option>
-                            </select>
-                        </div>
-
+                    <div class="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
                         <!-- User Filter -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Người dùng</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="bi bi-person mr-1"></i>Tất cả người dùng
+                            </label>
                             <select id="userFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Tất cả người dùng</option>
                                 <!-- Will be populated dynamically -->
@@ -315,19 +324,25 @@
 
                         <!-- Action Filter -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Hành động</label>
-                            <input type="text" id="actionFilter" onchange="loadAuditLogs()" placeholder="Tìm kiếm hành động..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="bi bi-search mr-1"></i>Tìm hành động
+                            </label>
+                            <input type="text" id="actionFilter" onchange="loadAuditLogs()" placeholder="Tìm hành động..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
 
                         <!-- Date From -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Từ ngày</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="bi bi-calendar mr-1"></i>Từ ngày
+                            </label>
                             <input type="date" id="dateFromFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
 
                         <!-- Date To -->
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Đến ngày</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="bi bi-calendar mr-1"></i>Đến ngày
+                            </label>
                             <input type="date" id="dateToFilter" onchange="loadAuditLogs()" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                     </div>
@@ -340,7 +355,7 @@
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người dùng</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quyền</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quyền hạn</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
@@ -1301,11 +1316,32 @@ function stopBackupStatusMonitoring() {
 // ========== AUDIT LOGS FUNCTIONS ==========
 
 let currentPage = 1;
+let activeAuditRole = ''; // Track active tab role
+
+function switchAuditTab(role) {
+    activeAuditRole = role;
+    
+    // Update tab buttons
+    document.querySelectorAll('.audit-tab-button').forEach(btn => {
+        btn.classList.remove('active', 'border-blue-500', 'text-blue-600');
+        btn.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    const tabId = role === '' ? 'audit-tab-all' : 
+                  role === 'ADMIN' ? 'audit-tab-admin' :
+                  role === 'DEPARTMENT' ? 'audit-tab-department' : 'audit-tab-buyer';
+    
+    const activeTab = document.getElementById(tabId);
+    activeTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+    activeTab.classList.remove('border-transparent', 'text-gray-500');
+    
+    // Reload logs with new role filter
+    loadAuditLogs(1);
+}
 
 function loadAuditLogs(page = 1) {
     currentPage = page;
     
-    const role = document.getElementById('roleFilter').value;
     const userId = document.getElementById('userFilter').value;
     const action = document.getElementById('actionFilter').value;
     const dateFrom = document.getElementById('dateFromFilter').value;
@@ -1316,7 +1352,7 @@ function loadAuditLogs(page = 1) {
         per_page: 20
     });
 
-    if (role) params.append('role', role);
+    if (activeAuditRole) params.append('role', activeAuditRole);
     if (userId) params.append('user_id', userId);
     if (action) params.append('action', action);
     if (dateFrom) params.append('date_from', dateFrom);
@@ -1475,25 +1511,8 @@ function getRoleBadge(role) {
 }
 
 function getActionBadge(action) {
-    const colors = {
-        'LOGIN': 'bg-green-100 text-green-700',
-        'LOGOUT': 'bg-gray-100 text-gray-700',
-        'CREATE': 'bg-blue-100 text-blue-700',
-        'UPDATE': 'bg-yellow-100 text-yellow-700',
-        'DELETE': 'bg-red-100 text-red-700',
-        'APPROVE': 'bg-green-100 text-green-700',
-        'REJECT': 'bg-red-100 text-red-700'
-    };
-    
-    let color = 'bg-gray-100 text-gray-700';
-    for (const key in colors) {
-        if (action.includes(key)) {
-            color = colors[key];
-            break;
-        }
-    }
-    
-    return `<span class="px-2 py-1 ${color} rounded-full text-xs font-semibold">${action}</span>`;
+    // Display action as blue text instead of badge
+    return `<span class="text-blue-600 font-medium">${action}</span>`;
 }
 
 function formatDateTime(dateString) {

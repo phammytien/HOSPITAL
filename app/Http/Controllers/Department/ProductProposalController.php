@@ -58,7 +58,7 @@ class ProductProposalController extends Controller
             'unit' => $proposal->unit,
             'unit_price' => $proposal->unit_price,
             'supplier' => $proposal->supplier,
-            'image' => $proposal->primaryImage ? $proposal->primaryImage->file_name : null,
+            'image_url' => $proposal->primaryImage ? asset($proposal->primaryImage->file_path) : null,
             'status' => $proposal->status,
             'status_label' => get_status_label($proposal->status),
             'status_class' => get_status_class($proposal->status),

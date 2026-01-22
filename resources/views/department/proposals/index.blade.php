@@ -109,9 +109,9 @@
                 .then(data => {
                     content.innerHTML = `
                             <div class="space-y-4">
-                                ${data.image ? `
+                                ${data.image_url ? `
                                 <div class="flex justify-center mb-4">
-                                    <img src="/images/products/${data.image}" alt="${data.product_name}" class="w-48 h-48 object-cover rounded-lg border">
+                                    <img src="${data.image_url}" alt="${data.product_name}" class="w-48 h-48 object-cover rounded-lg border">
                                 </div>
                                 ` : ''}
                                 <div><strong>Tên sản phẩm:</strong> ${data.product_name}</div>

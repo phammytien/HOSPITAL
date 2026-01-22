@@ -188,17 +188,17 @@
                         <div class="flex items-center gap-1.5 mb-4">
                             <i class="fas fa-store text-gray-300 text-xs"></i>
                             <p class="text-xs text-gray-500 truncate font-medium">
-                                NCC: {{ $product->supplier->supplier_name ?? $product->supplier->supplier_code ?? 'Chưa cập nhật' }}
+                                Nhà cung cấp: {{ $product->supplier->supplier_name ?? $product->supplier->supplier_code ?? 'Chưa cập nhật' }}
                             </p>
                         </div>
 
                         <!-- Footer: Stock & Price -->
                         <div class="flex items-end justify-between pt-3 border-t border-gray-50">
                             <div>
-                                <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Tồn kho</p>
-                                <p class="text-sm font-bold {{ $stockQty > 0 ? 'text-gray-900' : 'text-gray-400' }}">
+                                <!-- <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Tồn kho</p> -->
+                                <!-- <p class="text-sm font-bold {{ $stockQty > 0 ? 'text-gray-900' : 'text-gray-400' }}">
                                     {{ $stockQty }} <span class="text-[10px] text-gray-500 font-normal">{{ $product->unit }}</span>
-                                </p>
+                                </p> -->
                             </div>
                             <div class="text-right">
                                 <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Giá nhập</p>

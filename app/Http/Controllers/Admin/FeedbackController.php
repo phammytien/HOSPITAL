@@ -7,6 +7,7 @@ use App\Models\PurchaseFeedback;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FeedbackController extends Controller
 {
@@ -15,8 +16,17 @@ class FeedbackController extends Controller
      */
     public function index(Request $request)
     {
+        // Only fetch ONE feedback per Order (the first one with unique ID per group) to avoid duplicates
+        // We use a subquery to find the distinct IDs
         $query = PurchaseFeedback::with(['feedbackBy', 'purchaseOrder'])
-            ->where('is_delete', false);
+            ->where('is_delete', false)
+            ->whereIn('id', function ($q) {
+                $q->select(DB::raw('MIN(id)'))
+                    ->from('purchase_feedbacks')
+                    ->where('is_delete', false)
+                    ->whereNotNull('rating') // Ensure we target the "Rated" threads
+                    ->groupBy('purchase_order_id');
+            });
 
         // Filter by status
         if ($request->has('status') && $request->status != '') {
@@ -29,17 +39,18 @@ class FeedbackController extends Controller
 
         // Filter by department
         if ($request->has('department_id') && $request->department_id != '') {
-            $query->whereHas('feedbackBy', function($q) use ($request) {
+            $query->whereHas('feedbackBy', function ($q) use ($request) {
                 $q->where('department_id', $request->department_id);
             });
         }
 
         $feedbacks = $query->orderBy('created_at', 'desc')->paginate(5);
 
+        // Stats based on unique Purchase Orders with Feedback
         $stats = [
-            'total' => PurchaseFeedback::where('is_delete', false)->count(),
-            'pending' => PurchaseFeedback::where('is_delete', false)->where('status', 'PENDING')->count(),
-            'resolved' => PurchaseFeedback::where('is_delete', false)->where('status', '!=', 'PENDING')->count(),
+            'total' => PurchaseFeedback::where('is_delete', false)->whereNotNull('rating')->distinct('purchase_order_id')->count('purchase_order_id'),
+            'pending' => PurchaseFeedback::where('is_delete', false)->whereNotNull('rating')->where('status', 'PENDING')->distinct('purchase_order_id')->count('purchase_order_id'),
+            'resolved' => PurchaseFeedback::where('is_delete', false)->whereNotNull('rating')->where('status', '!=', 'PENDING')->distinct('purchase_order_id')->count('purchase_order_id'),
         ];
 
         $departments = Department::where('is_delete', false)->orderBy('department_name')->get();
@@ -52,11 +63,24 @@ class FeedbackController extends Controller
      */
     public function show($id)
     {
-        $feedback = PurchaseFeedback::with(['feedbackBy', 'purchaseOrder.items.product'])
+        $currentFeedback = PurchaseFeedback::with(['feedbackBy', 'purchaseOrder.items.product'])
             ->where('is_delete', false)
             ->findOrFail($id);
 
-        return view('admin.feedback.show', compact('feedback'));
+        // Load conversation history for this order
+        $feedbacks = PurchaseFeedback::with(['feedbackBy'])
+            ->where('purchase_order_id', $currentFeedback->purchase_order_id)
+            ->where('is_delete', false)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Identify the feedback to reply to:
+        // Always show the reply section if the whole thread is not resolved, 
+        // using the latest message as the target.
+        $isResolved = $feedbacks->where('status', 'RESOLVED')->count() > 0;
+        $replyTarget = !$isResolved ? $feedbacks->last() : null;
+
+        return view('admin.feedback.show', compact('currentFeedback', 'feedbacks', 'replyTarget', 'isResolved'));
     }
 
     /**
@@ -65,20 +89,41 @@ class FeedbackController extends Controller
     public function reply(Request $request, $id)
     {
         $validated = $request->validate([
-            'response' => 'required|string'
+            'response' => 'nullable|string',
+            'resolve' => 'nullable|boolean'
         ]);
 
         try {
             $feedback = PurchaseFeedback::where('is_delete', false)->findOrFail($id);
-            
-            $feedback->update([
-                'admin_response' => $validated['response'],
-                'response_time' => now(),
-            ]);
+            $orderId = $feedback->purchase_order_id;
 
-            return back()->with('success', 'Đã gửi phản hồi thành công!');
+            DB::beginTransaction();
+
+            // 1. If there's a response, update the feedback record
+            if (!empty($validated['response'])) {
+                $feedback->update([
+                    'admin_response' => $validated['response'],
+                    'response_time' => now(),
+                ]);
+            }
+
+            // 2. If 'resolve' is checked, mark ALL feedbacks for this order as RESOLVED
+            if (!empty($validated['resolve'])) {
+                PurchaseFeedback::where('purchase_order_id', $orderId)
+                    ->where('is_delete', false)
+                    ->update([
+                        'status' => 'RESOLVED',
+                        'resolved_at' => now(),
+                    ]);
+            }
+
+            DB::commit();
+
+            $msg = !empty($validated['resolve']) ? 'Đã phản hồi và giải quyết thành công!' : 'Đã gửi phản hồi thành công!';
+            return back()->with('success', $msg);
         } catch (\Exception $e) {
-            return back()->with('error', 'Có lỗi xảy ra khi gửi phản hồi!');
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' + $e->getMessage());
         }
     }
 
@@ -89,11 +134,15 @@ class FeedbackController extends Controller
     {
         try {
             $feedback = PurchaseFeedback::where('is_delete', false)->findOrFail($id);
-            
-            $feedback->update([
-                'status' => 'RESOLVED',
-                'resolved_at' => now(),
-            ]);
+            $orderId = $feedback->purchase_order_id;
+
+            // Sync status: Mark ALL feedbacks for this order as RESOLVED
+            PurchaseFeedback::where('purchase_order_id', $orderId)
+                ->where('is_delete', false)
+                ->update([
+                    'status' => 'RESOLVED',
+                    'resolved_at' => now(),
+                ]);
 
             return back()->with('success', 'Đã đánh dấu là đã giải quyết!');
         } catch (\Exception $e) {

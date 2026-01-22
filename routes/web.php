@@ -236,6 +236,13 @@ Route::middleware(['auth'])->group(function () {
         // Supplier Management
         Route::resource('buyer/suppliers', \App\Http\Controllers\Buyer\SupplierController::class, ['names' => 'buyer.suppliers']);
 
+        // Buyer Feedback
+        Route::get('/buyer/feedback', [\App\Http\Controllers\Buyer\FeedbackController::class, 'index'])->name('buyer.feedback.index');
+        Route::post('/buyer/feedback/{id}/reply', [\App\Http\Controllers\Buyer\FeedbackController::class, 'reply'])->name('buyer.feedback.reply');
+        Route::post('/buyer/feedback/{orderId}/store', [\App\Http\Controllers\Buyer\FeedbackController::class, 'store'])->name('buyer.feedback.store');
+        Route::post('/buyer/feedback/{id}/resolve', [\App\Http\Controllers\Buyer\FeedbackController::class, 'resolve'])->name('buyer.feedback.resolve');
+        Route::get('/buyer/feedback/messages/{orderId}', [\App\Http\Controllers\Buyer\FeedbackController::class, 'getMessages'])->name('buyer.feedback.messages');
+
 
     });
 
@@ -244,6 +251,7 @@ Route::middleware(['auth'])->group(function () {
         Route::group(['prefix' => 'department', 'as' => 'department.'], function () {
             // Dashboard
             Route::get('/dashboard', [\App\Http\Controllers\Department\DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard/month-orders', [\App\Http\Controllers\Department\DashboardController::class, 'getMonthOrders'])->name('dashboard.month_orders');
 
             // Inventory Management
             Route::get('/inventory', [\App\Http\Controllers\Department\InventoryController::class, 'index'])->name('inventory.index');
@@ -291,6 +299,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('/', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('store');
                 Route::get('/{id}', [\App\Http\Controllers\Department\ProductProposalController::class, 'show'])->name('show');
             });
+
+            // Feedback / Chat Routes
+            Route::get('/orders/{id}/messages', [\App\Http\Controllers\Department\FeedbackController::class, 'getMessages'])->name('feedback.messages');
+            Route::post('/orders/{id}/feedback', [\App\Http\Controllers\Department\FeedbackController::class, 'store'])->name('feedback.store');
+            Route::delete('/feedback/{id}', [\App\Http\Controllers\Department\FeedbackController::class, 'destroy'])->name('feedback.destroy');
 
             // Route::post('/catalog/suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'store'])->name('catalog.suggest');
             // Route::post('/catalog/import_suggest', [\App\Http\Controllers\Department\ProductProposalController::class, 'import'])->name('catalog.import_suggest');

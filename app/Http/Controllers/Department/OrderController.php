@@ -37,6 +37,10 @@ class OrderController extends Controller
                 $query->whereHas('purchaseRequest', function ($q) {
                     $q->where('status', 'REJECTED');
                 });
+            } elseif ($status == 'UNRATED') {
+                $query->whereHas('purchaseRequest', function ($q) {
+                    $q->whereIn('status', ['COMPLETED', 'REJECTED']);
+                })->whereDoesntHave('feedbacks');
             } else {
                 $query->where('status', $status);
             }
@@ -65,7 +69,7 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = PurchaseOrder::with(['items.product', 'purchaseRequest.requester', 'purchaseRequest.department'])
+        $order = PurchaseOrder::with(['items.product', 'purchaseRequest.requester', 'purchaseRequest.department', 'feedbacks'])
             ->where('department_id', auth()->user()->department_id)
             ->findOrFail($id);
 

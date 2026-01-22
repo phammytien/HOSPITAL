@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\PurchaseFeedback;
 use App\Models\Notification;
+use App\Models\Department;
+use Illuminate\Support\Facades\DB;
 
 class DeliveryTrackingController extends Controller
 {
@@ -14,29 +17,52 @@ class DeliveryTrackingController extends Controller
     {
         $status = $request->get('status', 'CREATED'); // Default to CREATED (Mới tạo)
 
-        $query = PurchaseOrder::with(['department', 'purchaseRequest'])
-            ->orderBy('created_at', 'desc');
+        if ($status === 'FEEDBACK') {
+            // Logic from FeedbackController
+            $query = PurchaseFeedback::with(['feedbackBy', 'purchaseOrder'])
+                ->where('is_delete', false)
+                ->whereNotNull('purchase_order_id')
+                ->whereIn('id', function ($q) {
+                    $q->select(DB::raw('MIN(id)'))
+                        ->from('purchase_feedbacks')
+                        ->where('is_delete', false)
+                        ->whereNotNull('rating')
+                        ->whereNotNull('purchase_order_id')
+                        ->groupBy('purchase_order_id');
+                });
 
-        if ($request->has('department_id') && $request->department_id != '') {
-            $query->where('department_id', $request->department_id);
-        }
+            if ($request->has('department_id') && $request->department_id != '') {
+                $query->whereHas('feedbackBy', function ($q) use ($request) {
+                    $q->where('department_id', $request->department_id);
+                });
+            }
 
-        if ($request->has('period') && $request->period != '') {
-            $query->whereHas('purchaseRequest', function ($q) use ($request) {
-                $q->where('period', $request->period);
-            });
-        }
-
-        // Apply status filter
-        if ($status === 'CREATED') {
-            $query->whereIn('status', ['CREATED', 'PENDING']);
-        } elseif ($status === 'CANCELLED') {
-            $query->whereIn('status', ['CANCELLED', 'REJECTED']);
+            $orders = $query->orderBy('created_at', 'desc')->paginate(10);
         } else {
-            $query->where('status', $status);
-        }
+            $query = PurchaseOrder::with(['department', 'purchaseRequest'])
+                ->orderBy('created_at', 'desc');
 
-        $orders = $query->paginate(10);
+            if ($request->has('department_id') && $request->department_id != '') {
+                $query->where('department_id', $request->department_id);
+            }
+
+            if ($request->has('period') && $request->period != '') {
+                $query->whereHas('purchaseRequest', function ($q) use ($request) {
+                    $q->where('period', $request->period);
+                });
+            }
+
+            // Apply status filter
+            if ($status === 'CREATED') {
+                $query->whereIn('status', ['CREATED', 'PENDING']);
+            } elseif ($status === 'CANCELLED') {
+                $query->whereIn('status', ['CANCELLED', 'REJECTED']);
+            } else {
+                $query->where('status', $status);
+            }
+
+            $orders = $query->paginate(10);
+        }
         $departments = \App\Models\Department::all();
         $periods = \App\Models\PurchaseRequest::select('period')->distinct()->orderBy('period', 'desc')->pluck('period');
 

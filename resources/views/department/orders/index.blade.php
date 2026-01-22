@@ -40,6 +40,11 @@
                         class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'REJECTED' ? 'bg-red-600 text-white shadow-md' : 'bg-red-50 text-red-600 hover:bg-red-100' }}">
                         Đã từ chối
                     </a>
+
+                    <a href="{{ route('department.dept_orders.index', array_merge(request()->all(), ['status' => 'UNRATED'])) }}"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition {{ request('status') == 'UNRATED' ? 'bg-amber-500 text-white shadow-md' : 'bg-amber-50 text-amber-600 hover:bg-amber-100' }}">
+                        Chưa đánh giá
+                    </a>
                 </div>
             </div>
 

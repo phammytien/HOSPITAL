@@ -247,10 +247,14 @@
                         data-notification-message="{{ $processedMessage }}" data-notification-badge="{{ $config['badge'] }}"
                         data-notification-color="{{ $config['color'] }}"
                         data-notification-read="{{ $notification->is_read ? 'true' : 'false' }}"
+                        data-notification-attachment="{{ $notification->attachment ? asset($notification->attachment->file_path) : '' }}"
+                        data-notification-sender="{{ $notification->createdBy->full_name ?? 'Hệ thống' }}"
+                        data-notification-recipient="{{ \App\Helpers\NotificationHelper::getRoleLabel($notification->target_role) }}"
+                        data-notification-time="{{ $notification->created_at->format('d/m/Y') }}"
                         data-notification-url="{{ $modalRedirectUrl }}" onclick="openNotificationModalFromData(this)">
 
                         <!-- <div class="p-6 hover:bg-gray-50 transition border-l-4 border-{{ $config['color'] }}-500 cursor-pointer {{ !$notification->is_read ? 'bg-blue-50' : '' }}"
-                                                                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})"> -->
+                                                                                        onclick="openNotificationModal({{ $notification->id }}, '{{ addslashes($notification->title) }}', '{{ addslashes($notification->message) }}', '{{ $config['badge'] }}', '{{ $config['color'] }}', {{ $notification->is_read ? 'true' : 'false' }})"> -->
 
                         <div class="flex items-start gap-4">
                             {{-- Icon with blue dot --}}
@@ -298,9 +302,24 @@
                                     </div>
                                 @endif
 
-                                <div class="mt-2 text-[11px] text-gray-500 font-medium">
-                                    <i class="far fa-clock mr-1"></i>
-                                    {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
+                                <div class="mt-2 text-[11px] text-gray-500 font-medium flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span>
+                                            <i class="far fa-clock mr-1"></i>
+                                            {{ $notification->created_at ? $notification->created_at->diffForHumans() : 'N/A' }}
+                                        </span>
+                                        @if($notification->attachment)
+                                            <span class="flex items-center gap-1 text-red-600 font-bold">
+                                                <i class="fas fa-file-pdf"></i>
+                                                Đính kèm PDF
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if($notification->attachment)
+                                        <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-500">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -327,37 +346,119 @@
             @endif
         </div>
 
-        {{-- Notification Detail Modal --}}
-        <div id="notificationModal"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
-                onclick="event.stopPropagation()">
-                {{-- Modal Header --}}
-                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                    <h3 id="modalTitle" class="text-xl font-bold text-gray-900"></h3>
-                    <button onclick="closeNotificationModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
+        {{-- Notification Detail Modal (Upgraded) --}}
+        <div id="notificationModal" class="fixed inset-0 z-[10060] hidden overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                {{-- Background overlay --}}
+                <div class="fixed inset-0 transition-opacity bg-gray-900/80 backdrop-blur-md"
+                    onclick="closeNotificationModal()" aria-hidden="true"></div>
 
-                {{-- Modal Body --}}
-                <div class="px-6 py-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-                    <div class="mb-4">
-                        <span id="modalBadge" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                <div
+                    class="relative inline-block w-full max-w-7xl my-4 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-3xl border border-white/20">
+                    {{-- Header Bar --}}
+                    <div
+                        class="absolute top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-8 z-20">
+                        <div class="flex items-center gap-4">
+                            <div id="modalIconContainer"
+                                class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div>
+                                <div id="modalBadge"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-widest uppercase mb-0.5 bg-blue-100 text-blue-700">
+                                </div>
+                                <h2 id="modalTitle" class="text-xl font-bold text-gray-900 truncate max-w-md lg:max-w-2xl">
+                                </h2>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <a id="modalDownloadLink" href="#" target="_blank"
+                                class="w-10 h-10 rounded-xl bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-100 hover:text-blue-600 transition-all border border-gray-200 shadow-sm"
+                                title="Mở trong cửa sổ mới">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                            <button onclick="closeNotificationModal()"
+                                class="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center hover:bg-gray-800 transition-all shadow-lg shadow-gray-200">
+                                <i class="fas fa-times text-lg"></i>
+                            </button>
+                        </div>
                     </div>
-                    <p id="modalMessage" class="text-gray-700 leading-relaxed break-words whitespace-normal"></p>
-                </div>
 
-                {{-- Modal Footer --}}
-                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                    <a id="modalActionBtn" href="#"
-                        class="hidden px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold">
-                        Đi nhận hàng
-                    </a>
-                    <button onclick="closeNotificationModal()"
-                        class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                        Đóng
-                    </button>
+                    <div class="flex flex-col lg:flex-row h-[90vh] pt-20">
+                        {{-- Left Side: Content --}}
+                        <div id="contentPane"
+                            class="w-full lg:w-[35%] border-r border-gray-100 bg-white overflow-y-auto custom-scrollbar transition-all duration-300">
+                            <div class="p-8">
+                                {{-- Metadata Section --}}
+                                <div class="space-y-4 mb-8">
+                                    <div
+                                        class="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50 shadow-sm">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-blue-500">
+                                                <i class="far fa-user text-lg"></i>
+                                            </div>
+                                            <div>
+                                                <p
+                                                    class="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-0.5">
+                                                    Người gửi</p>
+                                                <p id="modalSender" class="font-bold text-gray-800"></p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-0.5">
+                                                Thời gian</p>
+                                            <p id="modalTime" class="font-bold text-gray-800"></p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex items-center gap-3 p-4 bg-gray-50/50 rounded-2xl border border-gray-100/50 shadow-sm">
+                                        <div
+                                            class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-orange-500">
+                                            <i class="far fa-building text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-0.5">
+                                                Đối tượng nhận</p>
+                                            <p id="modalRecipient" class="font-bold text-gray-800"></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Message Content --}}
+                                <div class="relative">
+                                    <div class="absolute -left-4 top-0 bottom-0 w-1 bg-blue-500 rounded-full opacity-20">
+                                    </div>
+                                    <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-4">Nội dung chi
+                                        tiết</h4>
+                                    <div class="prose prose-sm prose-blue max-w-none">
+                                        <div id="modalMessage"
+                                            class="text-gray-600 leading-relaxed text-base whitespace-pre-wrap font-medium">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Action Button (if any) --}}
+                                <div class="mt-8 pt-6 border-t border-gray-100">
+                                    <a id="modalActionBtn" href="#"
+                                        class="hidden w-full px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all font-bold text-center shadow-lg shadow-blue-100">
+                                        Đi tới liên kết
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Right Side: PDF Viewer --}}
+                        <div id="pdfViewerArea"
+                            class="flex-1 bg-gray-100 relative overflow-hidden hidden transition-all duration-500">
+                            <div class="absolute inset-0 bg-gray-500 shadow-inner flex flex-col">
+                                <iframe id="pdfIframe" src="" class="flex-1 w-full h-full border-none shadow-2xl"></iframe>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -372,30 +473,64 @@
                     const color = element.dataset.notificationColor;
                     const isRead = element.dataset.notificationRead === 'true';
                     const redirectUrl = element.dataset.notificationUrl || '';
+                    const attachment = element.dataset.notificationAttachment || '';
+                    const sender = element.dataset.notificationSender || '';
+                    const recipient = element.dataset.notificationRecipient || '';
+                    const time = element.dataset.notificationTime || '';
 
-                    openNotificationModal(id, title, message, badge, color, isRead, redirectUrl);
+                    openNotificationModal(id, title, message, badge, color, isRead, redirectUrl, attachment, sender, recipient, time);
                 }
 
-                function openNotificationModal(id, title, message, badge, color, isRead, redirectUrl = '') {
+                function openNotificationModal(id, title, message, badge, color, isRead, redirectUrl = '', attachment = '', sender = '', recipient = '', time = '') {
                     // Set modal content
                     document.getElementById('modalTitle').textContent = title;
                     document.getElementById('modalMessage').innerHTML = message;
+                    
+                    // Set metadata content
+                    document.getElementById('modalSender').textContent = sender;
+                    document.getElementById('modalRecipient').textContent = recipient;
+                    document.getElementById('modalTime').textContent = time;
 
                     const badgeEl = document.getElementById('modalBadge');
                     badgeEl.textContent = badge;
-                    badgeEl.className = `px-3 py-1 rounded-full text-xs font-semibold bg-${color}-100 text-${color}-700`;
+                    badgeEl.className = `inline-flex items-center px-3 py-1 rounded-xl text-[10px] font-black tracking-widest uppercase mb-1 bg-${color}-100 text-${color}-700`;
+
+                    // Update Icon Color
+                    const iconContainer = document.getElementById('modalIconContainer');
+                    iconContainer.className = `w-10 h-10 rounded-xl bg-${color}-50 text-${color}-600 flex items-center justify-center shadow-sm border border-${color}-100`;
+
+                    // Handle PDF Attachment
+                    const pdfArea = document.getElementById('pdfViewerArea');
+                    const pdfIframe = document.getElementById('pdfIframe');
+                    const contentPane = document.getElementById('contentPane');
+                    const downloadLink = document.getElementById('modalDownloadLink');
+
+                    if (attachment) {
+                        pdfArea.classList.remove('hidden');
+                        pdfIframe.src = attachment + '#toolbar=1&navpanes=0&view=FitH';
+                        downloadLink.classList.remove('hidden');
+                        downloadLink.href = attachment;
+                        contentPane.classList.remove('lg:w-full');
+                        contentPane.classList.add('lg:w-[35%]');
+                    } else {
+                        pdfArea.classList.add('hidden');
+                        pdfIframe.src = '';
+                        downloadLink.classList.add('hidden');
+                        contentPane.classList.remove('lg:w-[35%]');
+                        contentPane.classList.add('lg:w-full');
+                    }
 
                     // Handle action button
                     const actionBtn = document.getElementById('modalActionBtn');
                     if (redirectUrl) {
                         if (redirectUrl === '#completed') {
                             actionBtn.href = 'javascript:void(0)';
-                            actionBtn.className = 'hidden px-6 py-2 bg-green-100 text-green-700 rounded-lg border border-green-200 font-bold pointer-events-none';
+                            actionBtn.className = 'w-full block px-6 py-4 bg-green-100 text-green-700 rounded-2xl border border-green-200 font-bold text-center pointer-events-none';
                             actionBtn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>THÀNH CÔNG';
                             actionBtn.classList.remove('hidden');
                         } else {
                             actionBtn.href = redirectUrl;
-                            actionBtn.className = 'px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-bold';
+                            actionBtn.className = 'w-full block px-6 py-4 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all font-bold text-center shadow-lg shadow-blue-100';
                             actionBtn.innerHTML = 'Đi nhận hàng';
                             actionBtn.classList.remove('hidden');
                         }

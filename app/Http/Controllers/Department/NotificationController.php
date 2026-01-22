@@ -35,7 +35,7 @@ class NotificationController extends Controller
             });
         }
 
-        $notifications = $query->orderBy('id', 'desc')->paginate(10);
+        $notifications = $query->with('attachment')->orderBy('id', 'desc')->paginate(10);
 
         $stats = [
             'total' => Notification::where(function ($q) use ($userRole) {

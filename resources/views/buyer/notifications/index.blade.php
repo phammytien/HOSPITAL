@@ -42,7 +42,8 @@
                         <div>
                             <p class="text-sm text-gray-600 mb-1">Tổng {{ $tab === 'sent' ? 'đã gửi' : 'đã nhận' }}</p>
                             <h3 class="text-3xl font-bold text-gray-900">
-                                {{ number_format($tab === 'sent' ? $stats['sent_total'] : $stats['received_total']) }}</h3>
+                                {{ number_format($tab === 'sent' ? $stats['sent_total'] : $stats['received_total']) }}
+                            </h3>
                         </div>
                         <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
                             <i class="fas {{ $tab === 'sent' ? 'fa-paper-plane' : 'fa-inbox' }} text-blue-600 text-xl"></i>
@@ -146,7 +147,8 @@
                                     <div class="flex items-start justify-between gap-4 mb-2">
                                         <h3
                                             class="{{ (!$notification->is_read && $tab === 'received') ? 'font-bold' : 'font-semibold' }} text-gray-900">
-                                            {{ $notification->title }}</h3>
+                                            {{ $notification->title }}
+                                        </h3>
                                         <span
                                             class="px-3 py-1 bg-{{ $config['color'] }}-100 text-{{ $config['color'] }}-700 rounded-full text-xs font-semibold whitespace-nowrap">
                                             {{ $config['badge'] }}
@@ -154,7 +156,8 @@
                                     </div>
                                     <p
                                         class="text-gray-600 text-sm mb-3 {{ (!$notification->is_read && $tab === 'received') ? 'font-medium' : '' }}">
-                                        {{ $notification->message }}</p>
+                                        {{ $notification->message }}
+                                    </p>
                                     <div
                                         class="flex items-center gap-4 text-xs {{ (!$notification->is_read && $tab === 'received') ? 'text-gray-600 font-medium' : 'text-gray-500' }}">
                                         <span class="flex items-center gap-1">
@@ -183,13 +186,14 @@
                                 @if($tab === 'sent')
                                     <div class="flex items-center gap-2">
                                         <button onclick="event.stopPropagation(); openEditModal({
-                                            id: {{ $notification->id }},
-                                            title: '{{ addslashes($notification->title) }}',
-                                            message: '{{ addslashes($notification->message) }}',
-                                            type: '{{ $notification->type }}',
-                                            target: '{{ $notification->target_role }}',
-                                            fileName: '{{ $notification->attachment ? $notification->attachment->file_name : "" }}'
-                                        })" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all border border-blue-100 shadow-sm"
+                                                                                            id: {{ $notification->id }},
+                                                                                            title: '{{ addslashes($notification->title) }}',
+                                                                                            message: '{{ addslashes($notification->message) }}',
+                                                                                            type: '{{ $notification->type }}',
+                                                                                            target: '{{ $notification->target_role }}',
+                                                                                            fileName: '{{ $notification->attachment ? $notification->attachment->file_name : "" }}'
+                                                                                        })"
+                                            class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-all border border-blue-100 shadow-sm"
                                             title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </button>
@@ -639,7 +643,9 @@
 
             if (data.attachment) {
                 pdfArea.classList.remove('hidden');
-                pdfIframe.src = data.attachment;
+                // pdfIframe.src = data.attachment;
+                // pdfIframe.src = data.attachment + '#view=FitH&navpanes=0&toolbar=0';
+                pdfIframe.src = data.attachment + '#toolbar=1&navpanes=0&view=FitH';
                 downloadLink.classList.remove('hidden');
                 downloadLink.href = data.attachment;
                 contentPane.classList.remove('lg:w-full');

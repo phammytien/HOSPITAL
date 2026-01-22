@@ -19,7 +19,12 @@ class DepartmentOrderController extends Controller
             ->orderBy('created_at', 'desc');
 
         if ($request->has('status') && $request->status != 'all') {
-            $query->where('status', $request->status);
+            if ($request->status == 'UNRATED') {
+                $query->whereIn('status', ['COMPLETED', 'REJECTED'])
+                    ->whereDoesntHave('feedbacks');
+            } else {
+                $query->where('status', $request->status);
+            }
         }
 
         $orders = $query->paginate(10);
@@ -32,13 +37,15 @@ class DepartmentOrderController extends Controller
     {
         $order = PurchaseOrder::findOrFail($id);
 
-        if ($order->status == 'CREATED') {
-            $order->status = 'PAID';
+        // Status flow: DELIVERED -> COMPLETED
+        if ($order->status == 'DELIVERED') {
+            $order->status = 'COMPLETED';
+            $order->completed_at = now();
             $order->save();
-            return redirect()->back()->with('success', 'Đã xác nhận bàn giao sản phẩm thành công');
+            return redirect()->back()->with('success', 'Đã xác nhận nhận hàng thành công');
         }
 
-        return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ');
+        return redirect()->back()->with('error', 'Trạng thái đơn hàng không hợp lệ để xác nhận');
     }
 
     // Từ chối đơn hàng

@@ -13,13 +13,30 @@ class ProductProposalController extends Controller
 {
     public function index()
     {
-        $proposals = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier'])
-            ->where('status', 'CREATED')
+        // Show all proposals, with CREATED status first
+        $proposals = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier', 'approver'])
             ->notDeleted()
+            ->orderByRaw("CASE 
+                WHEN status = 'CREATED' THEN 1 
+                WHEN status = 'APPROVED' THEN 2 
+                WHEN status = 'REJECTED' THEN 3 
+                ELSE 4 
+            END")
             ->latest()
             ->paginate(15);
 
         return view('admin.proposals.index', compact('proposals'));
+    }
+
+    public function show($id)
+    {
+        $proposal = ProductProposal::with(['department', 'createdBy', 'buyer', 'category', 'supplier', 'approver', 'primaryImage'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'proposal' => $proposal
+        ]);
     }
 
     public function approve($id)
@@ -27,6 +44,12 @@ class ProductProposalController extends Controller
         $proposal = ProductProposal::findOrFail($id);
 
         if ($proposal->status !== 'CREATED') {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chỉ có thể duyệt đề xuất ở trạng thái Mới tạo!'
+                ], 400);
+            }
             return redirect()->route('admin.proposals.index')
                 ->with('error', 'Chỉ có thể duyệt đề xuất ở trạng thái Mới tạo!');
         }
@@ -68,10 +91,25 @@ class ProductProposalController extends Controller
 
             DB::commit();
 
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Đã duyệt đề xuất và tạo sản phẩm mới thành công!'
+                ]);
+            }
+
             return redirect()->route('admin.proposals.index')
                 ->with('success', 'Đã duyệt đề xuất và tạo sản phẩm mới thành công!');
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return redirect()->route('admin.proposals.index')
                 ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
@@ -82,6 +120,12 @@ class ProductProposalController extends Controller
         $proposal = ProductProposal::findOrFail($id);
 
         if ($proposal->status !== 'CREATED') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chỉ có thể từ chối đề xuất ở trạng thái Mới tạo!'
+                ], 400);
+            }
             return redirect()->route('admin.proposals.index')
                 ->with('error', 'Chỉ có thể từ chối đề xuất ở trạng thái Mới tạo!');
         }
@@ -95,6 +139,13 @@ class ProductProposalController extends Controller
             'rejection_reason' => $validated['rejection_reason'],
             'approver_id' => Auth::id(),
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã từ chối đề xuất!'
+            ]);
+        }
 
         return redirect()->route('admin.proposals.index')
             ->with('success', 'Đã từ chối đề xuất!');

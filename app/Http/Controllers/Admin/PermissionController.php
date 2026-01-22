@@ -79,12 +79,30 @@ class PermissionController extends Controller
 
         $user = User::findOrFail($userId);
         $oldRole = $user->role;
-        $user->role = $validated['role'];
+        $newRole = $validated['role'];
+
+        // Không cho phép chuyển từ BUYER hoặc DEPARTMENT sang ADMIN
+        if ($oldRole !== 'ADMIN' && $newRole === 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể chuyển vai trò sang Quản trị viên từ vai trò khác'
+            ], 403);
+        }
+
+        // Không cho phép thay đổi vai trò của ADMIN
+        if ($oldRole === 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể thay đổi vai trò của Quản trị viên'
+            ], 403);
+        }
+
+        $user->role = $newRole;
         $user->save();
 
         return response()->json([
             'success' => true,
-            'message' => "Đã thay đổi quyền của {$user->full_name} từ {$oldRole} sang {$validated['role']}",
+            'message' => "Đã thay đổi quyền của {$user->full_name} từ {$oldRole} sang {$newRole}",
             'user' => $user
         ]);
     }
@@ -95,6 +113,15 @@ class PermissionController extends Controller
     public function toggleUserStatus(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
+
+        // Không cho phép khóa tài khoản ADMIN
+        if ($user->role === 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể khóa tài khoản Quản trị viên'
+            ], 403);
+        }
+
         $user->is_active = !$user->is_active;
         $user->save();
 

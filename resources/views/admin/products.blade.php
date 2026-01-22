@@ -99,7 +99,26 @@
                     <!-- Product Image Section -->
                     <div class="relative aspect-square bg-gray-50 overflow-hidden">
                         <!-- Status Badge -->
+                        @php
+                            $stockQty = $product->stock_quantity;
+                            $statusClass = '';
+                            $statusText = '';
+                            $statusIcon = 'fa-circle';
 
+                            if ($stockQty <= 0) {
+                                $statusClass = 'bg-gray-100 text-gray-600 border-gray-200';
+                                $statusText = 'HẾT HÀNG';
+                                $statusIcon = 'fa-times-circle';
+                            } elseif ($stockQty <= 10) {
+                                $statusClass = 'bg-red-50 text-red-600 border-red-100';
+                                $statusText = 'SẮP HẾT';
+                                $statusIcon = 'fa-exclamation-circle';
+                            } else {
+                                $statusClass = 'bg-green-50 text-green-600 border-green-100';
+                                $statusText = 'SẴN HÀNG';
+                                $statusIcon = 'fa-check-circle';
+                            }
+                        @endphp
 
                         <div class="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
                             <!-- Proposal Badge (if no supplier) -->
@@ -110,6 +129,11 @@
                                 </span>
                             @endif
 
+                            <!-- Stock Status Badge
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border {{ $statusClass }} shadow-sm">
+                                <i class="fas {{ $statusIcon }}"></i>
+                                {{ $statusText }}
+                            </span> -->
 
                         </div>
 
@@ -173,8 +197,8 @@
                         <div class="flex items-end justify-between pt-3 border-t border-gray-50">
                             <!-- <div>
                                 <p class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Tồn kho</p>
-                                <p class="text-sm font-bold {{ $product->stock_quantity > 0 ? 'text-gray-900' : 'text-gray-400' }}">
-                                    {{ $product->stock_quantity }} <span class="text-[10px] text-gray-500 font-normal">{{ $product->unit }}</span>
+                                <p class="text-sm font-bold {{ $stockQty > 0 ? 'text-gray-900' : 'text-gray-400' }}">
+                                    {{ $stockQty }} <span class="text-[10px] text-gray-500 font-normal">{{ $product->unit }}</span>
                                 </p>
                             </div> -->
                             <div class="text-right">

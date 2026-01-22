@@ -288,7 +288,7 @@
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Page Title Bar -->
             <div class="bg-white border-b border-gray-200 px-6 py-4">
-                <h2 class="text-xl font-semibold text-gray-800">@yield('page-title', 'Quản lý mua sắm nội bộ')</h2>
+                <h2 class="text-xl font-semibold text-gray-800">@yield('page-title', 'Đề xuất sản phẩm')</h2>
             </div>
 
             <!-- Page Content -->

@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Inventory Management
         Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
+        Route::get('/inventory/print', [App\Http\Controllers\Admin\InventoryController::class, 'printReport'])->name('inventory.print');
         Route::get('/inventory', [App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('inventory');
         Route::get('/inventory/export', [App\Http\Controllers\Admin\InventoryController::class, 'export'])->name('inventory.export');
 
@@ -105,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
         // Product Proposals
         Route::prefix('proposals')->name('proposals.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\ProductProposalController::class, 'index'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\ProductProposalController::class, 'show'])->name('show');
             Route::post('/{id}/approve', [\App\Http\Controllers\Admin\ProductProposalController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [\App\Http\Controllers\Admin\ProductProposalController::class, 'reject'])->name('reject');
         });

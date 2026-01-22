@@ -121,7 +121,7 @@
                                                             </div>
                                                             <div>
                                                                 <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
-                                                                <div class="text-xs text-gray-500">ID: {{ $user->username }}</div>
+                                                                <div class="text-xs text-gray-500">Tên đăng nhập: {{ $user->username }}</div>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -140,20 +140,24 @@
                                                     </td>
                                                     <td class="px-6 py-4 text-center">
                                                         <div class="flex items-center justify-center gap-2">
-                                                            <button 
-                                                                onclick="openRoleModal({{ $user->id }}, '{{ $user->full_name }}', '{{ $user->role }}')"
-                                                                class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition"
-                                                                title="Thay đổi vai trò"
-                                                            >
-                                                                <i class="fas fa-exchange-alt"></i>
-                                                            </button>
-                                                            <button 
-                                                                onclick="openLockModal({{ $user->id }}, '{{ $user->full_name }}', {{ $user->is_active ? 'true' : 'false' }})"
-                                                                class="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-50 rounded transition"
-                                                                title="{{ $user->is_active ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}"
-                                                            >
-                                                                <i class="fas fa-{{ $user->is_active ? 'lock' : 'lock-open' }}"></i>
-                                                            </button>
+                                                            @if($user->role !== 'ADMIN')
+                                                                <button 
+                                                                    onclick="openRoleModal({{ $user->id }}, '{{ $user->full_name }}', '{{ $user->role }}')"
+                                                                    class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded transition"
+                                                                    title="Thay đổi vai trò"
+                                                                >
+                                                                    <i class="fas fa-exchange-alt"></i>
+                                                                </button>
+                                                                <button 
+                                                                    onclick="openLockModal({{ $user->id }}, '{{ $user->full_name }}', {{ $user->is_active ? 'true' : 'false' }})"
+                                                                    class="text-gray-600 hover:text-gray-800 p-2 hover:bg-gray-50 rounded transition"
+                                                                    title="{{ $user->is_active ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}"
+                                                                >
+                                                                    <i class="fas fa-{{ $user->is_active ? 'lock' : 'lock-open' }}"></i>
+                                                                </button>
+                                                            @else
+                                                                <span class="text-xs text-gray-400 italic">Không thể thao tác</span>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -211,8 +215,8 @@
             
             <div class="mb-6">
                 <label class="block text-sm font-medium text-gray-700 mb-3">Chọn vai trò mới:</label>
-                <div class="space-y-3">
-                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition">
+                <div class="space-y-3" id="roleOptions">
+                    <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 transition" id="adminRoleOption">
                         <input type="radio" name="role" value="ADMIN" class="form-radio h-5 w-5 text-blue-600">
                         <div class="ml-3">
                             <div class="flex items-center">
@@ -375,8 +379,25 @@
         };
         document.getElementById('currentRole').innerHTML = roleIcons[currentRole];
         
+        // Ẩn option ADMIN nếu role hiện tại không phải ADMIN
+        const adminOption = document.getElementById('adminRoleOption');
+        if (currentRole !== 'ADMIN') {
+            adminOption.style.display = 'none';
+            // Nếu đang chọn ADMIN, chuyển sang option khác
+            const adminRadio = adminOption.querySelector('input[type="radio"]');
+            if (adminRadio.checked) {
+                const otherRadio = document.querySelector('input[name="role"][value="BUYER"]');
+                if (otherRadio) otherRadio.checked = true;
+            }
+        } else {
+            adminOption.style.display = 'flex';
+        }
+        
         // Pre-select current role
-        document.querySelector(`input[name="role"][value="${currentRole}"]`).checked = true;
+        const currentRadio = document.querySelector(`input[name="role"][value="${currentRole}"]`);
+        if (currentRadio && currentRadio.closest('label').style.display !== 'none') {
+            currentRadio.checked = true;
+        }
         
         document.getElementById('roleModal').classList.remove('hidden');
     }

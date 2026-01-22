@@ -16,65 +16,60 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
+        $tab = $request->get('tab', 'received');
         $query = Notification::query();
 
-        // Refined visibility permissions for Admin:
-        // 1. Notifications targeted to ADMIN
-        // 2. Notifications targeted to ALL (null or 'ALL')
-        // 3. Notifications created by the current user (Admin sent them)
-        $query->where(function($q) {
-            $q->where('target_role', 'ADMIN')
-              ->orWhere('target_role', 'ALL')
-              ->orWhereNull('target_role')
-              ->orWhere('created_by', Auth::id());
-        });
+        if ($tab === 'received') {
+            // Notifications received by admin
+            $query->where(function($q) {
+                $q->where('target_role', 'ADMIN')
+                  ->orWhere('target_role', 'ALL')
+                  ->orWhereNull('target_role');
+            })->where('created_by', '!=', Auth::id());
+        } else {
+            // Notifications sent by admin
+            $query->where('created_by', Auth::id());
+        }
 
         // Filter by type
         if ($request->has('type') && $request->type != '') {
             $query->where('type', $request->type);
         }
 
-        // Filter by status
-        if ($request->has('is_read') && $request->is_read !== '') {
+        // Filter by status (only for received)
+        if ($tab === 'received' && $request->has('is_read') && $request->is_read !== '') {
             $query->where('is_read', $request->is_read);
         }
 
-        // Search
-        if ($request->has('search') && $request->search != '') {
-            $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                    ->orWhere('message', 'like', '%' . $request->search . '%');
-            });
-        }
+        $notifications = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        $notifications = $query->orderBy('id', 'desc')->paginate(5);
-
+        // Stats
         $stats = [
-            'total' => Notification::where(function($q) {
+            'received_total' => Notification::where(function($q) {
                 $q->where('target_role', 'ADMIN')
                   ->orWhere('target_role', 'ALL')
-                  ->orWhereNull('target_role')
-                  ->orWhere('created_by', Auth::id());
-            })->count(),
-            'unread' => Notification::where(function($q) {
+                  ->orWhereNull('target_role');
+            })->where('created_by', '!=', Auth::id())->count(),
+            
+            'received_unread' => Notification::where(function($q) {
                 $q->where('target_role', 'ADMIN')
                   ->orWhere('target_role', 'ALL')
-                  ->orWhereNull('target_role')
-                  ->orWhere('created_by', Auth::id());
-            })->where('is_read', false)->count(),
-            'read' => Notification::where(function($q) {
+                  ->orWhereNull('target_role');
+            })->where('created_by', '!=', Auth::id())->where('is_read', false)->count(),
+            
+            'received_read' => Notification::where(function($q) {
                 $q->where('target_role', 'ADMIN')
                   ->orWhere('target_role', 'ALL')
-                  ->orWhereNull('target_role')
-                  ->orWhere('created_by', Auth::id());
-            })->where('is_read', true)->count(),
+                  ->orWhereNull('target_role');
+            })->where('created_by', '!=', Auth::id())->where('is_read', true)->count(),
+            
+            'sent_total' => Notification::where('created_by', Auth::id())->count(),
         ];
 
         // Get notification types from database
         $notificationTypes = NotificationHelper::getNotificationTypes();
-        $targetRoles = NotificationHelper::getTargetRoles();
 
-        return view('admin.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'targetRoles'));
+        return view('admin.notifications.index', compact('notifications', 'stats', 'notificationTypes', 'tab'));
     }
 
     /**
@@ -98,10 +93,11 @@ class NotificationController extends Controller
             'message' => 'required|string',
             'type' => "required|in:$validTypes",
             'target_role' => 'nullable|string',
+            'attachment' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         try {
-            Notification::create([
+            $notification = Notification::create([
                 'title' => $validated['title'],
                 'message' => $validated['message'],
                 'type' => $validated['type'],
@@ -109,14 +105,32 @@ class NotificationController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
+            // Handle file attachment
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('notifications', $fileName, 'public');
+                
+                $notification->attachment()->create([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => 'storage/' . $filePath,
+                    'file_type' => $file->getClientOriginalExtension(),
+                    'related_table' => 'notifications',
+                    'related_id' => $notification->id,
+                    'uploaded_by' => Auth::id(),
+                    'uploaded_at' => now(),
+                    'is_delete' => false,
+                ]);
+            }
+
             // Get labels from helper
             $typeLabel = NotificationHelper::getTypeLabel($validated['type']);
             $roleLabel = NotificationHelper::getRoleLabel($validated['target_role'] ?? 'ALL');
             $title = $validated['title'];
 
-            $msg = "Đã tạo thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
+            $msg = "Đã tạo thông báo gửi đến $roleLabel với tiêu đề \"$title\"";
 
-            return back()->with('success', $msg);
+            return redirect()->route('admin.notifications', ['tab' => 'sent'])->with('success', $msg);
         } catch (\Exception $e) {
             return back()->with('error', 'Có lỗi xảy ra khi gửi thông báo!');
         }
@@ -135,6 +149,7 @@ class NotificationController extends Controller
             'message' => 'required|string',
             'type' => "required|in:$validTypes",
             'target_role' => 'required|string',
+            'attachment' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         $notification = Notification::findOrFail($id);
@@ -145,14 +160,38 @@ class NotificationController extends Controller
             'target_role' => $request->target_role,
         ]);
 
+        // Handle file attachment
+        if ($request->hasFile('attachment')) {
+            // Delete old attachment if exists
+            if ($notification->attachment) {
+                \Storage::disk('public')->delete(str_replace('storage/', '', $notification->attachment->file_path));
+                $notification->attachment->delete();
+            }
+            
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('notifications', $fileName, 'public');
+            
+            $notification->attachment()->create([
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => 'storage/' . $filePath,
+                'file_type' => $file->getClientOriginalExtension(),
+                'related_table' => 'notifications',
+                'related_id' => $notification->id,
+                'uploaded_by' => Auth::id(),
+                'uploaded_at' => now(),
+                'is_delete' => false,
+            ]);
+        }
+
         // Get labels from helper
         $typeLabel = NotificationHelper::getTypeLabel($request->type);
         $roleLabel = NotificationHelper::getRoleLabel($request->target_role);
         $title = $request->title;
 
-        $msg = "Đã cập nhật thông tin gửi đến $roleLabel với tiêu đề \"$title\"";
+        $msg = "Đã cập nhật thông báo gửi đến $roleLabel với tiêu đề \"$title\"";
 
-        return redirect()->route('admin.notifications')->with('success', $msg);
+        return redirect()->route('admin.notifications', ['tab' => 'sent'])->with('success', $msg);
     }
 
     /**

@@ -13,7 +13,19 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        return view('auth.login');
+        // Count total login visits from audit logs
+        $totalVisits = \DB::table('audit_logs')
+            ->where('action', 'Đăng nhập thành công')
+            ->count();
+        
+        // Count currently online users (active sessions in last 5 minutes)
+        $onlineUsers = \DB::table('sessions')
+            ->whereNotNull('user_id')
+            ->where('last_activity', '>=', time() - 60) // 5 minutes = 300 seconds
+            ->distinct('user_id')
+            ->count('user_id');
+        
+        return view('auth.login', compact('totalVisits', 'onlineUsers'));
     }
 
     public function login(Request $request)

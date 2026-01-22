@@ -238,25 +238,33 @@
                             @if(isset($recentFeedbacks) && $recentFeedbacks->count() > 0)
                                 <div class="space-y-4">
                                     @foreach($recentFeedbacks as $feedback)
-                                        <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition cursor-pointer group"
-                                             onclick="openFeedbackModal({{ $feedback->id }}, '{{ $feedback->purchaseOrder->order_code }}', `{{ $feedback->feedback_content }}`, {{ $feedback->purchase_order_id }}, '{{ $feedback->status }}')">
+                                        @php
+                                            $hasReply = !empty($feedback->admin_response);
+                                            $displayUser = $hasReply ? 'Người mua / Ban quản trị' : ($feedback->feedbackBy->full_name ?? 'Khoa phòng');
+                                            $displayContent = $hasReply ? $feedback->admin_response : $feedback->feedback_content;
+                                            $displayTime = $hasReply && $feedback->response_time ? $feedback->response_time->diffForHumans() : $feedback->created_at->diffForHumans();
+                                            $displayAvatar = !$hasReply && $feedback->feedbackBy && $feedback->feedbackBy->avatar ? $feedback->feedbackBy->avatar : null;
+                                            $initial = $hasReply ? 'A' : substr($feedback->feedbackBy->full_name ?? 'K', 0, 1);
+                                        @endphp
+                                        <div class="flex items-start space-x-3 p-3 {{ $hasReply ? 'bg-blue-50' : 'bg-gray-50' }} rounded-lg hover:bg-indigo-50 transition cursor-pointer group"
+                                             onclick="openFeedbackModal({{ $feedback->id }}, '{{ $feedback->purchaseOrder->order_code }}', `{{ addslashes($feedback->feedback_content) }}`, {{ $feedback->purchase_order_id }}, '{{ $feedback->status }}')">
                                             <div class="flex-shrink-0">
-                                                @if($feedback->feedbackBy && $feedback->feedbackBy->avatar)
-                                                    <img src="{{ $feedback->feedbackBy->avatar }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm">
+                                                @if($displayAvatar)
+                                                    <img src="{{ $displayAvatar }}" class="w-10 h-10 rounded-full object-cover border border-gray-200 shadow-sm">
                                                 @else
-                                                    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">
-                                                        {{ substr($feedback->feedbackBy->full_name ?? 'U', 0, 1) }}
+                                                    <div class="w-10 h-10 rounded-full {{ $hasReply ? 'bg-blue-100 text-blue-600' : 'bg-indigo-100 text-indigo-600' }} flex items-center justify-center font-bold border {{ $hasReply ? 'border-blue-200' : 'border-indigo-200' }}">
+                                                        {{ $initial }}
                                                     </div>
                                                 @endif
                                             </div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="flex justify-between items-start">
                                                     <p class="text-sm font-bold text-gray-900 truncate group-hover:text-blue-700">
-                                                        {{ $feedback->feedbackBy->full_name ?? 'Unknown' }}
+                                                        {{ $displayUser }}
                                                     </p>
-                                                    <span class="text-[10px] text-gray-500 bg-white px-1.5 py-0.5 rounded border border-gray-100 whitespace-nowrap">{{ $feedback->created_at->diffForHumans() }}</span>
+                                                    <span class="text-[10px] text-gray-500 bg-white px-1.5 py-0.5 rounded border border-gray-100 whitespace-nowrap">{{ $displayTime }}</span>
                                                 </div>
-                                                <p class="text-sm text-gray-600 line-clamp-2 mt-0.5 leading-snug">{{ $feedback->feedback_content }}</p>
+                                                <p class="text-sm text-gray-600 line-clamp-2 mt-0.5 leading-snug">{{ $displayContent }}</p>
                                                 <div class="flex items-center gap-2 mt-1.5">
                                                      <p class="text-xs text-blue-500 font-medium flex items-center gap-1">
                                                         <i class="fas fa-hashtag text-[10px]"></i> {{ $feedback->purchaseOrder->order_code }}

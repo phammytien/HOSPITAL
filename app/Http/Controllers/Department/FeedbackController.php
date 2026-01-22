@@ -69,7 +69,7 @@ class FeedbackController extends Controller
         $request->validate([
             'content' => 'required|string|max:1000',
             'rating' => 'nullable|integer|min:1|max:5',
-            'action' => 'required|string|in:good,issue'
+            'action' => 'nullable|string|in:good,issue'
         ]);
 
         $order = PurchaseOrder::where('department_id', Auth::user()->department_id)
@@ -78,6 +78,13 @@ class FeedbackController extends Controller
         $isResolved = PurchaseFeedback::where('purchase_order_id', $orderId)
             ->where('status', 'RESOLVED')
             ->exists();
+
+        // If trying to add new feedback to a resolved thread via the dashboard/list without checking resolved status
+        // (Though UI should prevent this, safety check)
+        if ($isResolved && !$request->action) { // Relax check for existing threads if just replying? 
+            // Actually, if it's resolved, standard rule is no more replies unless reopened.
+            // But let's stick to the current logic: if resolved, return 403.
+        }
 
         if ($isResolved) {
             return response()->json([
@@ -101,7 +108,11 @@ class FeedbackController extends Controller
         $feedback->rating = $existingRating ?? $request->rating;
 
         // Set status based on action
-        $feedback->status = ($request->action == 'good') ? 'RESOLVED' : 'PENDING';
+        if ($request->action == 'good') {
+            $feedback->status = 'RESOLVED';
+        } else {
+            $feedback->status = 'PENDING';
+        }
 
         if ($feedback->status == 'RESOLVED') {
             $feedback->resolved_at = now();

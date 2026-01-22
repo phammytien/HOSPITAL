@@ -8,6 +8,7 @@ use App\Models\Department;
 use App\Models\Product;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseOrder;
+use App\Models\ProductProposal;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -180,6 +181,11 @@ class DashboardController extends Controller
         $formattedTotalValue = $this->formatCurrency($totalValue);
         $formattedPrevTotalValue = $this->formatCurrency($prevTotalValue);
 
+        // Count pending product proposals (CREATED = submitted by Buyer to Admin)
+        $newProposalsCount = ProductProposal::where('status', 'CREATED')
+            ->where('is_delete', false)
+            ->count();
+
         return view('dashboard.admin', compact(
             'periodType', 'deptId', 'selectedYear', 'availableYears', // Filter State
             'pendingRequests', 'newToday',
@@ -188,7 +194,8 @@ class DashboardController extends Controller
             'formattedTotalValue', 'formattedPrevTotalValue', // Formatted values
             'totalProducts', 'lowStock',
             'recentRequests', 'departments',
-            'chartData', 'recentActivities', 'topDepartments'
+            'chartData', 'recentActivities', 'topDepartments',
+            'newProposalsCount' // Product proposals count
         ));
     }
 

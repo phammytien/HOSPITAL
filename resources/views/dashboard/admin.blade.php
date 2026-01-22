@@ -418,6 +418,57 @@
             </div>
         </div>
     </div>
+
+    <!-- Product Proposal Notification Modal -->
+    <div id="proposalNotificationModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden z-[70] flex items-center justify-center p-4 transition-opacity duration-300">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all scale-100 overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-5 text-white">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="bi bi-bell-fill text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold">Thông báo mới</h3>
+                            <p class="text-xs text-blue-100 mt-0.5">Đề xuất sản phẩm</p>
+                        </div>
+                    </div>
+                    <button onclick="closeProposalModal()"
+                        class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors">
+                        <i class="bi bi-x-lg text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="bi bi-box-seam text-blue-600 text-4xl"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2">Có đề xuất sản phẩm mới!</h4>
+                    <p class="text-gray-600">
+                        Hiện có <span class="font-bold text-blue-600 text-2xl">{{ $newProposalsCount }}</span> đề xuất sản phẩm mới đang chờ duyệt.
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <a href="{{ route('admin.proposals.index') }}"
+                        class="block w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all transform hover:scale-105 text-center shadow-lg">
+                        <i class="bi bi-check-circle mr-2"></i>Duyệt ngay
+                    </a>
+                    <button onclick="closeProposalModal()"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -842,5 +893,17 @@
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
         }
+
+        // Product Proposal Notification Modal
+        function closeProposalModal() {
+            document.getElementById('proposalNotificationModal').classList.add('hidden');
+        }
+
+        // Show proposal modal on page load if there are pending proposals
+        @if($newProposalsCount > 0)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('proposalNotificationModal').classList.remove('hidden');
+        });
+        @endif
     </script>
 @endpush

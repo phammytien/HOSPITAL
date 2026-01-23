@@ -38,17 +38,20 @@
             </h1>
             <p class="mb-6 text-lg font-light text-blue-100 opacity-90">
                 Quản lý vật tư y tế, dược phẩm và thiết bị một cách hiệu quả, minh bạch.
-                Đảm bảo nguồn cung ứng liên tục cho công tác khám chữa bệnh tại Bệnh viện Đa Khoa Tâm Trí Sài Gòn.
+                Đảm bảo nguồn cung ứng liên tục cho công tác khám chữa bệnh tại Bệnh viện Đa Khoa Tâm Trí Cao Lãnh.
             </p>
 
             <!-- Statistics Panel -->
-            <div class="mb-6 p-3 bg-blue-800 bg-opacity-60 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30 shadow-lg max-w-xs">
+            <div
+                class="mb-6 p-3 bg-blue-800 bg-opacity-60 backdrop-blur-sm rounded-lg border border-blue-500 border-opacity-30 shadow-lg max-w-xs">
                 <h3 class="text-[10px] font-bold text-blue-200 uppercase tracking-wider mb-2">Thống kê truy cập</h3>
                 <div class="space-y-2">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            <svg class="w-3.5 h-3.5 text-blue-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             <span class="text-xs text-blue-200">Lượt truy cập</span>
                         </div>
@@ -58,7 +61,8 @@
                         <div class="flex items-center gap-1.5">
                             <div class="relative">
                                 <span class="flex h-2 w-2">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span
+                                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                                     <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                 </span>
                             </div>
@@ -93,7 +97,7 @@
 
 
         <div class="text-sm text-blue-300 opacity-75">
-            © 2024 TMMC Healthcare. All Rights Reserved.
+            © 2026 TMMC Healthcare. All Rights Reserved.
         </div>
     </div>
 
@@ -107,7 +111,8 @@
             <div class="flex justify-center mb-6">
                 <!-- Logo TMMC -->
                 <div class="text-center">
-                    <img src="{{ asset('logo.jpg') }}" alt="TMMC Healthcare Logo" class="mx-auto w-32 h-auto mb-3">
+                    <img src="{{ asset('logo-cao-lanh.png') }}" alt="TMMC Healthcare Logo"
+                        class="mx-auto w-32 h-auto mb-3">
 
 
                 </div>
